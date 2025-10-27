@@ -36,6 +36,9 @@ npm run start:go
 For complete documentation, setup guides, and troubleshooting:
 
 👉 **[📖 Full Documentation](./docs/README.md)**
+- **[🏗️ Architecture Guide](./docs/ARCHITECTURE.md)** - Project structure and design patterns
+- **[🛠️ Development Guide](./docs/DEVELOPMENT.md)** - Setup, commands, and best practices
+- **[🤝 Contributing Guide](./CONTRIBUTING.md)** - How to contribute to the project
 
 ## 🏗️ Architecture
 

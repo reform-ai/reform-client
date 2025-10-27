@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
 
 // Simple hook to provide spoken feedback when a new tip is available
 // It speaks only when analyzing and when the generated tip changes
@@ -16,6 +17,34 @@ export function useAudioFeedback(
   const lastFitnessMoveRef = useRef('');
   const minSpeakIntervalMs = 5000; // 5 seconds for focused shooting technique feedback
   const significantChangeThreshold = 0.3; // Only speak on significant changes
+  const audioConfiguredRef = useRef(false);
+
+  // Configure audio for optimal headphone/speaker output
+  const configureAudio = async () => {
+    if (audioConfiguredRef.current) return;
+    
+    try {
+      console.log('🔊 [AUDIO] Configuring audio for headphones and speaker...');
+      
+      // Set audio mode for optimal playback
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        staysActiveInBackground: false,
+        playsInSilentModeIOS: true, // Play even when phone is silent
+        shouldDuckAndroid: true, // Duck other audio on Android
+        playThroughEarpieceAndroid: false, // Use speaker/headphones, not earpiece
+        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+      });
+      
+      audioConfiguredRef.current = true;
+      console.log('🔊 [AUDIO] Audio configured successfully for headphones and speaker');
+    } catch (error) {
+      console.warn('🔊 [AUDIO] Audio configuration failed, using fallback:', error);
+      // Fallback: just mark as configured to avoid repeated attempts
+      audioConfiguredRef.current = true;
+    }
+  };
 
   useEffect(() => {
     console.log('🔊 [AUDIO] Audio feedback effect triggered - isAnalyzing:', isAnalyzing, 'movement:', movement, 'fitnessMove:', fitnessMove);
@@ -40,6 +69,9 @@ export function useAudioFeedback(
     const trySpeak = async () => {
       try {
         const now = Date.now();
+        
+        // Configure audio first
+        await configureAudio();
         
         // Check if enough time has passed
         if (now - lastSpokenAtRef.current < minSpeakIntervalMs) {
@@ -66,14 +98,23 @@ export function useAudioFeedback(
         
         if (tip && tip !== lastSpokenTip && tip.length > 5) { // Speak basketball tips even if short
           console.log('🔊 [AUDIO] Speaking tip:', tip);
-          // Don't stop current speech - let it finish naturally to avoid cutting off
+          
+          // Stop any current speech to avoid overlap
+          await Speech.stop();
+          
+          // Speak with optimized settings for headphones and speaker
           Speech.speak(tip, {
             language: 'en-US',
-            rate: 0.7, // Slower for clarity and to avoid cutting off
+            rate: 0.8, // Slightly faster for better flow
             pitch: 1.0,
-            volume: 1.0, // MAX VOLUME for demo
-            quality: 'enhanced' // Better quality
+            volume: 1.0, // Full volume - will route to headphones if connected, speaker if not
+            quality: 'enhanced', // Better quality for headphones
+            voice: 'com.apple.voice.compact.en-US.Samantha', // Use high-quality voice
+            onStart: () => console.log('🔊 [AUDIO] Speech started'),
+            onDone: () => console.log('🔊 [AUDIO] Speech completed'),
+            onError: (error) => console.warn('🔊 [AUDIO] Speech error:', error)
           });
+          
           // Update state immediately to prevent repetition
           setLastSpokenTip(tip);
           lastSpokenAtRef.current = now;
@@ -85,7 +126,7 @@ export function useAudioFeedback(
         }
       } catch (error) {
         // Fail silently; audio feedback is auxiliary
-        console.warn('Audio feedback error:', error);
+        console.warn('🔊 [AUDIO] Audio feedback error:', error);
       }
     };
 

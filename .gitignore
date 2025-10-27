@@ -35,6 +35,11 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# Source maps
+*.map
+*.js.map
+*.css.map
+
 # Generated files
 ios/
 android/

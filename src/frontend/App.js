@@ -6,6 +6,7 @@ import { detectFitnessMovement, getFitnessTip } from '../core/llm/llmArchitectur
 import { useAudioFeedback } from '../core/audio/audioOutput';
 import { getBasketballShootingTip, detectBasketballMovement, BASKETBALL_MOVEMENTS, resetBasketballAggregation } from '../core/pose/basketballFormAnalyzer';
 import { PoseOverlay, ShootingPhaseIndicator } from './components/PoseOverlay';
+import VideoDemoScreen from './screens/VideoDemoScreen';
 import styles from './styles/appStyles';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
   const [basketballMovement, setBasketballMovement] = useState(BASKETBALL_MOVEMENTS.SHOOTING);
   const [techniqueScore, setTechniqueScore] = useState(0);
   const [cameraDimensions, setCameraDimensions] = useState(null);
+  const [currentScreen, setCurrentScreen] = useState('camera'); // 'camera' or 'video-demo'
 
   // Initialize TensorFlow on app start
   useEffect(() => {
@@ -247,6 +249,11 @@ export default function App() {
     console.log('📱 [CAMERA] Camera dimensions set:', { width, height });
   };
 
+  // Screen switching
+  if (currentScreen === 'video-demo') {
+    return <VideoDemoScreen onBack={() => setCurrentScreen('camera')} />;
+  }
+
   return (
     <View style={styles.container}>
       <CameraView 
@@ -321,6 +328,15 @@ export default function App() {
             <Text style={styles.switchText}>Switch Camera</Text>
           </TouchableOpacity>
         </View>
+        
+        {/* Video Demo Button */}
+        <TouchableOpacity 
+          style={styles.videoDemoButton} 
+          onPress={() => setCurrentScreen('video-demo')}
+        >
+          <Text style={styles.videoDemoButtonText}>🎬 Video Demo</Text>
+        </TouchableOpacity>
+        
         <Text style={styles.status}>
           Status: {isAnalyzing ? 'Analyzing' : 'Ready'}
         </Text>

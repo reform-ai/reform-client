@@ -9,6 +9,8 @@ import { PoseOverlay, ShootingPhaseIndicator } from './components/PoseOverlay';
 import VideoDemoScreen from './screens/VideoDemoScreen';
 import SubscriptionScreen from './screens/SubscriptionScreen';
 import AnalyticsScreen from './screens/AnalyticsScreen';
+import CoachMarketplaceScreen from './screens/CoachMarketplaceScreen';
+import ShareScreen from './screens/ShareScreen';
 import { getUserProfile } from '../core/user/userProfile';
 import styles from './styles/appStyles';
 
@@ -27,7 +29,7 @@ export default function App() {
   const [basketballMovement, setBasketballMovement] = useState(BASKETBALL_MOVEMENTS.SHOOTING);
   const [techniqueScore, setTechniqueScore] = useState(0);
   const [cameraDimensions, setCameraDimensions] = useState(null);
-  const [currentScreen, setCurrentScreen] = useState('camera'); // 'camera', 'video-demo', 'subscription', 'analytics'
+  const [currentScreen, setCurrentScreen] = useState('camera'); // 'camera', 'video-demo', 'subscription', 'analytics', 'coaches', 'share'
 
   // Initialize TensorFlow on app start
   useEffect(() => {
@@ -264,6 +266,19 @@ export default function App() {
   if (currentScreen === 'analytics') {
     return <AnalyticsScreen onBack={() => setCurrentScreen('camera')} />;
   }
+  
+  if (currentScreen === 'coaches') {
+    return <CoachMarketplaceScreen onBack={() => setCurrentScreen('camera')} />;
+  }
+  
+  if (currentScreen === 'share') {
+    const workoutData = {
+      score: techniqueScore,
+      workoutType: basketballMovement,
+      duration: null,
+    };
+    return <ShareScreen onBack={() => setCurrentScreen('camera')} workoutData={workoutData} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -346,14 +361,28 @@ export default function App() {
             style={styles.menuButton} 
             onPress={() => setCurrentScreen('video-demo')}
           >
-            <Text style={styles.menuButtonText}>🎬 Video Demo</Text>
+            <Text style={styles.menuButtonText}>🎬 Video</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={styles.menuButton} 
             onPress={() => setCurrentScreen('analytics')}
           >
-            <Text style={styles.menuButtonText}>📊 Analytics</Text>
+            <Text style={styles.menuButtonText}>📊 Stats</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={() => setCurrentScreen('coaches')}
+          >
+            <Text style={styles.menuButtonText}>👥 Coaches</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={() => setCurrentScreen('share')}
+          >
+            <Text style={styles.menuButtonText}>📤 Share</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 

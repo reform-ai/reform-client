@@ -7,6 +7,9 @@ import { useAudioFeedback } from '../core/audio/audioOutput';
 import { getBasketballShootingTip, detectBasketballMovement, BASKETBALL_MOVEMENTS, resetBasketballAggregation } from '../core/pose/basketballFormAnalyzer';
 import { PoseOverlay, ShootingPhaseIndicator } from './components/PoseOverlay';
 import VideoDemoScreen from './screens/VideoDemoScreen';
+import SubscriptionScreen from './screens/SubscriptionScreen';
+import AnalyticsScreen from './screens/AnalyticsScreen';
+import { getUserProfile } from '../core/user/userProfile';
 import styles from './styles/appStyles';
 
 export default function App() {
@@ -24,7 +27,7 @@ export default function App() {
   const [basketballMovement, setBasketballMovement] = useState(BASKETBALL_MOVEMENTS.SHOOTING);
   const [techniqueScore, setTechniqueScore] = useState(0);
   const [cameraDimensions, setCameraDimensions] = useState(null);
-  const [currentScreen, setCurrentScreen] = useState('camera'); // 'camera' or 'video-demo'
+  const [currentScreen, setCurrentScreen] = useState('camera'); // 'camera', 'video-demo', 'subscription', 'analytics'
 
   // Initialize TensorFlow on app start
   useEffect(() => {
@@ -253,6 +256,14 @@ export default function App() {
   if (currentScreen === 'video-demo') {
     return <VideoDemoScreen onBack={() => setCurrentScreen('camera')} />;
   }
+  
+  if (currentScreen === 'subscription') {
+    return <SubscriptionScreen onBack={() => setCurrentScreen('camera')} />;
+  }
+  
+  if (currentScreen === 'analytics') {
+    return <AnalyticsScreen onBack={() => setCurrentScreen('camera')} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -329,13 +340,29 @@ export default function App() {
           </TouchableOpacity>
         </View>
         
-        {/* Video Demo Button */}
-        <TouchableOpacity 
-          style={styles.videoDemoButton} 
-          onPress={() => setCurrentScreen('video-demo')}
-        >
-          <Text style={styles.videoDemoButtonText}>🎬 Video Demo</Text>
-        </TouchableOpacity>
+        {/* Menu Buttons */}
+        <View style={styles.menuButtons}>
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={() => setCurrentScreen('video-demo')}
+          >
+            <Text style={styles.menuButtonText}>🎬 Video Demo</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={() => setCurrentScreen('analytics')}
+          >
+            <Text style={styles.menuButtonText}>📊 Analytics</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={() => setCurrentScreen('subscription')}
+          >
+            <Text style={styles.menuButtonText}>💳 Upgrade</Text>
+          </TouchableOpacity>
+        </View>
         
         <Text style={styles.status}>
           Status: {isAnalyzing ? 'Analyzing' : 'Ready'}

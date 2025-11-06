@@ -11,7 +11,9 @@ import SubscriptionScreen from './screens/SubscriptionScreen';
 import AnalyticsScreen from './screens/AnalyticsScreen';
 import CoachMarketplaceScreen from './screens/CoachMarketplaceScreen';
 import ShareScreen from './screens/ShareScreen';
+import WorkoutHistoryScreen from './screens/WorkoutHistoryScreen';
 import { getUserProfile } from '../core/user/userProfile';
+import { AchievementsSystem } from '../core/achievements/achievementsSystem';
 import styles from './styles/appStyles';
 
 export default function App() {
@@ -29,15 +31,19 @@ export default function App() {
   const [basketballMovement, setBasketballMovement] = useState(BASKETBALL_MOVEMENTS.SHOOTING);
   const [techniqueScore, setTechniqueScore] = useState(0);
   const [cameraDimensions, setCameraDimensions] = useState(null);
-  const [currentScreen, setCurrentScreen] = useState('camera'); // 'camera', 'video-demo', 'subscription', 'analytics', 'coaches', 'share'
+  const [currentScreen, setCurrentScreen] = useState('camera'); // 'camera', 'video-demo', 'subscription', 'analytics', 'coaches', 'share', 'history'
+  const [achievementsSystem] = useState(new AchievementsSystem());
 
-  // Initialize TensorFlow on app start
+  // Initialize TensorFlow and achievements on app start
   useEffect(() => {
     const initTF = async () => {
       const ready = await initializeTensorFlow();
       setTensorFlowReady(ready);
     };
     initTF();
+    
+    // Initialize achievements system
+    achievementsSystem.initialize();
   }, []); 
 
   // AI-powered movement detection function
@@ -225,7 +231,7 @@ export default function App() {
     console.log('🚀 [START] Analysis started successfully');
   };
 
-  const handleStopAnalysis = () => {
+  const handleStopAnalysis = async () => {
     console.log('🛑 [STOP] User clicked Stop Analysis button');
     
     // Clear any pending tip updates
@@ -235,6 +241,32 @@ export default function App() {
       tipUpdateTimeoutRef.current = null;
     } else {
       console.log('🛑 [STOP] No pending tip timeout to clear');
+    }
+    
+    // Save workout and check achievements
+    if (techniqueScore > 0 || movementIntensity > 0) {
+      try {
+        const profile = getUserProfile();
+        await profile.initialize();
+        
+        // Record workout
+        await profile.recordWorkout({
+          score: techniqueScore,
+          workoutType: basketballMovement,
+          duration: null, // Could calculate from start time
+        });
+        
+        // Check for new achievements
+        const stats = profile.getStats();
+        const newAchievements = await achievementsSystem.checkAchievements(stats);
+        
+        if (newAchievements.length > 0) {
+          console.log('🏆 [ACHIEVEMENTS] New achievements unlocked:', newAchievements);
+          // Could show achievement notification here
+        }
+      } catch (error) {
+        console.error('🛑 [STOP] Failed to save workout:', error);
+      }
     }
     
     // Immediate UI feedback
@@ -278,6 +310,10 @@ export default function App() {
       duration: null,
     };
     return <ShareScreen onBack={() => setCurrentScreen('camera')} workoutData={workoutData} />;
+  }
+  
+  if (currentScreen === 'history') {
+    return <WorkoutHistoryScreen onBack={() => setCurrentScreen('camera')} />;
   }
 
   return (
@@ -383,6 +419,13 @@ export default function App() {
             onPress={() => setCurrentScreen('share')}
           >
             <Text style={styles.menuButtonText}>📤 Share</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={() => setCurrentScreen('history')}
+          >
+            <Text style={styles.menuButtonText}>📜 History</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 

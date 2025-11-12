@@ -1,104 +1,33 @@
-# 💪 Reform - AI Personal Trainer
+# Reform - Exercise Analyzer App
 
-AI-powered personal trainer for all workouts with real-time form analysis and coaching feedback.
+**Version:** 0.0.0 (v0 Launch)
 
-[![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
-[![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)](https://tensorflow.org/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
+## Architecture Overview
 
-## ✨ Features
+This architecture represents the v0 launch structure for Reform.
 
-- 🎯 **Real-time Pose Detection** - TensorFlow.js + MoveNet for all exercises
-- 🤖 **AI-Powered Coaching** - OpenAI GPT-4 integration for personalized feedback
-- 🔊 **Audio Feedback** - Text-to-speech coaching tips during workouts
-- 👁️ **Visual Overlay** - Real-time skeleton visualization and form analysis
-- 💪 **All Workouts** - Supports strength training, cardio, yoga, sports, and more
-- 📊 **Form Analysis** - Detailed technique scoring and improvement suggestions
+### Layer 0: Root Level Components
+- **exercises/**: Exercise instances directory
+- **frontend/**: User interface and visualization components
+  - **frontend/camera/**: iPhone camera capture and frame streaming to backend
 
-## 🚀 Quick Start
+### Layer 1: Exercise Backend
+- **exercises/backend/**: Core analysis logic and processing for exercises
+  - **exercises/backend/live-video/**: Receives and processes streamed frames from frontend
+  - **exercises/backend/pose-estimation/**: Pose estimation component
+  - **exercises/backend/llm-form-analysis/**: LLM-based form analysis component
+  - **exercises/backend/feedback/**: Feedback generation component
 
-```bash
-# Install dependencies
-npm install
+## Common Processes
 
-# Set up OpenAI API key
-export OPENAI_API_KEY="your-key-here"
-
-# Start the app
-npm run start:go
-
-# Scan QR code with your iPhone
-```
-
-## 📚 Documentation
-
-For complete documentation, setup guides, and troubleshooting:
-
-👉 **[📖 Full Documentation](./docs/README.md)**
-- **[🏗️ Architecture Guide](./docs/ARCHITECTURE.md)** - Project structure and design patterns
-- **[🛠️ Development Guide](./docs/DEVELOPMENT.md)** - Setup, commands, and best practices
-- **[🤝 Contributing Guide](./CONTRIBUTING.md)** - How to contribute to the project
-
-## 🏗️ Architecture
-
-```
-src/
-├── frontend/     # React Native UI
-├── core/         # Core functionality  
-├── shared/       # Shared utilities
-└── config/       # Configuration
-```
-
-## 🛠️ Development
-
-```bash
-# Development
-npm run start:dev
-
-# Testing
-npm test
-
-# Linting
-npm run lint
-
-# Type checking
-npm run type-check
-```
-
-## 📱 Platform Support
-
-- **iOS 13+** with Expo Go
-- **Android 8+** with Expo Go
-- **Camera & Microphone** permissions required
-
-## 🎯 Supported Workouts
-
-- **Strength Training** - Squats, deadlifts, bench press, etc.
-- **Cardio** - Running, cycling, HIIT workouts
-- **Yoga & Pilates** - Poses and form correction
-- **Sports** - Basketball, tennis, golf, etc.
-- **Functional Fitness** - CrossFit, calisthenics
-- **And much more!**
-
-## 🎯 Performance
-
-- **90% reduction** in API calls
-- **60% reduction** in camera overhead
-- **Smart caching** and throttling
-- **Adaptive feedback** intervals
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Make changes with tests
-4. Submit pull request
+### Camera Streaming (Common to All Exercises)
+When the iPhone camera starts running in the Frontend:
+1. Camera frames are captured via `frontend/camera/`
+2. Frames are streamed to the Reform Backend
+3. Backend receives frames via `exercises/backend/live-video/`
+4. This process is shared/common across all exercise instances
 
 ---
 
-**Ready to perfect your form? Let's get started! 💪✨**
+*Architecture details to be expanded as development progresses.*
+

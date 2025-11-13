@@ -3,7 +3,7 @@
 Receives and processes uploaded video files from the frontend.
 
 ## Purpose
-- Receives uploaded video files from `frontend/upload/`
+- Receives uploaded video files from `frontend/camera/uploadVideo/`
 - Extracts frames from uploaded video
 - Processes frames for downstream analysis (same as liveVideo after frame extraction)
 
@@ -16,6 +16,6 @@ Receives and processes uploaded video files from the frontend.
 
 ## Relationship to Live Video
 - **liveVideo/**: Receives real-time streamed frames
-- **videoUpload/**: Receives uploaded video file, extracts frames
+- **uploadVideo/**: Receives uploaded video file, extracts frames
 - **Both converge**: After frame extraction, both use the same processing pipeline
 

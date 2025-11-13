@@ -4,4 +4,3 @@
 // 3. Video is sent to the Reform backend, along with the user input on exercise type.
 // 4. <Wait for this> Backend processes the video frames and outputs, to start, text feedback. TODO Add audio feedback.
 // 5. Text feedback is sent to the frontend and displayed to the user. TODO Add audio feedback.
-

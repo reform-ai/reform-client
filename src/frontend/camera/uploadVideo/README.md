@@ -14,6 +14,6 @@ Handles video file upload for the test/upload feature (App.test.js flow).
 4. Receives feedback from backend
 
 ## Difference from Live Streaming
-- **Live Streaming** (`frontend/camera/`): Real-time frame capture and streaming
-- **Video Upload** (`frontend/upload/`): File-based upload and processing
+- **Live Video** (`frontend/camera/liveVideo/`): Real-time frame capture and streaming
+- **Upload Video** (`frontend/camera/uploadVideo/`): File-based upload and processing
 

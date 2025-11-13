@@ -20,18 +20,18 @@ tst/
   backend/
     __tests__/                    # Test utilities and helpers for backend
     shared/
-      live-video/__tests__/       # Tests for live-video component
-      pose-estimation/__tests__/  # Tests for pose-estimation component
-      video-upload/__tests__/      # Tests for video-upload component
+      liveVideo/__tests__/       # Tests for liveVideo component
+      poseEstimation/__tests__/  # Tests for poseEstimation component
+      videoUpload/__tests__/      # Tests for videoUpload component
     exercise-1/
       calculation/__tests__/      # Tests for calculation component
-      llm-form-analysis/__tests__/ # Tests for llm-form-analysis component
+      llmFormAnalysis/__tests__/ # Tests for llmFormAnalysis component
       feedback/__tests__/         # Tests for feedback component
     (same pattern for exercise-2 and exercise-3)
 
   frontend/
     __tests__/                    # Test utilities and helpers for frontend
-    camera/__tests__/             # Tests for camera components (livestream & upload)
+    camera/__tests__/             # Tests for camera components (liveStream & upload)
 ```
 
 ## Principle
@@ -40,12 +40,20 @@ Tests are placed at the **component level** (where code files are), not at inter
 
 ## Test Entry Points
 
-- `Main.js` - Live streaming flow (production)
-- `Main_test.js` - Video upload flow (testing)
+- `App.js` - Live streaming flow (production)
+- `App.test.js` - Video upload flow (testing)
 
-## Test Files Naming
+## Test Files Naming Convention
 
-- Component tests: `ComponentName.test.js` or `ComponentName.spec.js`
+**All test files must use the `.test.js` suffix:**
+- Component tests: `ComponentName.test.js`
 - Integration tests: `integration.test.js`
-- Test utilities: `testUtils.js` or `testHelpers.js`
+- Test utilities: `testUtils.js` or `testHelpers.js` (non-test files, helpers only)
+
+**Examples:**
+- `src/backend/shared/liveVideo/VideoProcessor.js` → `tst/backend/shared/liveVideo/__tests__/VideoProcessor.test.js`
+- `src/frontend/camera/liveStream/CameraCapture.js` → `tst/frontend/camera/__tests__/CameraCapture.test.js`
+- `src/backend/exercise-1/calculation/FormAnalyzer.js` → `tst/backend/exercise-1/calculation/__tests__/FormAnalyzer.test.js`
+
+**Note:** The `.spec.js` naming is not used. All tests must follow the `.test.js` convention.
 

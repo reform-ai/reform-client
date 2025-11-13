@@ -8,7 +8,7 @@ Uses pose estimation data points to assist in deciding whether the exercise form
 - Determines if exercise form is correct based on pose data
 
 ## Input
-- Pose estimation data points (from shared pose-estimation component)
+- Pose estimation data points (from shared poseEstimation component)
 
 ## Output
 - Form correctness analysis/calculations for Exercise 3

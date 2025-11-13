@@ -7,7 +7,7 @@ Exercise-specific components for the second exercise type.
 ### calculation/
 Uses pose estimation data points to calculate and determine whether the exercise form is correct or not.
 
-### llm-form-analysis/
+### llmFormAnalysis/
 LLM-based form analysis specific to this exercise type.
 
 ### feedback/

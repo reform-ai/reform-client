@@ -13,6 +13,12 @@ These constraints are established to ensure best practices in debugging and main
 2. **External Libraries**: No external libraries unless explicitly instructed otherwise
 3. **File Organization**: Functions should be split up into different files whenever possible
 
+## Test File Naming
+
+1. **Test Files**: All test files must use the `.test.js` suffix (e.g., `ComponentName.test.js`)
+2. **Test Location**: Test files are located in `tst/` directory, mirroring the `src/` structure
+3. **Test Organization**: Tests are placed in `__tests__/` directories at the component level
+
 ## Rationale
 
 These constraints promote:

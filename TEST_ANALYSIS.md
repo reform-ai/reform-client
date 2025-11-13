@@ -15,14 +15,14 @@ These are at intermediate directory levels and are **NOT necessary**:
 ### Necessary Test Directories
 
 **Component-Level Tests** (where actual code files will be):
-- `backend/shared/live-video/__tests__` ✅ Keep
-- `backend/shared/pose-estimation/__tests__` ✅ Keep
-- `backend/shared/video-upload/__tests__` ✅ Should add (missing)
+- `backend/shared/liveVideo/__tests__` ✅ Keep
+- `backend/shared/poseEstimation/__tests__` ✅ Keep
+- `backend/shared/videoUpload/__tests__` ✅ Should add (missing)
 - `backend/exercise-1/calculation/__tests__` ✅ Keep
-- `backend/exercise-1/llm-form-analysis/__tests__` ✅ Keep
+- `backend/exercise-1/llmFormAnalysis/__tests__` ✅ Keep
 - `backend/exercise-1/feedback/__tests__` ✅ Keep
 - (Same for exercise-2 and exercise-3)
-- `frontend/camera/__tests__` ✅ Keep (or split into livestream/__tests__ and upload/__tests__)
+- `frontend/camera/__tests__` ✅ Keep (or split into liveStream/__tests__ and upload/__tests__)
 
 **Shared Test Utilities** (for reusable test helpers):
 - `backend/__tests__` ✅ Keep (for backend test utilities)

@@ -2,22 +2,22 @@
 
 ## Two Separate Features
 
-### Feature 1: Live Streaming (Main.js)
+### Feature 1: Live Streaming (App.js)
 - **Input**: Real-time camera frames
-- **Frontend**: `src/frontend/camera/livestream/` - captures and streams frames
-- **Backend Entry**: `src/backend/shared/live-video/` - receives streamed frames
+- **Frontend**: `src/frontend/camera/liveStream/` - captures and streams frames
+- **Backend Entry**: `src/backend/shared/liveVideo/` - receives streamed frames
 - **Processing**: Same backend pipeline (pose estimation → calculation → LLM → feedback)
 
-### Feature 2: Video Upload (Main_test.js)
+### Feature 2: Video Upload (App.test.js)
 - **Input**: Uploaded video file
 - **Frontend**: `src/frontend/camera/upload/` - handles video file upload
-- **Backend Entry**: `src/backend/shared/video-upload/` - receives uploaded video
+- **Backend Entry**: `src/backend/shared/videoUpload/` - receives uploaded video
 - **Processing**: Same backend pipeline (pose estimation → calculation → LLM → feedback)
 
 ## Shared Backend Pipeline
 
 Both features converge at the shared backend components:
-1. **Pose Estimation** (`src/backend/shared/pose-estimation/`) - Same for both
+1. **Pose Estimation** (`src/backend/shared/poseEstimation/`) - Same for both
 2. **Exercise-specific processing** (`src/backend/exercise-X/`) - Same for both
 3. **Feedback** - Same output format
 
@@ -31,9 +31,9 @@ Both features converge at the shared backend components:
 
 ## Implementation Strategy
 
-1. **Frontend Layer**: Separate components (`src/frontend/camera/livestream/` vs `src/frontend/camera/upload/`)
-2. **Backend Entry Layer**: Separate entry points (`src/backend/shared/live-video/` vs `src/backend/shared/video-upload/`)
-3. **Processing Layer**: Shared components (pose-estimation, exercise-specific logic)
+1. **Frontend Layer**: Separate components (`src/frontend/camera/liveStream/` vs `src/frontend/camera/upload/`)
+2. **Backend Entry Layer**: Separate entry points (`src/backend/shared/liveVideo/` vs `src/backend/shared/videoUpload/`)
+3. **Processing Layer**: Shared components (poseEstimation, exercise-specific logic)
 4. **Output Layer**: Shared feedback format
 
 The key is that after the input stage (frames from camera vs frames from video), everything else is identical.

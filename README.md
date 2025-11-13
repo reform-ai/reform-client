@@ -1,6 +1,6 @@
 # Reform - Exercise Analyzer App
 
-**Version:** 0.0.0 (v0 Launch)
+**Version:** 0.1.0 (v0 Launch)
 
 ## Architecture Overview
 

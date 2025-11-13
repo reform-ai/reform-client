@@ -4,7 +4,7 @@ Tests for camera-related components.
 
 ## Test Coverage
 
-### Live Stream (`camera/livestream/`)
+### Live Stream (`camera/liveStream/`)
 - Camera initialization
 - Real-time frame capture
 - Frame streaming to backend

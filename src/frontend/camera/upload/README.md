@@ -1,6 +1,6 @@
 # Video Upload Component
 
-Handles video file upload for the test/upload feature (Main_test.js flow).
+Handles video file upload for the test/upload feature (App.test.js flow).
 
 ## Purpose
 - Allows users to upload video files

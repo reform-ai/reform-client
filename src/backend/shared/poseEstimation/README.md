@@ -8,7 +8,7 @@ Identifies and tracks body part locations from video frames.
 - Shared across all exercises - the pose detection logic is the same regardless of exercise type
 
 ## Input
-- Video frames (from live-video component)
+- Video frames (from liveVideo component)
 
 ## Output
 - Pose data points (body part locations/coordinates)

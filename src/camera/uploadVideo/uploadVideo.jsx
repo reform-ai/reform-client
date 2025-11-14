@@ -149,6 +149,23 @@ function UploadVideo() {
                   <pre style={{ marginTop: '5px', fontSize: '12px' }}>
                     {JSON.stringify(uploadStatus.data, null, 2)}
                   </pre>
+                  {uploadStatus.data.visualization_url && (
+                    <div style={{ marginTop: '15px' }}>
+                      <h4 style={{ marginBottom: '10px', color: '#155724' }}>Visualization Video:</h4>
+                      <video 
+                        src={uploadStatus.data.visualization_url}
+                        controls
+                        style={{
+                          width: '100%',
+                          maxWidth: '800px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p style={{ color: '#721c24' }}>❌ Error: {uploadStatus.error}</p>

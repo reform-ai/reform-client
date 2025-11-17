@@ -25,6 +25,10 @@
       "react-app"
     ]
   },
+  "engines": {
+    "node": "22.x",
+    "npm": "11.6.2"
+  },
   "browserslist": {
     "production": [
       ">0.2%",

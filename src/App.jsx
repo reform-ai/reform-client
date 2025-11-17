@@ -6,6 +6,7 @@
 
 import React, { useState } from 'react';
 import UploadVideo from './camera/uploadVideo/uploadVideo';
+import { API_ENDPOINTS } from './config/api';
 
 function App() {
   const [backendStatus, setBackendStatus] = useState(null);
@@ -14,7 +15,7 @@ function App() {
   const testBackendConnection = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://127.0.0.1:8000/health');
+      const response = await fetch(API_ENDPOINTS.HEALTH);
       const data = await response.json();
       setBackendStatus(data);
     } catch (error) {
@@ -27,7 +28,7 @@ function App() {
   const testBackendRoot = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://127.0.0.1:8000/');
+      const response = await fetch(API_ENDPOINTS.ROOT);
       const data = await response.json();
       setBackendStatus(data);
     } catch (error) {

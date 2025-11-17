@@ -6,6 +6,7 @@ import React, { useState, useRef } from 'react';
 import '../../shared/utils/chartConfig';
 import ScoreBreakdown from '../../shared/components/ScoreBreakdown';
 import AnglePlot from '../../shared/components/charts/AnglePlot';
+import { API_ENDPOINTS } from '../../config/api';
 
 function UploadVideo() {
   const [videoFile, setVideoFile] = useState(null);
@@ -237,7 +238,7 @@ function UploadVideo() {
           reject(new Error('Upload aborted'));
         });
 
-        xhr.open('POST', 'http://127.0.0.1:8000/upload-video');
+        xhr.open('POST', API_ENDPOINTS.UPLOAD_VIDEO);
         xhr.send(formData);
       });
 

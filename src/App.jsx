@@ -41,7 +41,7 @@ function App() {
     <div className="App">
       <h1>Reform - Exercise Analyzer</h1>
       
-      <div style={{ margin: '20px 0' }}>
+      <div style={{ margin: '20px 0', display: 'none' }}>
         <button 
           onClick={testBackendConnection}
           disabled={loading}
@@ -60,7 +60,7 @@ function App() {
       </div>
 
       {backendStatus && (
-        <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '5px' }}>
+        <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '5px', display: 'none' }}>
           <h3>Backend Response:</h3>
           <pre>{JSON.stringify(backendStatus, null, 2)}</pre>
         </div>

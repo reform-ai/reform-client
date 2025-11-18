@@ -285,27 +285,40 @@ function UploadVideo() {
           } else {
             try {
               const errorData = JSON.parse(xhr.responseText);
-              console.error('❌ Backend Error Response:', errorData);
-              console.error('❌ Full XHR Response:', {
-                status: xhr.status,
-                statusText: xhr.statusText,
-                responseText: xhr.responseText,
-                responseHeaders: xhr.getAllResponseHeaders()
-              });
+              if (process.env.NODE_ENV === 'development') {
+                console.error('❌ Backend Error Response:', errorData);
+                console.error('❌ Full XHR Response:', {
+                  status: xhr.status,
+                  statusText: xhr.statusText,
+                  responseText: xhr.responseText,
+                  responseHeaders: xhr.getAllResponseHeaders()
+                });
+              }
               const errorMessage = errorData.detail?.message || errorData.detail?.error || errorData.message || `Upload failed with status ${xhr.status}`;
-              const errorDetail = errorData.detail || errorData || {};
+              const sanitizedErrorDetail = {
+                error: errorData.detail?.error || errorData.error || 'unknown_error',
+                message: errorMessage
+              };
+              if (errorData.detail?.recommendation) {
+                sanitizedErrorDetail.recommendation = errorData.detail.recommendation;
+              }
+              if (errorData.detail?.angle_estimate !== undefined) {
+                sanitizedErrorDetail.angle_estimate = errorData.detail.angle_estimate;
+              }
               resolve({ 
                 success: false, 
                 error: errorMessage,
-                errorDetail: errorDetail,
-                rawError: errorData,
+                errorDetail: sanitizedErrorDetail,
+                rawError: process.env.NODE_ENV === 'development' ? errorData : undefined,
                 status: xhr.status,
                 statusText: xhr.statusText
               });
             } catch (parseError) {
-              console.error('❌ Failed to parse error response:', parseError);
-              console.error('❌ Raw response text:', xhr.responseText);
-              reject(new Error(`Upload failed with status ${xhr.status}. Response: ${xhr.responseText}`));
+              if (process.env.NODE_ENV === 'development') {
+                console.error('❌ Failed to parse error response:', parseError);
+                console.error('❌ Raw response text:', xhr.responseText);
+              }
+              reject(new Error(`Upload failed with status ${xhr.status}`));
             }
           }
         });
@@ -321,7 +334,9 @@ function UploadVideo() {
         });
 
         const uploadUrl = API_ENDPOINTS.UPLOAD_VIDEO;
-        console.log('📤 Uploading to:', uploadUrl);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📤 Uploading to:', uploadUrl);
+        }
         xhr.open('POST', uploadUrl);
         xhr.send(formData);
       });
@@ -344,16 +359,17 @@ function UploadVideo() {
       }
     } catch (error) {
       setAnalyzing(false);
-      console.error('❌ Exception during upload:', error);
-      console.error('❌ Error stack:', error.stack);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Exception during upload:', error);
+        console.error('❌ Error stack:', error.stack);
+      }
+      const sanitizedMessage = error.message || 'An unexpected error occurred during upload';
       setUploadStatus({ 
         success: false, 
-        error: error.message,
+        error: sanitizedMessage,
         errorDetail: {
           error: 'upload_exception',
-          message: error.message,
-          stack: error.stack,
-          name: error.name
+          message: sanitizedMessage
         }
       });
     } finally {
@@ -980,7 +996,7 @@ function UploadVideo() {
                     {uploadStatus.error}
                   </pre>
                   
-                  <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>Full Error Detail Object:</p>
+                  <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>Error Details:</p>
                   <pre style={{ 
                     margin: '5px 0', 
                     padding: '10px', 
@@ -995,9 +1011,9 @@ function UploadVideo() {
                     {JSON.stringify(uploadStatus.errorDetail || {}, null, 2)}
                   </pre>
                   
-                  {uploadStatus.rawError && (
+                  {process.env.NODE_ENV === 'development' && uploadStatus.rawError && (
                     <>
-                      <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>Raw Backend Error Response:</p>
+                      <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>Raw Backend Error Response (Dev Only):</p>
                       <pre style={{ 
                         margin: '5px 0 10px 0', 
                         padding: '10px', 
@@ -1012,39 +1028,14 @@ function UploadVideo() {
                       </pre>
                     </>
                   )}
-                  {(uploadStatus.status || uploadStatus.statusText) && (
+                  {process.env.NODE_ENV === 'development' && (uploadStatus.status || uploadStatus.statusText) && (
                     <>
-                      <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>HTTP Status:</p>
+                      <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>HTTP Status (Dev Only):</p>
                       <p style={{ margin: '5px 0 10px 0', fontSize: '11px', color: '#666' }}>
                         Status: {uploadStatus.status} {uploadStatus.statusText}
                       </p>
                     </>
                   )}
-                  <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>Full Upload Status Object:</p>
-                  <pre style={{ 
-                    margin: '5px 0', 
-                    padding: '10px', 
-                    fontSize: '11px',
-                    backgroundColor: 'var(--bg-tertiary)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-primary)',
-                    borderRadius: '4px',
-                    overflow: 'auto',
-                    maxHeight: '400px'
-                  }}>
-                    {JSON.stringify(uploadStatus, (key, value) => {
-                      if (value instanceof File) {
-                        return {
-                          name: value.name,
-                          size: value.size,
-                          type: value.type,
-                          lastModified: value.lastModified,
-                          _type: 'File object (binary data not shown)'
-                        };
-                      }
-                      return value;
-                    }, 2)}
-                  </pre>
                 </div>
               </details>
               

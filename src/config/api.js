@@ -17,6 +17,9 @@ export const API_ENDPOINTS = {
   ROOT: `${API_URL}/`
 };
 
-console.log('🔗 API URL:', API_URL);
-console.log('🔗 Upload endpoint:', API_ENDPOINTS.UPLOAD_VIDEO);
+// Only log API URL in development mode for security
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔗 API URL:', API_URL);
+  console.log('🔗 Upload endpoint:', API_ENDPOINTS.UPLOAD_VIDEO);
+}
 

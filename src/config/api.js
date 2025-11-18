@@ -21,3 +21,7 @@ export const API_ENDPOINTS = {
   ROOT: `${API_URL}/`
 };
 
+// Log API URL to help debug (works in both dev and production)
+console.log('🔗 API URL:', API_URL);
+console.log('🔗 Upload endpoint:', API_ENDPOINTS.UPLOAD_VIDEO);
+

@@ -297,7 +297,9 @@ function UploadVideo() {
           reject(new Error('Upload aborted'));
         });
 
-        xhr.open('POST', API_ENDPOINTS.UPLOAD_VIDEO);
+        const uploadUrl = API_ENDPOINTS.UPLOAD_VIDEO;
+        console.log('📤 Uploading to:', uploadUrl);
+        xhr.open('POST', uploadUrl);
         xhr.send(formData);
       });
 

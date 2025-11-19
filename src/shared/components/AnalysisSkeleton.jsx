@@ -248,12 +248,22 @@ const AnalysisSkeleton = ({
             try {
               const errorResponse = JSON.parse(xhr.responseText);
               if (errorResponse.detail) {
-                errorMsg = typeof errorResponse.detail === 'string' 
-                  ? errorResponse.detail 
-                  : 'Upload failed';
+                if (typeof errorResponse.detail === 'string') {
+                  errorMsg = errorResponse.detail;
+                } else if (errorResponse.detail.message) {
+                  // Handle structured error response with message field
+                  errorMsg = errorResponse.detail.message;
+                } else {
+                  errorMsg = 'Upload failed';
+                }
               }
             } catch (e) {
-              if (xhr.status === 413) {
+              // Handle status codes
+              if (xhr.status === 403) {
+                errorMsg = 'Analysis limit reached. Anonymous users are limited to 1 analysis. Please sign up for unlimited analyses.';
+              } else if (xhr.status === 402) {
+                errorMsg = 'Insufficient tokens. Please wait for daily token reset or upgrade your account.';
+              } else if (xhr.status === 413) {
                 errorMsg = 'File too large. Maximum size is 500MB.';
               } else if (xhr.status === 415) {
                 errorMsg = 'Unsupported file format. Please use MP4, MOV, or AVI.';

@@ -342,8 +342,9 @@
       <div class="app-header-wrapper">
         <h1 class="app-header">Reform - Exercise Analyzer</h1>
         <div class="profile-menu" id="profile-menu" style="margin-left: auto; display: none;">
+          <span id="tokens-display" style="display: none; font-size: 0.85rem; color: var(--text-secondary); padding: 4px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-color); margin-right: 8px;"></span>
           <button class="profile-trigger" type="button" aria-haspopup="true" aria-expanded="false">
-            <span class="avatar-icon">RA</span>
+            <span class="avatar-icon" id="avatar-initials">RA</span>
             <span class="chevron">▾</span>
           </button>
           <div class="menu-list" role="menu">
@@ -393,6 +394,63 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
+        // Get API URL (use environment variable or default to production)
+        const getApiUrl = () => {
+          // Check if we're on Heroku or production
+          if (window.location.hostname.includes('herokuapp.com') || window.location.hostname.includes('reformgym.fit')) {
+            return 'https://reform-service-5c5560959cde.herokuapp.com';
+          }
+          return 'http://127.0.0.1:8000';
+        };
+        const API_URL = getApiUrl();
+        
+        // Get user initials from localStorage
+        const getUserInitials = () => {
+          const firstName = localStorage.getItem('firstName') || '';
+          const lastName = localStorage.getItem('lastName') || '';
+          
+          if (firstName && lastName) {
+            return (firstName[0] + lastName[0]).toUpperCase();
+          }
+          
+          const userName = localStorage.getItem('userName') || localStorage.getItem('user_name') || '';
+          if (userName) {
+            const parts = userName.trim().split(/\s+/);
+            if (parts.length >= 2) {
+              return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            } else if (parts.length === 1) {
+              return parts[0].substring(0, 2).toUpperCase();
+            }
+          }
+          
+          return 'U';
+        };
+        
+        // Fetch token count from API
+        const fetchTokens = async () => {
+          const token = localStorage.getItem('userToken');
+          if (!token) return;
+          
+          try {
+            const response = await fetch(`${API_URL}/api/auth/me`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              const tokensDisplay = document.getElementById('tokens-display');
+              if (tokensDisplay && data.tokens_remaining !== null && data.tokens_remaining !== undefined) {
+                tokensDisplay.textContent = `${data.tokens_remaining} tokens`;
+                tokensDisplay.style.display = 'inline-block';
+              }
+            }
+          } catch (error) {
+            console.warn('Failed to fetch token count:', error);
+          }
+        };
+        
         // Check login status and show/hide dropdown
         const profileMenu = document.getElementById('profile-menu');
         const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -400,6 +458,15 @@
         if (profileMenu) {
           if (isLoggedIn) {
             profileMenu.style.display = 'flex';
+            // Update avatar initials
+            const avatarInitials = document.getElementById('avatar-initials');
+            if (avatarInitials) {
+              avatarInitials.textContent = getUserInitials();
+            }
+            // Fetch and display tokens
+            fetchTokens();
+            // Refresh tokens every 30 seconds
+            setInterval(fetchTokens, 30000);
           } else {
             profileMenu.style.display = 'none';
           }

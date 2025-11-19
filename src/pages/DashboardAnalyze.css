@@ -193,7 +193,7 @@
 
 .dashboard-analyze textarea {
   resize: none;
-  min-height: 120px;
+  min-height: 60px;
 }
 
 .dashboard-analyze .analysis-actions {

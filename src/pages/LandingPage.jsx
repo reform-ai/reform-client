@@ -192,6 +192,9 @@ function LandingPage() {
                   setShowLoginModal(false);
                   setEmail('');
                   setPassword('');
+                  
+                  // Redirect to dashboard after successful login
+                  window.location.href = '/dashboard/index.html';
                 } catch (err) {
                   setLoginError(err.message || 'Invalid credentials. Please check your email and password.');
                 }

@@ -306,6 +306,9 @@ const AnalysisSkeleton = ({
           reject(new Error('Upload cancelled'));
         });
 
+        // Open the request first (required before setting headers)
+        xhr.open('POST', API_ENDPOINTS.UPLOAD_VIDEO);
+        
         // Add authorization header if token exists
         // Note: Upload endpoint doesn't require auth, but we send it for future use
         const token = localStorage.getItem('userToken');
@@ -313,7 +316,6 @@ const AnalysisSkeleton = ({
           xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         }
         
-        xhr.open('POST', API_ENDPOINTS.UPLOAD_VIDEO);
         xhr.send(formData);
       });
 

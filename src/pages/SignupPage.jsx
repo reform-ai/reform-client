@@ -63,11 +63,20 @@ function SignupPage() {
         })
       });
 
-      const data = await response.json();
-
+      // Check if response is ok before trying to parse JSON
       if (!response.ok) {
-        throw new Error(data.detail || 'Signup failed');
+        let errorMessage = 'Signup failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorMessage;
+        } catch (e) {
+          // If JSON parsing fails, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
 
       // Store token and user info
       localStorage.setItem('userToken', data.access_token);

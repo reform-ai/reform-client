@@ -1,0 +1,76 @@
+import React, { useState } from 'react';
+import { API_ENDPOINTS } from '../../config/api';
+import { getUserToken } from '../utils/authStorage';
+
+const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCount, onUpdate }) => {
+  const [isLiked, setIsLiked] = useState(initialIsLiked);
+  const [likeCount, setLikeCount] = useState(initialLikeCount);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLike = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    const token = getUserToken();
+
+    try {
+      const response = await fetch(API_ENDPOINTS.POST_LIKE(postId), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle like');
+      }
+
+      const data = await response.json();
+      setIsLiked(data.liked);
+      setLikeCount(prev => data.liked ? prev + 1 : prev - 1);
+      
+      if (onUpdate) {
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <button 
+      className="like-button"
+      onClick={handleLike}
+      disabled={isLoading}
+      style={{
+        background: 'none',
+        border: 'none',
+        color: isLiked ? 'var(--accent-green)' : 'var(--text-secondary)',
+        cursor: isLoading ? 'wait' : 'pointer',
+        fontSize: '0.9rem',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        transition: 'all 0.2s',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px'
+      }}
+      onMouseEnter={(e) => {
+        if (!isLoading) {
+          e.target.style.background = 'var(--bg-tertiary)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.target.style.background = 'none';
+      }}
+    >
+      {isLiked ? '❤️' : '🤍'} {likeCount}
+    </button>
+  );
+};
+
+export default LikeButton;
+

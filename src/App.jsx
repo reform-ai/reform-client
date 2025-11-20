@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage';
 import DashboardAnalyze from './pages/DashboardAnalyze';
 import SignupPage from './pages/SignupPage';
 import ProfilePage from './pages/ProfilePage';
+import FeedPage from './pages/FeedPage';
 import Footer from './shared/components/Footer';
 import './App.css';
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/dashboard/analyze" element={<DashboardAnalyze />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/feed" element={<FeedPage />} />
         <Route path="*" element={<LandingPage />} />
       </Routes>
       <Footer />

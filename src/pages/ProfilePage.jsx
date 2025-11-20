@@ -24,6 +24,9 @@ function ProfilePage() {
   const [usernameError, setUsernameError] = useState('');
   const [usernameSuccess, setUsernameSuccess] = useState('');
   const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
+  const [isUpdatingPrivacy, setIsUpdatingPrivacy] = useState(false);
+  const [privacyError, setPrivacyError] = useState('');
 
   useEffect(() => {
     fetchUserInfo();
@@ -58,6 +61,20 @@ function ProfilePage() {
       const data = await response.json();
       setUserInfo(data);
       setUsername(data.username || '');
+      
+      // Fetch privacy setting
+      const privacyResponse = await fetch(API_ENDPOINTS.PRIVACY, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (privacyResponse.ok) {
+        const privacyData = await privacyResponse.json();
+        setIsPublic(privacyData.is_public);
+      }
     } catch (err) {
       setError(err.message || 'Failed to load profile information');
     } finally {
@@ -172,6 +189,39 @@ function ProfilePage() {
     }
   };
 
+  const handleTogglePrivacy = async () => {
+    setPrivacyError('');
+    setIsUpdatingPrivacy(true);
+    
+    const newPrivacyValue = !isPublic;
+    
+    try {
+      const token = getUserToken();
+      const response = await fetch(API_ENDPOINTS.PRIVACY, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          is_public: newPrivacyValue
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to update privacy setting');
+      }
+
+      setIsPublic(data.is_public);
+    } catch (err) {
+      setPrivacyError(err.message || 'Failed to update privacy setting');
+    } finally {
+      setIsUpdatingPrivacy(false);
+    }
+  };
+
   if (loading) {
     return (
       <PageContainer>
@@ -224,7 +274,20 @@ function ProfilePage() {
         <header className="skeleton-v2-header">
           <div>
             <p className="skeleton-v2-eyebrow">User Profile</p>
-            <h1 className="skeleton-v2-title">{userInfo?.full_name || 'Profile'}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <h1 className="skeleton-v2-title" style={{ margin: 0 }}>{userInfo?.full_name || 'Profile'}</h1>
+              {userInfo?.email === process.env.REACT_APP_VERIFIED_EMAIL && (
+                <img 
+                  src="https://images.credential.net/badge/tiny/kt0vexxs_1761580077325_badge.png" 
+                  alt="Verified Badge" 
+                  style={{
+                    height: '32px',
+                    width: 'auto',
+                    objectFit: 'contain'
+                  }}
+                />
+              )}
+            </div>
           </div>
         </header>
 
@@ -288,7 +351,7 @@ function ProfilePage() {
             borderRadius: '8px',
             color: 'var(--text-primary)'
           }}>
-            {userInfo?.is_verified ? '✓ Verified' : '⚠ Not Verified'}
+            {userInfo?.is_verified ? '✓ Verified' : '⚠ Not Verified - Coming Soon'}
           </div>
         </div>
           </article>
@@ -296,6 +359,91 @@ function ProfilePage() {
           <article className="skeleton-v2-card">
             <h3 style={{ margin: '0 0 20px 0' }}>Account Settings</h3>
             
+            {/* Privacy Toggle Section */}
+            <div style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={{
+                  display: 'block',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.9rem',
+                  margin: 0
+                }}>
+                  Profile Privacy
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ 
+                    fontSize: '0.85rem', 
+                    color: isPublic ? 'var(--text-secondary)' : 'var(--text-primary)',
+                    fontWeight: isPublic ? 'normal' : '600'
+                  }}>
+                    Private
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleTogglePrivacy}
+                    disabled={isUpdatingPrivacy}
+                    style={{
+                      position: 'relative',
+                      width: '48px',
+                      height: '24px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: isPublic ? 'var(--accent-green)' : 'var(--bg-tertiary)',
+                      cursor: isUpdatingPrivacy ? 'not-allowed' : 'pointer',
+                      opacity: isUpdatingPrivacy ? 0.7 : 1,
+                      transition: 'background 0.2s ease',
+                      outline: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isUpdatingPrivacy) {
+                        e.target.style.opacity = '0.9';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isUpdatingPrivacy) {
+                        e.target.style.opacity = '1';
+                      }
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '2px',
+                        left: isPublic ? '26px' : '2px',
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        background: '#fff',
+                        transition: 'left 0.2s ease',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                      }}
+                    />
+                  </button>
+                  <span style={{ 
+                    fontSize: '0.85rem', 
+                    color: isPublic ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontWeight: isPublic ? '600' : 'normal'
+                  }}>
+                    Public
+                  </span>
+                </div>
+              </div>
+              <p style={{ 
+                margin: '8px 0 0 0', 
+                fontSize: '0.85rem', 
+                color: 'var(--text-secondary)' 
+              }}>
+                {isPublic 
+                  ? 'Your profile and posts are visible to everyone' 
+                  : 'Your profile and posts are only visible to followers'}
+              </p>
+              {privacyError && (
+                <p style={{ color: 'var(--accent-orange)', margin: '8px 0 0 0', fontSize: '0.85rem' }}>
+                  {privacyError}
+                </p>
+              )}
+            </div>
+
             {/* Username Section */}
             <div style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: '1px solid var(--border-color)' }}>
               <label style={{

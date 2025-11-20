@@ -30,7 +30,23 @@ const DashboardPage = () => {
 
           <article className="skeleton-v2-card">
             <h3>Community Feed</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>Coming soon</p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
+              Connect with the community and share your progress
+            </p>
+            <Link 
+              to="/feed" 
+              className="btn btn-view-feed"
+              style={{ 
+                display: 'inline-block',
+                background: 'transparent',
+                border: '1px solid var(--accent-green)',
+                color: 'var(--text-primary)',
+                padding: '6px 12px',
+                fontSize: '0.9rem'
+              }}
+            >
+              View Feed
+            </Link>
           </article>
         </div>
       </div>

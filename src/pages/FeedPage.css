@@ -1,0 +1,34 @@
+.feed-content {
+  padding: 24px 48px;
+}
+
+.feed-error,
+.feed-loading,
+.feed-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.feed-error p {
+  margin-bottom: 16px;
+  color: var(--accent-orange);
+}
+
+.posts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.feed-load-more {
+  text-align: center;
+  padding: 24px 0;
+}
+
+@media (max-width: 768px) {
+  .feed-content {
+    padding: 16px 24px;
+  }
+}
+

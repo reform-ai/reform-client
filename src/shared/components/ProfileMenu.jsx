@@ -203,8 +203,38 @@ const ProfileMenu = () => {
             }}
             onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.05)'}
             onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            onClick={(e) => {
+              e.preventDefault();
+              setIsOpen(false);
+              window.location.href = '/profile';
+            }}
           >
             Profile
+          </a>
+          <a
+            href="/feed"
+            role="menuitem"
+            style={{
+              textDecoration: 'none',
+              color: 'var(--text-primary)',
+              padding: '10px 12px',
+              borderRadius: '10px',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              textAlign: 'left',
+              transition: 'background 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.05)'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            onClick={(e) => {
+              e.preventDefault();
+              setIsOpen(false);
+              window.location.href = '/feed';
+            }}
+          >
+            Social Feed
           </a>
           <a
             href="#"

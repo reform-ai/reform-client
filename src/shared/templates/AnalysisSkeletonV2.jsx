@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { API_ENDPOINTS } from '../../config/api';
 import { isUserLoggedIn } from '../utils/authStorage';
-import './AnalysisSkeletonV2.css';
+import '../styles/AnalysisSkeletonV2.css';
 
 const MAX_FILE_SIZE_BYTES = 500 * 1024 * 1024; // 500 MB
 const WARNING_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB

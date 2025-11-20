@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from '../shared/components/PageHeader';
-import PageContainer from '../shared/components/PageContainer';
-import PostCard from '../shared/components/PostCard';
-import CreatePostModal from '../shared/components/CreatePostModal';
+import PageHeader from '../shared/components/layout/PageHeader';
+import PageContainer from '../shared/components/layout/PageContainer';
+import PostCard from '../shared/components/social/PostCard';
+import CreatePostModal from '../shared/components/modals/CreatePostModal';
 import { API_ENDPOINTS } from '../config/api';
 import { getUserToken } from '../shared/utils/authStorage';
-import '../shared/components/AnalysisSkeletonV2.css';
+import '../shared/styles/AnalysisSkeletonV2.css';
 import './FeedPage.css';
 
 const FeedPage = () => {

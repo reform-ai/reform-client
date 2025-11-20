@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import AnalysisSkeletonV2 from '../shared/components/AnalysisSkeletonV2';
-import PageHeader from '../shared/components/PageHeader';
-import PageContainer from '../shared/components/PageContainer';
+import AnalysisSkeletonV2 from '../shared/templates/AnalysisSkeletonV2';
+import PageHeader from '../shared/components/layout/PageHeader';
+import PageContainer from '../shared/components/layout/PageContainer';
 import ScoreBreakdown from '../shared/components/ScoreBreakdown';
 import AnglePlot from '../shared/components/charts/AnglePlot';
 

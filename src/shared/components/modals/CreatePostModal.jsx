@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS } from '../../config/api';
-import { getUserToken } from '../utils/authStorage';
-import './CreatePostModal.css';
+import { API_ENDPOINTS } from '../../../config/api';
+import { getUserToken } from '../../utils/authStorage';
+import '../../styles/social/CreatePostModal.css';
 
 const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   const navigate = useNavigate();

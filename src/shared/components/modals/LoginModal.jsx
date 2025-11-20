@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { API_ENDPOINTS } from '../../config/api';
-import { storeUserData } from '../utils/authStorage';
+import { API_ENDPOINTS } from '../../../config/api';
+import { storeUserData } from '../../utils/authStorage';
 
 /**
  * Login modal component

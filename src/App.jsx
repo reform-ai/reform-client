@@ -6,7 +6,7 @@ import DashboardAnalyze from './pages/DashboardAnalyze';
 import SignupPage from './pages/SignupPage';
 import ProfilePage from './pages/ProfilePage';
 import FeedPage from './pages/FeedPage';
-import Footer from './shared/components/Footer';
+import Footer from './shared/components/layout/Footer';
 import './App.css';
 
 function App() {

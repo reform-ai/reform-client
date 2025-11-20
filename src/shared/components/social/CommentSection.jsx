@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { API_ENDPOINTS } from '../../config/api';
-import { getUserToken } from '../utils/authStorage';
+import { API_ENDPOINTS } from '../../../config/api';
+import { getUserToken } from '../../utils/authStorage';
 
 const CommentSection = ({ postId, currentUserId, currentUserEmail, onUpdate }) => {
   const [comments, setComments] = useState([]);

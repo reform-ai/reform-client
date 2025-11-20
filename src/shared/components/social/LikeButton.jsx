@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { API_ENDPOINTS } from '../../config/api';
-import { getUserToken } from '../utils/authStorage';
+import { API_ENDPOINTS } from '../../../config/api';
+import { getUserToken } from '../../utils/authStorage';
 
 const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCount, onUpdate }) => {
   const [isLiked, setIsLiked] = useState(initialIsLiked);

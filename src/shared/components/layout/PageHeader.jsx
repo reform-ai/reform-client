@@ -1,6 +1,6 @@
 import React from 'react';
-import ProfileMenu from './ProfileMenu';
-import { isUserLoggedIn } from '../utils/authStorage';
+import ProfileMenu from '../ProfileMenu';
+import { isUserLoggedIn } from '../../utils/authStorage';
 
 /**
  * Common page header component used across multiple pages

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import PageHeader from '../shared/components/PageHeader';
-import PageContainer from '../shared/components/PageContainer';
-import '../shared/components/AnalysisSkeletonV2.css';
+import PageHeader from '../shared/components/layout/PageHeader';
+import PageContainer from '../shared/components/layout/PageContainer';
+import '../shared/styles/AnalysisSkeletonV2.css';
 import './DashboardPage.css';
 
 const DashboardPage = () => {

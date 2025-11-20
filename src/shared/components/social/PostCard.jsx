@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS } from '../../config/api';
-import { getUserToken } from '../utils/authStorage';
+import { API_ENDPOINTS } from '../../../config/api';
+import { getUserToken } from '../../utils/authStorage';
 import LikeButton from './LikeButton';
 import CommentSection from './CommentSection';
-import ScoreBreakdown from './ScoreBreakdown';
-import AnglePlot from './charts/AnglePlot';
-import './PostCard.css';
+import ScoreBreakdown from '../ScoreBreakdown';
+import AnglePlot from '../charts/AnglePlot';
+import '../../styles/social/PostCard.css';
 
 const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete }) => {
   const navigate = useNavigate();

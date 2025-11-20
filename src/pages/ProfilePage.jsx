@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import { getUserToken } from '../shared/utils/authStorage';
-import PageHeader from '../shared/components/PageHeader';
-import PageContainer from '../shared/components/PageContainer';
-import '../shared/components/AnalysisSkeletonV2.css';
+import PageHeader from '../shared/components/layout/PageHeader';
+import PageContainer from '../shared/components/layout/PageContainer';
+import '../shared/styles/AnalysisSkeletonV2.css';
 import './DashboardPage.css';
 
 function ProfilePage() {

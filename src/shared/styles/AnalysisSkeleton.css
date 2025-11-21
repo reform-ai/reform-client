@@ -1,0 +1,141 @@
+/* AnalysisSkeleton - Dashboard-style visual treatment */
+/* Layout and container styles - component-specific styles moved to upload/ directory */
+
+.skeleton-shell {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 32px;
+  background: rgba(5, 8, 18, 0.85);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+}
+
+.skeleton-header {
+  padding: 48px;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.08));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.skeleton-eyebrow {
+  letter-spacing: 0.2em;
+  color: var(--accent-green);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+  margin: 0 0 12px 0;
+}
+
+.skeleton-title {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
+}
+
+.skeleton-subtitle {
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.skeleton-grid {
+  padding: 40px 48px 48px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.skeleton-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.skeleton-card h3 {
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.skeleton-options {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.skeleton-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-btn {
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, border 0.2s ease;
+  border: 1px solid transparent;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.skeleton-btn-primary {
+  background: var(--accent-green);
+  color: #fff;
+}
+
+.skeleton-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.skeleton-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.skeleton-note {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .skeleton-shell {
+    border-radius: 20px;
+    margin-top: 16px;
+  }
+
+  .skeleton-header,
+  .skeleton-grid {
+    padding: 28px;
+  }
+
+  .skeleton-title {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import AnalysisSkeletonV2 from '../shared/templates/AnalysisSkeletonV2';
+import AnalysisSkeleton from '../shared/templates/AnalysisSkeleton';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
 import ScoreBreakdown from '../shared/components/ScoreBreakdown';
@@ -86,7 +86,7 @@ const DashboardAnalyze = () => {
     <PageContainer>
       <PageHeader onLoginClick={() => window.location.href = '/?login=1'} />
       
-      <AnalysisSkeletonV2
+      <AnalysisSkeleton
         showNotes={true}
         syncCardHeights={false}
         headerTitle="Upload a Session"

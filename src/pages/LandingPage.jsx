@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import AnalysisSkeletonV2 from '../shared/templates/AnalysisSkeletonV2';
+import AnalysisSkeleton from '../shared/templates/AnalysisSkeleton';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
 import LoginModal from '../shared/components/modals/LoginModal';
@@ -107,7 +107,7 @@ function LandingPage() {
     <PageContainer className="App">
       <PageHeader onLoginClick={() => setShowLoginModal(true)} />
 
-      <AnalysisSkeletonV2
+      <AnalysisSkeleton
         showNotes={false}
         syncCardHeights={true}
         headerTitle="Upload a Session"

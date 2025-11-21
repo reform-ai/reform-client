@@ -6,7 +6,7 @@ import PostCard from '../shared/components/social/PostCard';
 import CreatePostModal from '../shared/components/modals/CreatePostModal';
 import { API_ENDPOINTS } from '../config/api';
 import { getUserToken } from '../shared/utils/authStorage';
-import '../shared/styles/AnalysisSkeletonV2.css';
+import '../shared/styles/AnalysisSkeleton.css';
 import './FeedPage.css';
 
 const FeedPage = () => {
@@ -123,12 +123,12 @@ const FeedPage = () => {
     <PageContainer>
       <PageHeader onLoginClick={() => navigate('/?login=1')} />
       
-      <div className="skeleton-v2-shell">
-        <header className="skeleton-v2-header">
+      <div className="skeleton-shell">
+        <header className="skeleton-header">
           <div>
-            <p className="skeleton-v2-eyebrow">Community</p>
-            <h1 className="skeleton-v2-title">Feed</h1>
-            <p className="skeleton-v2-subtitle">See what the community is sharing</p>
+            <p className="skeleton-eyebrow">Community</p>
+            <h1 className="skeleton-title">Feed</h1>
+            <p className="skeleton-subtitle">See what the community is sharing</p>
           </div>
           <div className="hero-actions">
             <button 

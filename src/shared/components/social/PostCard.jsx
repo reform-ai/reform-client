@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../../config/api';
 import { getUserToken } from '../../utils/authStorage';
+import { formatDate } from '../../utils/dateFormat';
 import LikeButton from './LikeButton';
 import CommentSection from './CommentSection';
 import ScoreBreakdown from '../ScoreBreakdown';
@@ -110,70 +111,6 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
     return null;
   };
 
-  const formatDate = (dateValue) => {
-    if (!dateValue) return '';
-    
-    // Handle both string and Date object
-    let date;
-    if (typeof dateValue === 'string') {
-      // API returns UTC times without timezone indicator
-      // If no 'Z' or timezone offset, treat as UTC by appending 'Z'
-      let dateString = dateValue;
-      if (!dateString.includes('Z') && !dateString.match(/[+-]\d{2}:\d{2}$/)) {
-        dateString = dateString.endsWith('Z') ? dateString : dateString + 'Z';
-      }
-      // Parse as UTC and convert to local timezone
-      date = new Date(dateString);
-    } else if (dateValue instanceof Date) {
-      date = dateValue;
-    } else {
-      // If it's an object with timestamp or other format, try to convert
-      date = new Date(dateValue);
-    }
-    
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
-      console.warn('Invalid date:', dateValue, typeof dateValue);
-      return '';
-    }
-    
-    // Get current time in user's local timezone
-    const now = new Date();
-    
-    // Calculate difference in milliseconds (both dates are in local timezone after parsing)
-    const diffMs = now.getTime() - date.getTime();
-    
-    // If date is in the future (shouldn't happen, but handle gracefully), show the date
-    if (diffMs < 0) {
-      return date.toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        timeZoneName: 'short'
-      });
-    }
-    
-    const diffMins = Math.floor(diffMs / 60000);
-
-    // Under 1 minute: "just now"
-    if (diffMins < 1) return 'just now';
-    
-    // 1-30 minutes: "x min ago"
-    if (diffMins <= 30) return `${diffMins}m ago`;
-    
-    // Over 30 minutes: show actual date/time in user's local timezone
-    // Using undefined for locale uses browser's locale, and automatically uses local timezone
-    return date.toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    });
-  };
 
   return (
     <article className="post-card">

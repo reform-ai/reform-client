@@ -1,5 +1,5 @@
-/* Dashboard page now uses skeleton-v2 classes for header */
-/* Shell, header, title, subtitle, grid, and card classes come from AnalysisSkeletonV2.css */
+/* Dashboard page now uses skeleton classes for header */
+/* Shell, header, title, subtitle, grid, and card classes come from AnalysisSkeleton.css */
 
 .hero-actions {
   margin-top: 28px;
@@ -38,29 +38,29 @@
   border-color: var(--border-color-hover);
 }
 
-/* Grid and card classes come from AnalysisSkeletonV2.css */
+/* Grid and card classes come from AnalysisSkeleton.css */
 
 /* Dashboard-specific: Add actions to header */
-.skeleton-v2-header .hero-actions {
+.skeleton-header .hero-actions {
   margin-top: 0;
   align-self: flex-end;
 }
 
 @media (max-width: 768px) {
-  /* Mobile styles for skeleton-v2 classes are in AnalysisSkeletonV2.css */
+  /* Mobile styles for skeleton classes are in AnalysisSkeleton.css */
   /* Additional dashboard-specific mobile styles */
-  .skeleton-v2-header {
+  .skeleton-header {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .skeleton-v2-header .hero-actions {
+  .skeleton-header .hero-actions {
     width: 100%;
     margin-top: 16px;
     align-self: stretch;
   }
 
-  .skeleton-v2-header .hero-actions a {
+  .skeleton-header .hero-actions a {
     width: 100%;
     text-align: center;
   }

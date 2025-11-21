@@ -4,7 +4,7 @@ import { API_ENDPOINTS } from '../config/api';
 import { getUserToken } from '../shared/utils/authStorage';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
-import '../shared/styles/AnalysisSkeletonV2.css';
+import '../shared/styles/AnalysisSkeleton.css';
 import './DashboardPage.css';
 
 function ProfilePage() {
@@ -226,7 +226,7 @@ function ProfilePage() {
     return (
       <PageContainer>
         <PageHeader onLoginClick={() => navigate('/?login=1')} />
-        <div className="skeleton-v2-shell">
+        <div className="skeleton-shell">
           <div style={{ 
             display: 'flex',
             alignItems: 'center',
@@ -244,14 +244,14 @@ function ProfilePage() {
     return (
       <PageContainer>
         <PageHeader onLoginClick={() => navigate('/?login=1')} />
-        <div className="skeleton-v2-shell">
+        <div className="skeleton-shell">
           <div style={{ 
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             padding: '40px 0'
           }}>
-            <div className="skeleton-v2-card" style={{ maxWidth: '500px', width: '100%' }}>
+            <div className="skeleton-card" style={{ maxWidth: '500px', width: '100%' }}>
               <p style={{ color: 'var(--accent-orange)', marginBottom: '16px' }}>{error}</p>
               <button
                 onClick={() => navigate('/')}
@@ -270,12 +270,12 @@ function ProfilePage() {
     <PageContainer>
       <PageHeader onLoginClick={() => navigate('/?login=1')} />
       
-      <div className="skeleton-v2-shell">
-        <header className="skeleton-v2-header">
+      <div className="skeleton-shell">
+        <header className="skeleton-header">
           <div>
-            <p className="skeleton-v2-eyebrow">User Profile</p>
+            <p className="skeleton-eyebrow">User Profile</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <h1 className="skeleton-v2-title" style={{ margin: 0 }}>{userInfo?.full_name || 'Profile'}</h1>
+              <h1 className="skeleton-title" style={{ margin: 0 }}>{userInfo?.full_name || 'Profile'}</h1>
               {userInfo?.email === process.env.REACT_APP_VERIFIED_EMAIL && (
                 <img 
                   src="https://images.credential.net/badge/tiny/kt0vexxs_1761580077325_badge.png" 
@@ -291,8 +291,8 @@ function ProfilePage() {
           </div>
         </header>
 
-        <div className="skeleton-v2-grid">
-          <article className="skeleton-v2-card">
+        <div className="skeleton-grid">
+          <article className="skeleton-card">
             <h3>Account Information</h3>
 
         <div style={{ marginBottom: '20px' }}>
@@ -356,7 +356,7 @@ function ProfilePage() {
         </div>
           </article>
 
-          <article className="skeleton-v2-card">
+          <article className="skeleton-card">
             <h3 style={{ margin: '0 0 20px 0' }}>Account Settings</h3>
             
             {/* Privacy Toggle Section */}

@@ -96,26 +96,26 @@
 }
 
 /* ================================================================
-   ANALYSIS SKELETON V2 (AnalysisSkeletonV2 component)
+   ANALYSIS SKELETON (AnalysisSkeleton component)
    Used by LandingPage, DashboardAnalyze, DashboardPage, ProfilePage
    Ensures consistent title positioning across all pages
    ================================================================ */
 @media (max-width: 768px) {
   /* Main container - override default styles for mobile */
-  .skeleton-v2-shell {
+  .skeleton-shell {
     border-radius: 20px;
     margin-top: 16px;
   }
 
   /* Header section - consistent across all pages */
-  .skeleton-v2-header {
+  .skeleton-header {
     padding: 28px !important;
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 12px !important;
   }
 
-  .skeleton-v2-title {
+  .skeleton-title {
     font-size: clamp(1.5rem, 6vw, 2rem) !important;
     white-space: nowrap !important;
     overflow: hidden !important;
@@ -124,27 +124,27 @@
     margin: 0 0 16px 0 !important;
   }
 
-  .skeleton-v2-subtitle {
+  .skeleton-subtitle {
     max-width: 100% !important;
     font-size: 0.95rem !important;
   }
 
   /* Grid: stack cards vertically */
-  .skeleton-v2-grid {
+  .skeleton-grid {
     grid-template-columns: 1fr;
     gap: 16px;
     padding: 28px;
   }
 
   /* Cards */
-  .skeleton-v2-card {
+  .skeleton-card {
     padding: 20px;
     border-radius: 16px;
     width: 100%;
   }
 
   /* Upload area - maintain consistent size */
-  .skeleton-v2-upload-area {
+  .skeleton-upload-area {
     min-height: 80px;
     padding: 20px 12px;
     width: 100%;
@@ -154,75 +154,75 @@
     justify-content: center;
   }
 
-  .skeleton-v2-upload-content {
+  .skeleton-upload-content {
     align-items: stretch;
     gap: 12px;
     width: 100%;
   }
 
   /* Upload file info - prevent layout shift */
-  .skeleton-v2-upload-file-info {
+  .skeleton-upload-file-info {
     min-height: 32px;
     width: 100%;
     box-sizing: border-box;
   }
 
-  .skeleton-v2-upload-label {
+  .skeleton-upload-label {
     width: auto !important;
     margin: 0 auto;
     justify-content: center;
   }
 
   /* Upload text: show mobile version, hide desktop */
-  .skeleton-v2-upload-text-desktop {
+  .skeleton-upload-text-desktop {
     display: none !important;
   }
 
-  .skeleton-v2-upload-text-mobile {
+  .skeleton-upload-text-mobile {
     display: inline !important;
   }
 
-  .skeleton-v2-upload-guidance {
+  .skeleton-upload-guidance {
     display: none !important;
   }
 
   /* Analysis options */
-  .skeleton-v2-options {
+  .skeleton-options {
     display: flex;
     flex-direction: column;
     gap: 16px;
   }
 
-  .skeleton-v2-select-group {
+  .skeleton-select-group {
     width: 100%;
   }
 
-  .skeleton-v2-select-group select,
-  .skeleton-v2-select-group textarea {
+  .skeleton-select-group select,
+  .skeleton-select-group textarea {
     width: 100%;
   }
 
   /* Actions */
-  .skeleton-v2-actions {
+  .skeleton-actions {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
   }
 
-  .skeleton-v2-btn {
+  .skeleton-btn {
     width: 100% !important;
     justify-content: center;
   }
 
-  .skeleton-v2-note {
+  .skeleton-note {
     text-align: center;
     width: 100%;
   }
 
   /* Progress and error messages */
-  .skeleton-v2-progress,
-  .skeleton-v2-error,
-  .skeleton-v2-limit-message {
+  .skeleton-progress,
+  .skeleton-error,
+  .skeleton-limit-message {
     width: 100% !important;
   }
 }
@@ -290,12 +290,12 @@
     padding: 16px 12px;
   }
 
-  .skeleton-v2-shell {
+  .skeleton-shell {
     margin-top: 12px;
   }
 
-  .skeleton-v2-header,
-  .skeleton-v2-grid {
+  .skeleton-header,
+  .skeleton-grid {
     padding: 24px;
   }
 }
@@ -308,8 +308,8 @@
     padding: 12px;
   }
 
-  .skeleton-v2-header,
-  .skeleton-v2-grid {
+  .skeleton-header,
+  .skeleton-grid {
     padding: 20px;
   }
 

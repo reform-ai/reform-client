@@ -33,10 +33,36 @@ function ProfilePage() {
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
+  const [isTokenActivated, setIsTokenActivated] = useState(null); // null = unknown, true/false = known
+  const [isActivatingTokens, setIsActivatingTokens] = useState(false);
+  const [tokenActivationError, setTokenActivationError] = useState('');
+  const [tokenActivationSuccess, setTokenActivationSuccess] = useState('');
 
   useEffect(() => {
     fetchUserInfo();
+    checkTokenActivationStatus();
   }, []);
+
+  const checkTokenActivationStatus = async () => {
+    try {
+      const token = getUserToken();
+      if (!token) return;
+
+      const response = await fetch(API_ENDPOINTS.TOKEN_BALANCE, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsTokenActivated(data.is_activated !== false);
+      }
+    } catch (err) {
+      // Silently fail - we'll show button anyway if status is unknown
+      console.error('Failed to check token activation status:', err);
+    }
+  };
 
   const fetchUserInfo = async () => {
     try {
@@ -228,6 +254,43 @@ function ProfilePage() {
       setPrivacyError(err.message || 'Failed to update privacy setting');
     } finally {
       setIsUpdatingPrivacy(false);
+    }
+  };
+
+  const handleActivateTokens = async () => {
+    setTokenActivationError('');
+    setTokenActivationSuccess('');
+    setIsActivatingTokens(true);
+
+    try {
+      const token = getUserToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(API_ENDPOINTS.TOKEN_ACTIVATE, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to activate tokens');
+      }
+
+      setTokenActivationSuccess('Tokens activated! You received 10 free tokens.');
+      setIsTokenActivated(true);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setTokenActivationSuccess(''), 3000);
+    } catch (err) {
+      setTokenActivationError(err.message || 'Failed to activate tokens');
+    } finally {
+      setIsActivatingTokens(false);
     }
   };
 
@@ -508,6 +571,56 @@ function ProfilePage() {
             {userInfo?.is_verified ? '✓ Verified' : '⚠ Not Verified - Coming Soon'}
           </div>
         </div>
+
+        {/* Token Activation Section */}
+        {isTokenActivated === false && (
+          <div style={{ marginBottom: '20px', padding: '16px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--accent-green)', borderRadius: '8px' }}>
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{
+                display: 'block',
+                color: 'var(--text-primary)',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                marginBottom: '8px'
+              }}>
+                Get Started with Tokens
+              </label>
+              <p style={{
+                margin: 0,
+                color: 'var(--text-secondary)',
+                fontSize: '0.85rem',
+                lineHeight: '1.5'
+              }}>
+                Activate your token system to get 10 free tokens. This is a one-time activation that starts your monthly token cycle.
+              </p>
+            </div>
+            {tokenActivationError && (
+              <p style={{ color: 'var(--accent-orange)', margin: '0 0 12px 0', fontSize: '0.85rem' }}>
+                {tokenActivationError}
+              </p>
+            )}
+            {tokenActivationSuccess && (
+              <p style={{ color: 'var(--accent-green)', margin: '0 0 12px 0', fontSize: '0.85rem' }}>
+                {tokenActivationSuccess}
+              </p>
+            )}
+            <button
+              onClick={handleActivateTokens}
+              disabled={isActivatingTokens}
+              className="btn btn-primary"
+              style={{
+                padding: '10px 20px',
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                opacity: isActivatingTokens ? 0.7 : 1,
+                cursor: isActivatingTokens ? 'not-allowed' : 'pointer',
+                width: '100%'
+              }}
+            >
+              {isActivatingTokens ? 'Activating...' : 'Get 10 Free Tokens'}
+            </button>
+          </div>
+        )}
 
         <div style={{ marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>

@@ -41,6 +41,11 @@ const TokensPage = () => {
 
         const data = await response.json();
         setBalance(data);
+        
+        // If not activated, set error to show activation message
+        if (data.is_activated === false) {
+          setError('not_activated');
+        }
       } catch (err) {
         console.error('Error fetching token balance:', err);
         setError(err.message || 'Failed to load token balance');
@@ -135,6 +140,26 @@ const TokensPage = () => {
   }
 
   if (error) {
+    // Special handling for not-activated state
+    if (error === 'not_activated') {
+      return (
+        <PageContainer>
+          <PageHeader onLoginClick={() => navigate('/?login=1')} />
+          <div className="skeleton-shell">
+            <div className="skeleton-card" style={{ maxWidth: '500px', margin: '40px auto', textAlign: 'center', padding: '32px' }}>
+              <h2 style={{ color: 'var(--text-primary)', marginBottom: '16px' }}>Token System Not Activated</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.6' }}>
+                You need to activate your token system to start using tokens. Click the button below to go to your profile and activate it.
+              </p>
+              <button onClick={() => navigate('/profile')} className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '1rem' }}>
+                Go to Profile to Activate
+              </button>
+            </div>
+          </div>
+        </PageContainer>
+      );
+    }
+    
     return (
       <PageContainer>
         <PageHeader onLoginClick={() => navigate('/?login=1')} />

@@ -10,6 +10,8 @@ import FollowersPage from './pages/FollowersPage';
 import TokensPage from './pages/TokensPage';
 import TransactionHistoryPage from './pages/TransactionHistoryPage';
 import ContactPage from './pages/ContactPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 import Footer from './shared/components/layout/Footer';
 import './App.css';
 
@@ -27,6 +29,8 @@ function App() {
         <Route path="/tokens" element={<TokensPage />} />
         <Route path="/tokens/history" element={<TransactionHistoryPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
         <Route path="*" element={<LandingPage />} />
       </Routes>
       <Footer />

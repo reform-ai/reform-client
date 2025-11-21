@@ -5,6 +5,7 @@ import { getUserToken } from '../../utils/authStorage';
 import { formatDate } from '../../utils/dateFormat';
 import LikeButton from './LikeButton';
 import CommentSection from './CommentSection';
+import FollowButton from './FollowButton';
 import ScoreBreakdown from '../ScoreBreakdown';
 import AnglePlot from '../charts/AnglePlot';
 import '../../styles/social/PostCard.css';
@@ -116,7 +117,7 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
     <article className="post-card">
       <div className="post-header">
         <div className="post-user-info">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <button 
               className="post-username" 
               onClick={handleUserClick}
@@ -132,6 +133,18 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
                   height: '20px',
                   width: 'auto',
                   verticalAlign: 'middle'
+                }}
+              />
+            )}
+            {!isOwnPost && post.username && (
+              <FollowButton 
+                username={post.username}
+                initialFollowing={post.is_following}
+                onUpdate={(following) => {
+                  // Update post's follow status if callback provided
+                  if (onUpdate) {
+                    onUpdate({ ...post, is_following: following });
+                  }
                 }}
               />
             )}

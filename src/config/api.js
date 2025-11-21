@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
   ME: `${API_URL}/api/auth/me`,
   CHANGE_PASSWORD: `${API_URL}/api/auth/change-password`,
   UPDATE_USERNAME: `${API_URL}/api/auth/update-username`,
+  UPDATE_PROFILE: `${API_URL}/api/auth/update-profile`,
   // Social feed endpoints
   FEED: `${API_URL}/api/social/feed`,
   POSTS: `${API_URL}/api/social/posts`,
@@ -30,8 +31,11 @@ export const API_ENDPOINTS = {
   POST_COMMENTS: (postId) => `${API_URL}/api/social/posts/${postId}/comments`,
   COMMENT: (commentId) => `${API_URL}/api/social/comments/${commentId}`,
   USER_FOLLOW: (username) => `${API_URL}/api/social/users/${username}/follow`,
+  USER_FOLLOW_STATUS: (username) => `${API_URL}/api/social/users/${username}/follow`,
   USER_POSTS: (username) => `${API_URL}/api/social/users/${username}/posts`,
-  PRIVACY: `${API_URL}/api/social/users/me/privacy`
+  PRIVACY: `${API_URL}/api/social/users/me/privacy`,
+  MY_FOLLOWERS: `${API_URL}/api/social/users/me/followers`,
+  MY_FOLLOWING: `${API_URL}/api/social/users/me/following`
 };
 
 // Only log API URL in development mode for security

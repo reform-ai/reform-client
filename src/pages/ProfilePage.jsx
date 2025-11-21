@@ -27,6 +27,12 @@ function ProfilePage() {
   const [isPublic, setIsPublic] = useState(true);
   const [isUpdatingPrivacy, setIsUpdatingPrivacy] = useState(false);
   const [privacyError, setPrivacyError] = useState('');
+  const [technicalLevel, setTechnicalLevel] = useState('');
+  const [favoriteExercise, setFavoriteExercise] = useState('');
+  const [communityPreference, setCommunityPreference] = useState('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
 
   useEffect(() => {
     fetchUserInfo();
@@ -61,6 +67,9 @@ function ProfilePage() {
       const data = await response.json();
       setUserInfo(data);
       setUsername(data.username || '');
+      setTechnicalLevel(data.technical_level || '');
+      setFavoriteExercise(data.favorite_exercise || '');
+      setCommunityPreference(data.community_preference || '');
       
       // Fetch privacy setting
       const privacyResponse = await fetch(API_ENDPOINTS.PRIVACY, {
@@ -222,6 +231,54 @@ function ProfilePage() {
     }
   };
 
+  const handleUpdateProfile = async () => {
+    setProfileError('');
+    setProfileSuccess('');
+    setIsUpdatingProfile(true);
+
+    try {
+      const token = getUserToken();
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(API_ENDPOINTS.UPDATE_PROFILE, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          technical_level: technicalLevel || null,
+          favorite_exercise: favoriteExercise || null,
+          community_preference: communityPreference || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to update profile');
+      }
+
+      setProfileSuccess('Profile updated successfully');
+      // Update userInfo to reflect changes
+      setUserInfo({
+        ...userInfo,
+        technical_level: data.technical_level,
+        favorite_exercise: data.favorite_exercise,
+        community_preference: data.community_preference
+      });
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setProfileSuccess(''), 3000);
+    } catch (err) {
+      setProfileError(err.message || 'Failed to update profile');
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
   if (loading) {
     return (
       <PageContainer>
@@ -275,7 +332,7 @@ function ProfilePage() {
           <div>
             <p className="skeleton-eyebrow">User Profile</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <h1 className="skeleton-title" style={{ margin: 0 }}>{userInfo?.full_name || 'Profile'}</h1>
+              <h1 className="skeleton-title" style={{ margin: 0, fontSize: '1.5rem' }}>{userInfo?.full_name || 'Profile'}</h1>
               {userInfo?.email === process.env.REACT_APP_VERIFIED_EMAIL && (
                 <img 
                   src="https://images.credential.net/badge/tiny/kt0vexxs_1761580077325_badge.png" 
@@ -342,6 +399,103 @@ function ProfilePage() {
             fontSize: '0.9rem',
             marginBottom: '8px'
           }}>
+            Username
+          </label>
+          {isEditingUsername ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={isUpdatingUsername}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.95rem'
+                }}
+                placeholder="Enter username"
+              />
+              {usernameError && (
+                <p style={{ color: 'var(--accent-orange)', margin: 0, fontSize: '0.85rem' }}>
+                  {usernameError}
+                </p>
+              )}
+              {usernameSuccess && (
+                <p style={{ color: 'var(--accent-green)', margin: 0, fontSize: '0.85rem' }}>
+                  {usernameSuccess}
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleUpdateUsername}
+                  disabled={isUpdatingUsername}
+                  className="btn btn-primary"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '0.9rem',
+                    opacity: isUpdatingUsername ? 0.7 : 1,
+                    cursor: isUpdatingUsername ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isUpdatingUsername ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditingUsername(false);
+                    setUsername(userInfo?.username || '');
+                    setUsernameError('');
+                    setUsernameSuccess('');
+                  }}
+                  disabled={isUpdatingUsername}
+                  className="btn btn-secondary"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                padding: '12px',
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                color: userInfo?.username ? 'var(--text-primary)' : 'var(--text-muted)',
+                fontSize: '0.95rem',
+                flex: 1
+              }}>
+                {userInfo?.username || 'Not set'}
+              </div>
+              <button
+                onClick={() => setIsEditingUsername(true)}
+                className="btn btn-secondary"
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '0.9rem',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {userInfo?.username ? 'Edit' : 'Set Username'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{
+            display: 'block',
+            color: 'var(--text-secondary)',
+            fontSize: '0.9rem',
+            marginBottom: '8px'
+          }}>
             Account Status
           </label>
           <div style={{
@@ -353,6 +507,147 @@ function ProfilePage() {
           }}>
             {userInfo?.is_verified ? '✓ Verified' : '⚠ Not Verified - Coming Soon'}
           </div>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <label style={{
+              display: 'block',
+              color: 'var(--text-secondary)',
+              fontSize: '0.9rem',
+              margin: 0
+            }}>
+              Password
+            </label>
+            {!showChangePassword && (
+              <button
+                onClick={() => setShowChangePassword(true)}
+                className="btn btn-secondary"
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '0.9rem'
+                }}
+              >
+                Change Password
+              </button>
+            )}
+          </div>
+
+          {showChangePassword && (
+            <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{
+                  display: 'block',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.9rem',
+                  marginBottom: '8px'
+                }}>
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-tertiary)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.9rem',
+                  marginBottom: '8px'
+                }}>
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-tertiary)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.9rem',
+                  marginBottom: '8px'
+                }}>
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-tertiary)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
+
+              {passwordError && (
+                <p style={{ color: 'var(--accent-orange)', margin: 0, fontSize: '0.9rem' }}>
+                  {passwordError}
+                </p>
+              )}
+
+              {passwordSuccess && (
+                <p style={{ color: 'var(--accent-green)', margin: 0, fontSize: '0.9rem' }}>
+                  {passwordSuccess}
+                </p>
+              )}
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  type="submit"
+                  disabled={isChangingPassword}
+                  className="btn btn-primary"
+                  style={{
+                    opacity: isChangingPassword ? 0.7 : 1,
+                    cursor: isChangingPassword ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isChangingPassword ? 'Changing...' : 'Update Password'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowChangePassword(false);
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    setPasswordError('');
+                    setPasswordSuccess('');
+                  }}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
         </div>
           </article>
 
@@ -444,237 +739,124 @@ function ProfilePage() {
               )}
             </div>
 
-            {/* Username Section */}
+            {/* Profile Attributes Section */}
             <div style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: '1px solid var(--border-color)' }}>
-              <label style={{
-                display: 'block',
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                marginBottom: '8px'
-              }}>
-                Username
-              </label>
-              {isEditingUsername ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    disabled={isUpdatingUsername}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      background: 'var(--bg-tertiary)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '8px',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.95rem'
-                    }}
-                    placeholder="Enter username"
-                  />
-                  {usernameError && (
-                    <p style={{ color: 'var(--accent-orange)', margin: 0, fontSize: '0.85rem' }}>
-                      {usernameError}
-                    </p>
-                  )}
-                  {usernameSuccess && (
-                    <p style={{ color: 'var(--accent-green)', margin: 0, fontSize: '0.85rem' }}>
-                      {usernameSuccess}
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={handleUpdateUsername}
-                      disabled={isUpdatingUsername}
-                      className="btn btn-primary"
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '0.9rem',
-                        opacity: isUpdatingUsername ? 0.7 : 1,
-                        cursor: isUpdatingUsername ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      {isUpdatingUsername ? 'Saving...' : 'Save'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsEditingUsername(false);
-                        setUsername(userInfo?.username || '');
-                        setUsernameError('');
-                        setUsernameSuccess('');
-                      }}
-                      disabled={isUpdatingUsername}
-                      className="btn btn-secondary"
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '0.9rem'
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{
+              <h3 style={{ margin: '0 0 20px 0' }}>Profile Attributes</h3>
+              
+              {/* Technical Level */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.9rem',
+                  marginBottom: '8px'
+                }}>
+                  Technical Level
+                </label>
+                <select
+                  value={technicalLevel}
+                  onChange={(e) => setTechnicalLevel(e.target.value)}
+                  style={{
+                    width: '100%',
                     padding: '12px',
                     background: 'var(--bg-tertiary)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '8px',
-                    color: userInfo?.username ? 'var(--text-primary)' : 'var(--text-muted)',
+                    color: 'var(--text-primary)',
                     fontSize: '0.95rem',
-                    flex: 1,
-                    marginRight: '12px'
-                  }}>
-                    {userInfo?.username || 'Not set'}
-                  </div>
-                  <button
-                    onClick={() => setIsEditingUsername(true)}
-                    className="btn btn-secondary"
-                    style={{
-                      padding: '8px 16px',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    {userInfo?.username ? 'Edit' : 'Set Username'}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Password Section */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ margin: 0 }}>Password</h3>
-                {!showChangePassword && (
-                  <button
-                    onClick={() => setShowChangePassword(true)}
-                    className="btn btn-secondary"
-                    style={{
-                      padding: '8px 16px',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    Change Password
-                  </button>
-                )}
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="">Select level...</option>
+                  <option value="beginner">Beginner</option>
+                  <option value="novice">Novice</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                  <option value="elite">Elite</option>
+                </select>
               </div>
 
-        {showChangePassword && (
-          <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label style={{
-                display: 'block',
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                marginBottom: '8px'
-              }}>
-                Current Password
-              </label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-tertiary)',
-                  color: 'var(--text-primary)'
-                }}
-              />
-            </div>
+              {/* Favorite Exercise */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.9rem',
+                  marginBottom: '8px'
+                }}>
+                  Favorite Exercise
+                </label>
+                <input
+                  type="text"
+                  value={favoriteExercise}
+                  onChange={(e) => setFavoriteExercise(e.target.value)}
+                  placeholder="Enter favorite exercise (dropdown coming soon)"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
 
-            <div>
-              <label style={{
-                display: 'block',
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                marginBottom: '8px'
-              }}>
-                New Password
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-tertiary)',
-                  color: 'var(--text-primary)'
-                }}
-              />
-            </div>
+              {/* Community Preference */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.9rem',
+                  marginBottom: '8px'
+                }}>
+                  Community Preference
+                </label>
+                <select
+                  value={communityPreference}
+                  onChange={(e) => setCommunityPreference(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.95rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="">Select preference...</option>
+                  <option value="share_to_similar_levels">Share to Similar Levels</option>
+                  <option value="share_to_pt">Share to PT</option>
+                  <option value="compete_with_someone">Compete with Someone</option>
+                </select>
+              </div>
 
-            <div>
-              <label style={{
-                display: 'block',
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                marginBottom: '8px'
-              }}>
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-tertiary)',
-                  color: 'var(--text-primary)'
-                }}
-              />
-            </div>
-
-            {passwordError && (
-              <p style={{ color: 'var(--accent-orange)', margin: 0, fontSize: '0.9rem' }}>
-                {passwordError}
-              </p>
-            )}
-
-            {passwordSuccess && (
-              <p style={{ color: 'var(--accent-green)', margin: 0, fontSize: '0.9rem' }}>
-                {passwordSuccess}
-              </p>
-            )}
-
-            <div style={{ display: 'flex', gap: '12px' }}>
+              {profileError && (
+                <p style={{ color: 'var(--accent-orange)', margin: '0 0 12px 0', fontSize: '0.85rem' }}>
+                  {profileError}
+                </p>
+              )}
+              {profileSuccess && (
+                <p style={{ color: 'var(--accent-green)', margin: '0 0 12px 0', fontSize: '0.85rem' }}>
+                  {profileSuccess}
+                </p>
+              )}
               <button
-                type="submit"
-                disabled={isChangingPassword}
+                onClick={handleUpdateProfile}
+                disabled={isUpdatingProfile}
                 className="btn btn-primary"
                 style={{
-                  opacity: isChangingPassword ? 0.7 : 1,
-                  cursor: isChangingPassword ? 'not-allowed' : 'pointer'
+                  padding: '8px 16px',
+                  fontSize: '0.9rem',
+                  opacity: isUpdatingProfile ? 0.7 : 1,
+                  cursor: isUpdatingProfile ? 'not-allowed' : 'pointer'
                 }}
               >
-                {isChangingPassword ? 'Changing...' : 'Update Password'}
+                {isUpdatingProfile ? 'Saving...' : 'Save Profile Attributes'}
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowChangePassword(false);
-                  setCurrentPassword('');
-                  setNewPassword('');
-                  setConfirmPassword('');
-                  setPasswordError('');
-                  setPasswordSuccess('');
-                }}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
             </div>
           </article>
         </div>

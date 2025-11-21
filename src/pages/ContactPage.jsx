@@ -115,43 +115,18 @@ const ContactPage = () => {
             <p className="skeleton-eyebrow">Support</p>
             <h1 className="skeleton-title">Contact Us</h1>
             <p className="skeleton-subtitle">
-              Have a question or need help? Send us a message and we'll get back to you as soon as possible.
+              Have a question or need help? Send us a message and we'll get back to you!
             </p>
           </div>
         </header>
 
-        <article className="skeleton-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
-            {success && (
-              <div style={{
-                padding: '12px 16px',
-                marginBottom: '20px',
-                background: 'var(--accent-green)',
-                color: 'white',
-                borderRadius: '8px',
-                fontSize: '0.9rem'
-              }}>
-                {success}
-              </div>
-            )}
-
-            {error && (
-              <div style={{
-                padding: '12px 16px',
-                marginBottom: '20px',
-                background: 'var(--accent-orange)',
-                color: 'white',
-                borderRadius: '8px',
-                fontSize: '0.9rem'
-              }}>
-                {error}
-              </div>
-            )}
+        <article className="skeleton-card" style={{ width: 'calc(100% - 80px)', margin: '40px' }}>
+          <div style={{ padding: '8px 32px 32px 32px' }}>
+            <form onSubmit={handleSubmit}>
 
             <div style={{ marginBottom: '20px' }}>
               <label htmlFor="name" style={{
                 display: 'block',
-                marginBottom: '8px',
                 color: 'var(--text-primary)',
                 fontWeight: '500',
                 fontSize: '0.9rem'
@@ -164,6 +139,7 @@ const ContactPage = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                readOnly={isUserLoggedIn()}
                 required
                 minLength={1}
                 maxLength={100}
@@ -173,9 +149,10 @@ const ContactPage = () => {
                   fontSize: '0.9rem',
                   border: '1px solid var(--border-color)',
                   borderRadius: '6px',
-                  background: 'var(--bg-primary)',
+                  background: isUserLoggedIn() ? 'var(--bg-secondary)' : 'var(--bg-primary)',
                   color: 'var(--text-primary)',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  cursor: isUserLoggedIn() ? 'not-allowed' : 'text'
                 }}
               />
             </div>
@@ -183,7 +160,6 @@ const ContactPage = () => {
             <div style={{ marginBottom: '20px' }}>
               <label htmlFor="email" style={{
                 display: 'block',
-                marginBottom: '8px',
                 color: 'var(--text-primary)',
                 fontWeight: '500',
                 fontSize: '0.9rem'
@@ -196,6 +172,7 @@ const ContactPage = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                readOnly={isUserLoggedIn()}
                 required
                 style={{
                   width: '100%',
@@ -203,9 +180,10 @@ const ContactPage = () => {
                   fontSize: '0.9rem',
                   border: '1px solid var(--border-color)',
                   borderRadius: '6px',
-                  background: 'var(--bg-primary)',
+                  background: isUserLoggedIn() ? 'var(--bg-secondary)' : 'var(--bg-primary)',
                   color: 'var(--text-primary)',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  cursor: isUserLoggedIn() ? 'not-allowed' : 'text'
                 }}
               />
             </div>
@@ -213,7 +191,6 @@ const ContactPage = () => {
             <div style={{ marginBottom: '20px' }}>
               <label htmlFor="subject" style={{
                 display: 'block',
-                marginBottom: '8px',
                 color: 'var(--text-primary)',
                 fontWeight: '500',
                 fontSize: '0.9rem'
@@ -245,7 +222,6 @@ const ContactPage = () => {
             <div style={{ marginBottom: '24px' }}>
               <label htmlFor="message" style={{
                 display: 'block',
-                marginBottom: '8px',
                 color: 'var(--text-primary)',
                 fontWeight: '500',
                 fontSize: '0.9rem'
@@ -275,7 +251,6 @@ const ContactPage = () => {
                 }}
               />
               <div style={{
-                marginTop: '4px',
                 fontSize: '0.8rem',
                 color: 'var(--text-secondary)',
                 textAlign: 'right'
@@ -300,15 +275,42 @@ const ContactPage = () => {
               {isSubmitting ? 'Sending...' : 'Send Message'}
             </button>
 
-            <p style={{
-              marginTop: '16px',
-              fontSize: '0.85rem',
-              color: 'var(--text-secondary)',
-              textAlign: 'center'
-            }}>
-              We typically respond within 24-48 hours.
-            </p>
+            {/* Messages displayed below the submit button */}
+            {(success || error) && (
+              <div style={{ 
+                marginTop: '16px',
+                display: 'flex',
+                alignItems: 'flex-start'
+              }}>
+                {success && (
+                  <div style={{
+                    padding: '12px 16px',
+                    background: 'var(--accent-green)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem',
+                    width: '100%'
+                  }}>
+                    {success}
+                  </div>
+                )}
+
+                {error && (
+                  <div style={{
+                    padding: '12px 16px',
+                    background: 'var(--accent-orange)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem',
+                    width: '100%'
+                  }}>
+                    {error}
+                  </div>
+                )}
+              </div>
+            )}
           </form>
+          </div>
         </article>
       </div>
     </PageContainer>

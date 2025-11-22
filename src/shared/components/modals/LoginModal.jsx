@@ -26,6 +26,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
     try {
       const response = await fetch(API_ENDPOINTS.LOGIN, {
         method: 'POST',
+        credentials: 'include', // Important: include cookies for httpOnly token
         headers: {
           'Content-Type': 'application/json',
         },

@@ -19,6 +19,8 @@ export const API_ENDPOINTS = {
   CHECK_ANONYMOUS_LIMIT: `${API_URL}/api/check-anonymous-limit`,
   SIGNUP: `${API_URL}/api/auth/signup`,
   LOGIN: `${API_URL}/api/auth/login`,
+  LOGOUT: `${API_URL}/api/auth/logout`,
+  REFRESH: `${API_URL}/api/auth/refresh`,
   ME: `${API_URL}/api/auth/me`,
   CHANGE_PASSWORD: `${API_URL}/api/auth/change-password`,
   UPDATE_USERNAME: `${API_URL}/api/auth/update-username`,

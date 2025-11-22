@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
-import { getUserToken, isUserLoggedIn } from '../shared/utils/authStorage';
+import { useRequireAuth } from '../shared/utils/useRequireAuth';
+import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
 import FollowButton from '../shared/components/social/FollowButton';
@@ -14,67 +15,26 @@ const FollowersPage = () => {
   const [followingLoading, setFollowingLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    // Redirect to home if not logged in
-    if (!isUserLoggedIn()) {
-      navigate('/?login=1');
-      return;
-    }
-
-    const fetchFollowers = async () => {
-      const token = getUserToken();
-      if (!token) {
-        setError('Not authenticated');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(API_ENDPOINTS.MY_FOLLOWERS, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.detail || 'Failed to fetch followers');
-        }
-
-        const data = await response.json();
-        setFollowers(data.followers || []);
-      } catch (err) {
-        console.error('Error fetching followers:', err);
-        setError(err.message || 'Failed to load followers');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFollowers();
-    fetchFollowing();
-  }, [navigate]);
-
-  const fetchFollowing = async () => {
-    const token = getUserToken();
-    if (!token) {
-      setFollowingLoading(false);
-      return;
-    }
+  const fetchFollowers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
     try {
-      const response = await fetch(API_ENDPOINTS.MY_FOLLOWING, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const data = await authenticatedFetchJson(API_ENDPOINTS.MY_FOLLOWERS, {}, navigate);
+      setFollowers(data.followers || []);
+    } catch (err) {
+      console.error('Error fetching followers:', err);
+      setError(err.message || 'Failed to load followers');
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to fetch following');
-      }
+  const fetchFollowing = useCallback(async () => {
+    setFollowingLoading(true);
 
-      const data = await response.json();
+    try {
+      const data = await authenticatedFetchJson(API_ENDPOINTS.MY_FOLLOWING, {}, navigate);
       setFollowing(data.followers || []);
     } catch (err) {
       console.error('Error fetching following:', err);
@@ -82,7 +42,14 @@ const FollowersPage = () => {
     } finally {
       setFollowingLoading(false);
     }
-  };
+  }, [navigate]);
+
+  const initializePage = useCallback(() => {
+    fetchFollowers();
+    fetchFollowing();
+  }, [fetchFollowers, fetchFollowing]);
+
+  useRequireAuth(navigate, initializePage);
 
   const handleUserClick = (username) => {
     if (username) {

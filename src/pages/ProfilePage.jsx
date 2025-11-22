@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import { getUserToken } from '../shared/utils/authStorage';
+import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import { activateTokens } from '../shared/utils/tokenActivation';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
@@ -67,56 +68,27 @@ function ProfilePage() {
 
   const fetchUserInfo = useCallback(async () => {
     try {
-      const token = getUserToken();
-      if (!token) {
-        navigate('/?login=1');
-        return;
-      }
-
-      const response = await fetch(API_ENDPOINTS.ME, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('isLoggedIn');
-          navigate('/?login=1');
-          return;
-        }
-        throw new Error('Failed to fetch user info');
-      }
-
-      const data = await response.json();
+      const data = await authenticatedFetchJson(API_ENDPOINTS.ME, {}, navigate);
       setUserInfo(data);
       setUsername(data.username || '');
       setTechnicalLevel(data.technical_level || '');
       setFavoriteExercise(data.favorite_exercise || '');
       setCommunityPreference(data.community_preference || '');
       
-      // Fetch privacy setting
-      const privacyResponse = await fetch(API_ENDPOINTS.PRIVACY, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      if (privacyResponse.ok) {
-        const privacyData = await privacyResponse.json();
+      // Fetch privacy setting (optional, don't fail if it errors)
+      try {
+        const privacyData = await authenticatedFetchJson(API_ENDPOINTS.PRIVACY, {}, navigate);
         setIsPublic(privacyData.is_public);
+      } catch (err) {
+        // Silently fail - privacy setting is optional
+        console.warn('Failed to fetch privacy setting:', err);
       }
     } catch (err) {
       setError(err.message || 'Failed to load profile information');
     } finally {
       setLoading(false);
     }
-  }, [navigate]); // navigate is stable, but included for completeness
+  }, [navigate]);
 
   useEffect(() => {
     fetchUserInfo();

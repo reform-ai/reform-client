@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
-import { getUserToken, isUserLoggedIn } from '../shared/utils/authStorage';
+import { useRequireAuth } from '../shared/utils/useRequireAuth';
+import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import { formatDateTime, formatDateOnly } from '../shared/utils/dateFormat';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
@@ -13,44 +14,22 @@ const TransactionHistoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!isUserLoggedIn()) {
-      navigate('/?login=1');
-      return;
+  const fetchTransactions = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await authenticatedFetchJson(API_ENDPOINTS.TOKEN_TRANSACTIONS, {}, navigate);
+      setTransactions(data.transactions || []);
+    } catch (err) {
+      console.error('Error fetching transaction history:', err);
+      setError(err.message || 'Failed to load transaction history');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const fetchTransactions = async () => {
-      const token = getUserToken();
-      if (!token) {
-        setError('Not authenticated');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(API_ENDPOINTS.TOKEN_TRANSACTIONS, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.detail || 'Failed to fetch transaction history');
-        }
-
-        const data = await response.json();
-        setTransactions(data.transactions || []);
-      } catch (err) {
-        console.error('Error fetching transaction history:', err);
-        setError(err.message || 'Failed to load transaction history');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTransactions();
-  }, [navigate]);
+  useRequireAuth(navigate, fetchTransactions);
 
   const getSourceLabel = (source) => {
     const labels = {

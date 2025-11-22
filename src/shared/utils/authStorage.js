@@ -4,16 +4,14 @@
 
 /**
  * Stores user authentication data in localStorage after login/signup
+ * Note: Tokens are now stored in httpOnly cookies, not localStorage
  * @param {Object} data - Response data from login/signup endpoint
- * @param {string} data.access_token - JWT access token
  * @param {string} data.user_id - User ID
  * @param {string} data.email - User email
  * @param {string} data.full_name - User's full name
  */
 export const storeUserData = (data) => {
-  // Store tokens (keeping both for backward compatibility)
-  localStorage.setItem('userToken', data.access_token);
-  localStorage.setItem('access_token', data.access_token);
+  // Tokens are now in httpOnly cookies - don't store them in localStorage
   
   // Store user ID (keeping both for backward compatibility)
   localStorage.setItem('userId', data.user_id);
@@ -47,8 +45,10 @@ export const storeUserData = (data) => {
 
 /**
  * Clears all authentication data from localStorage
+ * Also calls logout endpoint to clear httpOnly cookie
  */
-export const clearUserData = () => {
+export const clearUserData = async () => {
+  // Clear localStorage first
   localStorage.removeItem('isLoggedIn');
   localStorage.removeItem('userToken');
   localStorage.removeItem('access_token');
@@ -60,6 +60,18 @@ export const clearUserData = () => {
   localStorage.removeItem('user_name');
   localStorage.removeItem('firstName');
   localStorage.removeItem('lastName');
+  
+  // Clear httpOnly cookie by calling logout endpoint
+  try {
+    const { API_ENDPOINTS } = await import('../../config/api');
+    await fetch(API_ENDPOINTS.LOGOUT, {
+      method: 'POST',
+      credentials: 'include', // Important: include cookies
+    });
+  } catch (err) {
+    // Silently fail - cookie will expire naturally
+    console.warn('Failed to call logout endpoint:', err);
+  }
 };
 
 /**
@@ -72,9 +84,15 @@ export const isUserLoggedIn = () => {
 
 /**
  * Gets the user's authentication token
- * @returns {string|null}
+ * Note: Tokens are now in httpOnly cookies, so this returns null.
+ * The token is automatically sent with requests via credentials: 'include'
+ * @returns {string|null} Always returns null - tokens are in cookies
+ * @deprecated Tokens are now in httpOnly cookies, not accessible via JavaScript
  */
 export const getUserToken = () => {
-  return localStorage.getItem('userToken') || localStorage.getItem('access_token');
+  // Tokens are now in httpOnly cookies - not accessible via JavaScript
+  // This function is kept for backward compatibility but always returns null
+  // The token is automatically sent with requests when credentials: 'include' is used
+  return null;
 };
 

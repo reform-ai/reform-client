@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
-import { getUserToken, isUserLoggedIn } from '../shared/utils/authStorage';
+import { useRequireAuth } from '../shared/utils/useRequireAuth';
+import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import { formatDateOnly } from '../shared/utils/dateFormat';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
@@ -13,50 +14,27 @@ const TokensPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    // Redirect to home if not logged in
-    if (!isUserLoggedIn()) {
-      navigate('/?login=1');
-      return;
+  const fetchTokenBalance = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await authenticatedFetchJson(API_ENDPOINTS.TOKEN_BALANCE, {}, navigate);
+      setBalance(data);
+      
+      // If not activated, set error to show activation message
+      if (data.is_activated === false) {
+        setError('not_activated');
+      }
+    } catch (err) {
+      console.error('Error fetching token balance:', err);
+      setError(err.message || 'Failed to load token balance');
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const fetchTokenBalance = async () => {
-      const token = getUserToken();
-      if (!token) {
-        setError('Not authenticated');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(API_ENDPOINTS.TOKEN_BALANCE, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.detail || 'Failed to fetch token balance');
-        }
-
-        const data = await response.json();
-        setBalance(data);
-        
-        // If not activated, set error to show activation message
-        if (data.is_activated === false) {
-          setError('not_activated');
-        }
-      } catch (err) {
-        console.error('Error fetching token balance:', err);
-        setError(err.message || 'Failed to load token balance');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTokenBalance();
-  }, [navigate]);
+  useRequireAuth(navigate, fetchTokenBalance);
 
   const TokenCard = ({ title, count, description, color = 'var(--accent-green)', expiresAt = null, children = null }) => (
     <div style={{

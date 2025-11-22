@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Line, Bar } from 'react-chartjs-2';
 import '../shared/utils/chartConfig'; // Ensure Chart.js is registered
 import { getProgressMetrics } from '../shared/utils/analysisApi';
-import { isUserLoggedIn } from '../shared/utils/authStorage';
+import { useRequireAuth } from '../shared/utils/useRequireAuth';
 import { formatDateTime, formatDateOnly } from '../shared/utils/dateFormat';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
@@ -15,15 +15,6 @@ const ProgressDashboardPage = () => {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (!isUserLoggedIn()) {
-      navigate('/?login=1');
-      return;
-    }
-
-    fetchMetrics();
-  }, [navigate]);
 
   const fetchMetrics = async () => {
     setLoading(true);
@@ -39,6 +30,8 @@ const ProgressDashboardPage = () => {
       setLoading(false);
     }
   };
+
+  useRequireAuth(navigate, fetchMetrics);
 
   const getScoreColor = (score) => {
     if (score >= 90) return 'var(--score-excellent)';

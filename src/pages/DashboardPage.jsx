@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getProgressMetrics } from '../shared/utils/analysisApi';
-import { isUserLoggedIn } from '../shared/utils/authStorage';
+import { useRequireAuth } from '../shared/utils/useRequireAuth';
 import { formatDateTime } from '../shared/utils/dateFormat';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
@@ -14,14 +14,7 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!isUserLoggedIn()) {
-      navigate('/?login=1');
-      return;
-    }
-
-    fetchMetrics();
-  }, [navigate]);
+  useRequireAuth(navigate, fetchMetrics);
 
   const fetchMetrics = async () => {
     setLoading(true);
@@ -49,7 +42,7 @@ const DashboardPage = () => {
 
   return (
     <PageContainer>
-      <PageHeader onLoginClick={() => window.location.href = '/?login=1'} />
+      <PageHeader onLoginClick={() => navigate('/?login=1')} />
       
       <div className="skeleton-shell">
         <header className="skeleton-header">

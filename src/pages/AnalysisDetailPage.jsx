@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getAnalysis } from '../shared/utils/analysisApi';
-import { isUserLoggedIn } from '../shared/utils/authStorage';
+import { useRequireAuth } from '../shared/utils/useRequireAuth';
 import { formatDateTime } from '../shared/utils/dateFormat';
 import { normalizeAnalysisResults, getFpsFromAnalysis, getComponentScores as getComponentScoresFromNormalizer } from '../shared/utils/analysisDataNormalizer';
 import { getScoreColor } from '../shared/utils/scoreUtils';
@@ -30,17 +30,7 @@ const AnalysisDetailPage = () => {
     knee_valgus: false
   });
 
-  useEffect(() => {
-    if (!isUserLoggedIn()) {
-      navigate('/?login=1');
-      return;
-    }
-
-    fetchAnalysis();
-  }, [analysisId, navigate]);
-
-
-  const fetchAnalysis = async () => {
+  const fetchAnalysis = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -53,7 +43,9 @@ const AnalysisDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [analysisId]);
+
+  useRequireAuth(navigate, fetchAnalysis);
 
   const handleToggleExpanded = (key) => {
     setExpandedStates(prev => ({

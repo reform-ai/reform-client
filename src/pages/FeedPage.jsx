@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
@@ -6,7 +6,8 @@ import PostCard from '../shared/components/social/PostCard';
 import CreatePostModal from '../shared/components/modals/CreatePostModal';
 import VerificationBanner from '../shared/components/verification/VerificationBanner';
 import { API_ENDPOINTS } from '../config/api';
-import { getUserToken } from '../shared/utils/authStorage';
+import { useRequireAuth } from '../shared/utils/useRequireAuth';
+import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import '../shared/styles/AnalysisSkeleton.css';
 import './FeedPage.css';
 
@@ -23,62 +24,28 @@ const FeedPage = () => {
   const [isVerified, setIsVerified] = useState(true);
   const limit = 20;
 
-  useEffect(() => {
-    fetchCurrentUser();
-    loadFeed();
-  }, []);
-
-  const fetchCurrentUser = async () => {
-    const token = getUserToken();
-    if (!token) return;
-    
+  const fetchCurrentUser = useCallback(async () => {
     try {
-      const response = await fetch(API_ENDPOINTS.ME, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const userData = await response.json();
-        setCurrentUserId(userData.id);
-        setCurrentUserEmail(userData.email);
-        setIsVerified(userData.is_verified || false);
-      }
+      const userData = await authenticatedFetchJson(API_ENDPOINTS.ME, {}, navigate);
+      setCurrentUserId(userData.id);
+      setCurrentUserEmail(userData.email);
+      setIsVerified(userData.is_verified || false);
     } catch (err) {
       console.warn('Failed to fetch current user:', err);
     }
-  };
+  }, [navigate]);
 
-  const loadFeed = async (reset = false) => {
+  const loadFeed = useCallback(async (reset = false) => {
     setLoading(true);
     setError('');
 
-    const token = getUserToken();
-    if (!token) {
-      navigate('/?login=1');
-      return;
-    }
-
     try {
       const currentOffset = reset ? 0 : offset;
-      const response = await fetch(
+      const data = await authenticatedFetchJson(
         `${API_ENDPOINTS.FEED}?limit=${limit}&offset=${currentOffset}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
+        {},
+        navigate
       );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          navigate('/?login=1');
-          return;
-        }
-        throw new Error('Failed to load feed');
-      }
-
-      const data = await response.json();
       
       if (reset) {
         setPosts(data.posts);
@@ -99,7 +66,14 @@ const FeedPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [offset, limit, navigate]);
+
+  const initializePage = useCallback(() => {
+    fetchCurrentUser();
+    loadFeed(true);
+  }, [fetchCurrentUser, loadFeed]);
+
+  useRequireAuth(navigate, initializePage);
 
   const handleRefresh = () => {
     setOffset(0);

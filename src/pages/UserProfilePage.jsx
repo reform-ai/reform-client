@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
-import { getUserToken, isUserLoggedIn } from '../shared/utils/authStorage';
+import { useRequireAuth } from '../shared/utils/useRequireAuth';
+import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PostCard from '../shared/components/social/PostCard';
@@ -21,53 +22,27 @@ const UserProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const isLoggedIn = isUserLoggedIn();
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     setError('');
 
     try {
-      const token = getUserToken();
-      if (!token) {
-        navigate('/?login=1');
-        return;
-      }
-
-      const response = await fetch(API_ENDPOINTS.USER_PROFILE(username), {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError('User not found');
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          setError(errorData.detail || 'Failed to load profile');
-        }
-        return;
-      }
-
-      const data = await response.json();
+      const data = await authenticatedFetchJson(API_ENDPOINTS.USER_PROFILE(username), {}, navigate);
       setProfile(data);
     } catch (err) {
-      setError('Failed to load profile');
+      if (err.message && err.message.includes('not found')) {
+        setError('User not found');
+      } else {
+        setError(err.message || 'Failed to load profile');
+      }
       console.error('Error fetching profile:', err);
     } finally {
       setLoading(false);
     }
   }, [username, navigate]);
 
-  useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/?login=1');
-      return;
-    }
-
-    fetchProfile();
-  }, [isLoggedIn, navigate, fetchProfile]);
+  useRequireAuth(navigate, fetchProfile);
 
 
   const handlePostUpdate = () => {

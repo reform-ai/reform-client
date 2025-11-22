@@ -52,6 +52,7 @@ function SignupPage() {
 
     try {
       const response = await fetch(API_ENDPOINTS.SIGNUP, {
+        credentials: 'include', // Important: include cookies for httpOnly token
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

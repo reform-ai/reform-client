@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import { useRequireAuth } from '../shared/utils/useRequireAuth';
@@ -14,7 +14,7 @@ const TransactionHistoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -27,7 +27,7 @@ const TransactionHistoryPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   useRequireAuth(navigate, fetchTransactions);
 

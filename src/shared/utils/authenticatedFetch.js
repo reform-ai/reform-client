@@ -4,7 +4,7 @@
  * @module authenticatedFetch
  */
 
-import { clearUserData } from './authStorage';
+import { clearUserData, isUserLoggedIn } from './authStorage';
 import { handleFetchError } from './apiErrorHandler';
 import { refreshAccessToken } from './tokenRefresh';
 
@@ -34,6 +34,13 @@ export async function authenticatedFetch(url, options = {}, navigate = null, ret
 
   // Handle 401 Unauthorized - try to refresh token first
   if (response.status === 401 && retryOn401) {
+    // Only try refresh if user is marked as logged in (cookies might not be available yet)
+    // If user is not logged in, don't try refresh - just fail
+    if (!isUserLoggedIn()) {
+      const error = await handleFetchError(response);
+      throw error;
+    }
+    
     // Try to refresh the access token
     const refreshSucceeded = await refreshAccessToken();
     
@@ -43,27 +50,35 @@ export async function authenticatedFetch(url, options = {}, navigate = null, ret
       
       // If still 401 after refresh, token refresh failed or user is logged out
       if (response.status === 401) {
-        await clearUserData();
-        if (navigate) {
-          navigate('/?login=1');
+        // Only clear if user was actually logged in (not a fresh login)
+        if (isUserLoggedIn()) {
+          await clearUserData();
+          if (navigate) {
+            navigate('/?login=1');
+          }
         }
         const error = await handleFetchError(response);
         throw error;
       }
     } else {
-      // Refresh token is invalid or expired - user needs to log in again
-      await clearUserData();
-      if (navigate) {
-        navigate('/?login=1');
+      // Refresh token is invalid or expired - only clear if user was logged in
+      if (isUserLoggedIn()) {
+        await clearUserData();
+        if (navigate) {
+          navigate('/?login=1');
+        }
       }
       const error = await handleFetchError(response);
       throw error;
     }
   } else if (response.status === 401) {
     // 401 but retryOn401 is false (e.g., refresh endpoint itself)
-    await clearUserData();
-    if (navigate) {
-      navigate('/?login=1');
+    // Only clear if user was actually logged in
+    if (isUserLoggedIn()) {
+      await clearUserData();
+      if (navigate) {
+        navigate('/?login=1');
+      }
     }
     const error = await handleFetchError(response);
     throw error;

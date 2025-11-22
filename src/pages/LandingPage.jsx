@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AnalysisSkeleton from '../shared/templates/AnalysisSkeleton';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
@@ -9,6 +10,7 @@ import { isUserLoggedIn } from '../shared/utils/authStorage';
 import { normalizeAnalysisResults, getFpsFromAnalysis, getComponentScores } from '../shared/utils/analysisDataNormalizer';
 
 function LandingPage() {
+  const navigate = useNavigate();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() => isUserLoggedIn());
   const [analysisResults, setAnalysisResults] = useState(null);
@@ -64,8 +66,12 @@ function LandingPage() {
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
-    // Redirect to dashboard after successful login
-    window.location.href = '/dashboard';
+    // Use React Router navigate instead of window.location to avoid full page reload
+    // This ensures cookies are available when dashboard loads
+    // Small delay to ensure cookies are processed by browser
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 100);
   };
 
   const handleAnalysisComplete = (data) => {

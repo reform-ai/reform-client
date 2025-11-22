@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../../config/api';
 import { getUserToken } from '../../utils/authStorage';
 import { formatDate } from '../../utils/dateFormat';
 
 const CommentSection = ({ postId, currentUserId, currentUserEmail, onUpdate }) => {
+  const navigate = useNavigate();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState(null); // ID of comment being replied to
@@ -13,6 +15,12 @@ const CommentSection = ({ postId, currentUserId, currentUserEmail, onUpdate }) =
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
   const [expandedReplies, setExpandedReplies] = useState(new Set()); // Track which comments have replies expanded
+
+  const handleUsernameClick = (username) => {
+    if (username) {
+      navigate(`/profile/${username}`);
+    }
+  };
 
   useEffect(() => {
     loadComments();
@@ -218,13 +226,26 @@ const CommentSection = ({ postId, currentUserId, currentUserEmail, onUpdate }) =
                     marginBottom: '6px'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="comment-username" style={{ fontWeight: '600' }}>
+                      <button
+                        onClick={() => handleUsernameClick(comment.username)}
+                        disabled={!comment.username}
+                        className="comment-username"
+                        style={{
+                          fontWeight: '600',
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-primary)',
+                          cursor: comment.username ? 'pointer' : 'default',
+                          padding: 0,
+                          textDecoration: comment.username ? 'underline' : 'none'
+                        }}
+                      >
                         {comment.username || 'Unknown User'}
-                      </span>
-                      {comment.user_email && comment.user_email === process.env.REACT_APP_VERIFIED_EMAIL && (
+                      </button>
+                      {comment.is_pt && (
                         <img 
                           src="https://images.credential.net/badge/tiny/kt0vexxs_1761580077325_badge.png" 
-                          alt="Verified Badge" 
+                          alt="Verified Personal Trainer" 
                           style={{
                             height: '18px',
                             width: 'auto',
@@ -386,13 +407,26 @@ const CommentSection = ({ postId, currentUserId, currentUserEmail, onUpdate }) =
                             marginBottom: '6px'
                           }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span className="comment-username" style={{ fontWeight: '600' }}>
+                              <button
+                                onClick={() => handleUsernameClick(reply.username)}
+                                disabled={!reply.username}
+                                className="comment-username"
+                                style={{
+                                  fontWeight: '600',
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--text-primary)',
+                                  cursor: reply.username ? 'pointer' : 'default',
+                                  padding: 0,
+                                  textDecoration: reply.username ? 'underline' : 'none'
+                                }}
+                              >
                                 {reply.username || 'Unknown User'}
-                              </span>
-                              {reply.user_email && reply.user_email === process.env.REACT_APP_VERIFIED_EMAIL && (
+                              </button>
+                              {reply.is_pt && (
                                 <img 
                                   src="https://images.credential.net/badge/tiny/kt0vexxs_1761580077325_badge.png" 
-                                  alt="Verified Badge" 
+                                  alt="Verified Personal Trainer" 
                                   style={{
                                     height: '18px',
                                     width: 'auto',

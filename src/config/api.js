@@ -33,6 +33,7 @@ export const API_ENDPOINTS = {
   USER_FOLLOW: (username) => `${API_URL}/api/social/users/${username}/follow`,
   USER_FOLLOW_STATUS: (username) => `${API_URL}/api/social/users/${username}/follow`,
   USER_POSTS: (username) => `${API_URL}/api/social/users/${username}/posts`,
+  USER_PROFILE: (username) => `${API_URL}/api/social/users/${username}/profile`,
   PRIVACY: `${API_URL}/api/social/users/me/privacy`,
   MY_FOLLOWERS: `${API_URL}/api/social/users/me/followers`,
   MY_FOLLOWING: `${API_URL}/api/social/users/me/following`,

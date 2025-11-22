@@ -125,10 +125,10 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
             >
               {post.username || 'Unknown User'}
             </button>
-            {post.user_email && post.user_email === process.env.REACT_APP_VERIFIED_EMAIL && (
+            {post.is_pt && (
               <img 
                 src="https://images.credential.net/badge/tiny/kt0vexxs_1761580077325_badge.png" 
-                alt="Verified Badge" 
+                alt="Verified Personal Trainer" 
                 style={{
                   height: '20px',
                   width: 'auto',

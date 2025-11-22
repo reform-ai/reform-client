@@ -48,7 +48,8 @@ const AnalysisSkeleton = ({
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');  // User-friendly error message
+  const [errorData, setErrorData] = useState(null);     // Structured error data (e.g., needs_activation flag)
   const [hasCompletedAnalysis, setHasCompletedAnalysis] = useState(() => {
     if (isLoggedIn) return false;
     return localStorage.getItem('anonymousAnalysisCompleted') === 'true';
@@ -172,7 +173,11 @@ const AnalysisSkeleton = ({
       setAnalyzing(false);
       setProgress(0);
       setProgressText('');
+      
+      // Extract error message and structured data from error object
+      // errorData contains info like needs_activation flag for UI customization
       setErrorMessage(error.message || 'An error occurred during analysis');
+      setErrorData(error.errorData || null);
     }
   };
 
@@ -195,7 +200,9 @@ const AnalysisSkeleton = ({
             selectedFile={selectedFile}
             onFileChange={(file) => {
               setSelectedFile(file);
+              // Clear any previous errors when user selects a new file
               setErrorMessage('');
+              setErrorData(null);
             }}
             disabled={isDisabled}
           />
@@ -234,7 +241,20 @@ const AnalysisSkeleton = ({
               <AnonymousLimitMessage onSignInClick={onSignInClick} />
             )}
 
-            <UploadError errorMessage={errorMessage} />
+            <UploadError 
+              errorMessage={errorMessage} 
+              errorData={errorData}
+              onActivationComplete={() => {
+                // User successfully activated tokens - clear error state
+                setErrorMessage('');
+                setErrorData(null);
+                
+                // Notify ProfileMenu to refresh token count display
+                window.dispatchEvent(new CustomEvent('tokensUpdated'));
+                
+                // User can now retry the upload
+              }}
+            />
 
             <UploadProgress
               progress={progress}

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import { getUserToken } from '../shared/utils/authStorage';
+import { activateTokens } from '../shared/utils/tokenActivation';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
 import '../shared/styles/AnalysisSkeleton.css';
@@ -38,12 +39,7 @@ function ProfilePage() {
   const [tokenActivationError, setTokenActivationError] = useState('');
   const [tokenActivationSuccess, setTokenActivationSuccess] = useState('');
 
-  useEffect(() => {
-    fetchUserInfo();
-    checkTokenActivationStatus();
-  }, []);
-
-  const checkTokenActivationStatus = async () => {
+  const checkTokenActivationStatus = useCallback(async () => {
     try {
       const token = getUserToken();
       if (!token) return;
@@ -62,9 +58,9 @@ function ProfilePage() {
       // Silently fail - we'll show button anyway if status is unknown
       console.error('Failed to check token activation status:', err);
     }
-  };
+  }, []); // No dependencies - only uses stable functions
 
-  const fetchUserInfo = async () => {
+  const fetchUserInfo = useCallback(async () => {
     try {
       const token = getUserToken();
       if (!token) {
@@ -115,7 +111,12 @@ function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]); // navigate is stable, but included for completeness
+
+  useEffect(() => {
+    fetchUserInfo();
+    checkTokenActivationStatus();
+  }, [fetchUserInfo, checkTokenActivationStatus]);
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -263,26 +264,10 @@ function ProfilePage() {
     setIsActivatingTokens(true);
 
     try {
-      const token = getUserToken();
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
+      // Use shared token activation utility for consistency across components
+      const result = await activateTokens();
 
-      const response = await fetch(API_ENDPOINTS.TOKEN_ACTIVATE, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to activate tokens');
-      }
-
-      setTokenActivationSuccess('Tokens activated! You received 10 free tokens.');
+      setTokenActivationSuccess(result.message);
       setIsTokenActivated(true);
       
       // Clear success message after 3 seconds
@@ -396,10 +381,10 @@ function ProfilePage() {
             <p className="skeleton-eyebrow">User Profile</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <h1 className="skeleton-title" style={{ margin: 0, fontSize: '1.5rem' }}>{userInfo?.full_name || 'Profile'}</h1>
-              {userInfo?.email === process.env.REACT_APP_VERIFIED_EMAIL && (
+              {userInfo?.is_pt && (
                 <img 
                   src="https://images.credential.net/badge/tiny/kt0vexxs_1761580077325_badge.png" 
-                  alt="Verified Badge" 
+                  alt="Verified Personal Trainer" 
                   style={{
                     height: '32px',
                     width: 'auto',

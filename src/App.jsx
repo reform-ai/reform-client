@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage';
 import DashboardAnalyze from './pages/DashboardAnalyze';
 import SignupPage from './pages/SignupPage';
 import ProfilePage from './pages/ProfilePage';
+import UserProfilePage from './pages/UserProfilePage';
 import FeedPage from './pages/FeedPage';
 import FollowersPage from './pages/FollowersPage';
 import TokensPage from './pages/TokensPage';
@@ -24,6 +25,7 @@ function App() {
         <Route path="/dashboard/analyze" element={<DashboardAnalyze />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/:username" element={<UserProfilePage />} />
         <Route path="/feed" element={<FeedPage />} />
         <Route path="/followers" element={<FollowersPage />} />
         <Route path="/tokens" element={<TokensPage />} />

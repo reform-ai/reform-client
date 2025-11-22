@@ -1,4 +1,39 @@
 import { API_ENDPOINTS } from '../../config/api';
+import { parseErrorResponse, createErrorWithData, getStatusErrorMessage } from './apiErrorHandler';
+
+/**
+ * Parses upload-specific error response from XMLHttpRequest.
+ * Uses the shared error handler but adds upload-specific status code messages.
+ * 
+ * @param {XMLHttpRequest} xhr - The XMLHttpRequest object
+ * @returns {{errorMsg: string, errorData: object|null}} Parsed error message and structured data
+ */
+function parseUploadError(xhr) {
+  // Use shared error parser
+  let { errorMsg, errorData } = parseErrorResponse(xhr, xhr.responseText, xhr.status);
+  
+  // Override with upload-specific messages for certain status codes
+  if (errorMsg === 'An error occurred' || !xhr.responseText) {
+    const uploadSpecificMessages = {
+      403: 'Analysis limit reached. Anonymous users are limited to 1 analysis. Please sign up for unlimited analyses.',
+      402: errorData ? null : 'Insufficient tokens. Please wait for daily token reset or upgrade your account.',
+      413: 'File too large. Maximum size is 500MB.',
+      415: 'Unsupported file format. Please use MP4, MOV, or AVI.',
+    };
+    
+    if (xhr.status in uploadSpecificMessages && uploadSpecificMessages[xhr.status]) {
+      errorMsg = uploadSpecificMessages[xhr.status];
+    } else {
+      // Fall back to generic status code handler
+      const genericMsg = getStatusErrorMessage(xhr.status, errorData);
+      if (genericMsg) {
+        errorMsg = genericMsg;
+      }
+    }
+  }
+  
+  return { errorMsg, errorData };
+}
 
 /**
  * Handles video upload and analysis
@@ -39,33 +74,13 @@ export const uploadVideo = async ({ file, exercise, notes = null, onProgress }) 
           reject(new Error('Invalid response from server'));
         }
       } else {
-        let errorMsg = 'Network error during upload';
-        try {
-          const errorResponse = JSON.parse(xhr.responseText);
-          if (errorResponse.detail) {
-            if (typeof errorResponse.detail === 'string') {
-              errorMsg = errorResponse.detail;
-            } else if (errorResponse.detail.message) {
-              errorMsg = errorResponse.detail.message;
-            } else {
-              errorMsg = 'Upload failed';
-            }
-          }
-        } catch (e) {
-          // Handle status codes
-          if (xhr.status === 403) {
-            errorMsg = 'Analysis limit reached. Anonymous users are limited to 1 analysis. Please sign up for unlimited analyses.';
-          } else if (xhr.status === 402) {
-            errorMsg = 'Insufficient tokens. Please wait for daily token reset or upgrade your account.';
-          } else if (xhr.status === 413) {
-            errorMsg = 'File too large. Maximum size is 500MB.';
-          } else if (xhr.status === 415) {
-            errorMsg = 'Unsupported file format. Please use MP4, MOV, or AVI.';
-          } else if (xhr.status >= 500) {
-            errorMsg = 'Server error. Please try again later.';
-          }
-        }
-        reject(new Error(errorMsg));
+        // Handle error responses from the server
+        const { errorMsg, errorData } = parseUploadError(xhr);
+        
+        // Create error object with structured data attached
+        // errorData contains info like needs_activation flag for UI customization
+        const error = createErrorWithData(errorMsg, errorData);
+        reject(error);
       }
     });
 

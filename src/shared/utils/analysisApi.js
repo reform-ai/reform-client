@@ -8,7 +8,7 @@
  */
 
 import { API_ENDPOINTS } from '../../config/api';
-import { getUserToken } from './authStorage';
+import { authenticatedFetchJson } from './authenticatedFetch';
 
 /**
  * Get list of analyses with optional filters
@@ -32,11 +32,6 @@ export async function getAnalyses({
   startDate = null,
   endDate = null
 } = {}) {
-  const token = getUserToken();
-  if (!token) {
-    throw new Error('Not authenticated. Please log in to view your analyses.');
-  }
-
   // Build query string
   const params = new URLSearchParams();
   params.append('limit', limit.toString());
@@ -47,22 +42,10 @@ export async function getAnalyses({
   if (startDate) params.append('start_date', startDate);
   if (endDate) params.append('end_date', endDate);
 
-  const response = await fetch(`${API_ENDPOINTS.ANALYSES}?${params.toString()}`, {
+  // Use authenticatedFetch for proper token handling and refresh
+  return await authenticatedFetchJson(`${API_ENDPOINTS.ANALYSES}?${params.toString()}`, {
     method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    const errorMessage = data.detail || 'Failed to fetch analyses';
-    throw new Error(errorMessage);
-  }
-
-  return data;
 }
 
 /**
@@ -72,27 +55,10 @@ export async function getAnalyses({
  * @throws {Error} If request fails or analysis not found
  */
 export async function getAnalysis(analysisId) {
-  const token = getUserToken();
-  if (!token) {
-    throw new Error('Not authenticated. Please log in to view analysis details.');
-  }
-
-  const response = await fetch(API_ENDPOINTS.ANALYSIS(analysisId), {
+  // Use authenticatedFetch for proper token handling and refresh
+  return await authenticatedFetchJson(API_ENDPOINTS.ANALYSIS(analysisId), {
     method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    const errorMessage = data.detail || 'Failed to fetch analysis';
-    throw new Error(errorMessage);
-  }
-
-  return data;
 }
 
 /**
@@ -101,26 +67,9 @@ export async function getAnalysis(analysisId) {
  * @throws {Error} If request fails
  */
 export async function getProgressMetrics() {
-  const token = getUserToken();
-  if (!token) {
-    throw new Error('Not authenticated. Please log in to view progress metrics.');
-  }
-
-  const response = await fetch(API_ENDPOINTS.ANALYSIS_PROGRESS, {
+  // Use authenticatedFetch for proper token handling and refresh
+  return await authenticatedFetchJson(API_ENDPOINTS.ANALYSIS_PROGRESS, {
     method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    const errorMessage = data.detail || 'Failed to fetch progress metrics';
-    throw new Error(errorMessage);
-  }
-
-  return data;
 }
 

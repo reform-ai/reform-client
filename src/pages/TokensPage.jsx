@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import { getUserToken, isUserLoggedIn } from '../shared/utils/authStorage';
+import { formatDateOnly } from '../shared/utils/dateFormat';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
 import '../shared/styles/AnalysisSkeleton.css';
@@ -57,16 +58,6 @@ const TokensPage = () => {
     fetchTokenBalance();
   }, [navigate]);
 
-  const formatDate = (dateString) => {
-    if (!dateString) return null;
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric'
-    });
-  };
-
   const TokenCard = ({ title, count, description, color = 'var(--accent-green)', expiresAt = null, children = null }) => (
     <div style={{
       padding: '24px',
@@ -115,7 +106,7 @@ const TokensPage = () => {
           color: 'var(--text-secondary)',
           fontStyle: 'italic'
         }}>
-          Expires: {formatDate(expiresAt)}
+          Expires: {formatDateOnly(expiresAt)}
         </p>
       )}
       {children && (

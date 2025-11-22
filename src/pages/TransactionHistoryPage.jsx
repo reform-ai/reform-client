@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import { getUserToken, isUserLoggedIn } from '../shared/utils/authStorage';
+import { formatDateTime, formatDateOnly } from '../shared/utils/dateFormat';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
 import '../shared/styles/AnalysisSkeleton.css';
@@ -50,28 +51,6 @@ const TransactionHistoryPage = () => {
 
     fetchTransactions();
   }, [navigate]);
-
-  const formatDateTime = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Never';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
   const getSourceLabel = (source) => {
     const labels = {
@@ -253,7 +232,7 @@ const TransactionHistoryPage = () => {
                               color: 'var(--text-tertiary)',
                               fontStyle: 'italic'
                             }}>
-                              Expires: {formatDate(txn.expires_at)}
+                              Expires: {formatDateOnly(txn.expires_at)}
                             </p>
                           )}
                         </div>

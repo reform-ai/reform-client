@@ -41,6 +41,8 @@ export const storeUserData = (data) => {
   
   // Mark as logged in
   localStorage.setItem('isLoggedIn', 'true');
+  // Store login timestamp to detect fresh logins
+  localStorage.setItem('loginTimestamp', Date.now().toString());
 };
 
 /**

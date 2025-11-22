@@ -41,16 +41,63 @@ export async function authenticatedFetch(url, options = {}, navigate = null, ret
       throw error;
     }
     
-    // Try to refresh the access token
-    const refreshSucceeded = await refreshAccessToken();
+    // Check if this might be a fresh login (cookies not yet available)
+    // If login just happened, wait a bit for cookies to be processed
+    const loginTimestamp = localStorage.getItem('loginTimestamp');
+    const now = Date.now();
+    const timeSinceLogin = loginTimestamp ? now - parseInt(loginTimestamp, 10) : Infinity;
+    const isFreshLogin = timeSinceLogin < 2000; // Less than 2 seconds since login
     
-    if (refreshSucceeded) {
-      // Retry the original request with the new access token
+    if (isFreshLogin) {
+      // Wait a bit for cookies to be processed by browser
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Retry the original request (cookies should be available now)
       response = await fetch(url, mergedOptions);
       
-      // If still 401 after refresh, token refresh failed or user is logged out
+      // If still 401 after waiting, try refresh
       if (response.status === 401) {
-        // Only clear if user was actually logged in (not a fresh login)
+        const refreshSucceeded = await refreshAccessToken();
+        
+        if (refreshSucceeded) {
+          // Retry again with new token
+          response = await fetch(url, mergedOptions);
+          if (response.status === 401) {
+            // Still 401 - clear and redirect
+            await clearUserData();
+            if (navigate) {
+              navigate('/?login=1');
+            }
+            const error = await handleFetchError(response);
+            throw error;
+          }
+        } else {
+          // Refresh failed - but don't clear on fresh login, just throw error
+          const error = await handleFetchError(response);
+          throw error;
+        }
+      }
+    } else {
+      // Not a fresh login - proceed with normal refresh flow
+      const refreshSucceeded = await refreshAccessToken();
+      
+      if (refreshSucceeded) {
+        // Retry the original request with the new access token
+        response = await fetch(url, mergedOptions);
+        
+        // If still 401 after refresh, token refresh failed or user is logged out
+        if (response.status === 401) {
+          // Only clear if user was actually logged in
+          if (isUserLoggedIn()) {
+            await clearUserData();
+            if (navigate) {
+              navigate('/?login=1');
+            }
+          }
+          const error = await handleFetchError(response);
+          throw error;
+        }
+      } else {
+        // Refresh token is invalid or expired - only clear if user was logged in
         if (isUserLoggedIn()) {
           await clearUserData();
           if (navigate) {
@@ -60,16 +107,6 @@ export async function authenticatedFetch(url, options = {}, navigate = null, ret
         const error = await handleFetchError(response);
         throw error;
       }
-    } else {
-      // Refresh token is invalid or expired - only clear if user was logged in
-      if (isUserLoggedIn()) {
-        await clearUserData();
-        if (navigate) {
-          navigate('/?login=1');
-        }
-      }
-      const error = await handleFetchError(response);
-      throw error;
     }
   } else if (response.status === 401) {
     // 401 but retryOn401 is false (e.g., refresh endpoint itself)

@@ -1,0 +1,7 @@
+/* Progress Dashboard Page Styles */
+
+/* Chart container adjustments */
+.skeleton-card canvas {
+  max-width: 100%;
+}
+

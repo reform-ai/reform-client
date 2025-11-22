@@ -11,7 +11,11 @@
  * @param {string} data.full_name - User's full name
  */
 export const storeUserData = (data) => {
-  // Tokens are now in httpOnly cookies - don't store them in localStorage
+  // Store access token temporarily as fallback for browsers that block third-party cookies
+  // Cookies are preferred, but we need a fallback
+  if (data.access_token) {
+    localStorage.setItem('access_token', data.access_token);
+  }
   
   // Store user ID (keeping both for backward compatibility)
   localStorage.setItem('userId', data.user_id);
@@ -86,15 +90,13 @@ export const isUserLoggedIn = () => {
 
 /**
  * Gets the user's authentication token
- * Note: Tokens are now in httpOnly cookies, so this returns null.
- * The token is automatically sent with requests via credentials: 'include'
- * @returns {string|null} Always returns null - tokens are in cookies
- * @deprecated Tokens are now in httpOnly cookies, not accessible via JavaScript
+ * Returns token from localStorage as fallback for browsers that block third-party cookies
+ * Cookies are preferred, but this provides a fallback
+ * @returns {string|null} Access token from localStorage, or null if not available
  */
 export const getUserToken = () => {
-  // Tokens are now in httpOnly cookies - not accessible via JavaScript
-  // This function is kept for backward compatibility but always returns null
-  // The token is automatically sent with requests when credentials: 'include' is used
-  return null;
+  // Return token from localStorage as fallback
+  // Cookies are preferred, but many browsers block third-party cookies
+  return localStorage.getItem('access_token');
 };
 

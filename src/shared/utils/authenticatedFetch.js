@@ -19,15 +19,26 @@ import { refreshAccessToken } from './tokenRefresh';
  * @returns {Promise<Response>} Fetch response
  * @throws {Error} If request fails or user is not authenticated
  */
+import { getUserToken } from './authStorage';
+
 export async function authenticatedFetch(url, options = {}, navigate = null, retryOn401 = true) {
-  // Tokens are now in httpOnly cookies, so we need credentials: 'include'
+  // Try cookies first (preferred), but also include Authorization header as fallback
+  // Many browsers block third-party cookies, so we need both
+  const token = getUserToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+  
+  // Add Authorization header as fallback if token is available
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const mergedOptions = {
     ...options,
     credentials: 'include', // Important: include cookies with request
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
   };
 
   let response = await fetch(url, mergedOptions);

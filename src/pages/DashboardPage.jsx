@@ -19,7 +19,7 @@ const DashboardPage = () => {
     setError(null);
 
     try {
-      const data = await getProgressMetrics();
+      const data = await getProgressMetrics(navigate);
       setMetrics(data);
     } catch (err) {
       console.error('Error fetching progress metrics:', err);
@@ -27,7 +27,7 @@ const DashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   useRequireAuth(navigate, fetchMetrics);
 

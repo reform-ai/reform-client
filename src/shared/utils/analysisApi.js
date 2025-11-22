@@ -63,13 +63,14 @@ export async function getAnalysis(analysisId) {
 
 /**
  * Get progress metrics and trends
+ * @param {Function} navigate - Optional navigate function for redirects on auth failure
  * @returns {Promise<Object>} Progress metrics including statistics and trends
  * @throws {Error} If request fails
  */
-export async function getProgressMetrics() {
+export async function getProgressMetrics(navigate = null) {
   // Use authenticatedFetch for proper token handling and refresh
   return await authenticatedFetchJson(API_ENDPOINTS.ANALYSIS_PROGRESS, {
     method: 'GET',
-  });
+  }, navigate);
 }
 

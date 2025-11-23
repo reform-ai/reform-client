@@ -5,13 +5,13 @@ import React from 'react';
 import FPPAPlot from '../charts/FPPAPlot';
 
 const statusColors = {
-  good: { bg: '#d4edda', border: '#c3e6cb', text: '#155724' },
-  warning: { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
-  poor: { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24' },
-  error: { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24' }
+  good: { bg: 'var(--card-bg)', border: 'var(--score-excellent)', text: 'var(--text-primary)' },
+  warning: { bg: 'var(--card-bg)', border: 'var(--score-warning)', text: 'var(--text-primary)' },
+  poor: { bg: 'var(--card-bg)', border: 'var(--score-poor)', text: 'var(--text-primary)' },
+  error: { bg: 'var(--card-bg)', border: 'var(--score-poor)', text: 'var(--text-primary)' }
 };
 
-function KneeValgusAnalysis({ valgusAnalysis }) {
+function KneeValgusAnalysis({ valgusAnalysis, fps = 30, calculationResults = null }) {
   if (!valgusAnalysis) return null;
 
   const colors = statusColors[valgusAnalysis.status] || statusColors.error;
@@ -51,16 +51,16 @@ function KneeValgusAnalysis({ valgusAnalysis }) {
       <div style={{
         marginTop: '10px',
         padding: '10px',
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        backgroundColor: 'var(--bg-tertiary)',
         borderRadius: '4px'
       }}>
-        <p style={{ margin: '5px 0', fontStyle: 'italic' }}>
+        <p style={{ margin: '5px 0', fontStyle: 'italic', color: 'var(--text-secondary)' }}>
           {valgusAnalysis.message}
         </p>
       </div>
       {valgusAnalysis.fppa_per_frame && (
         <div style={{ marginTop: '15px', height: '300px' }}>
-          <FPPAPlot fppaPerFrame={valgusAnalysis.fppa_per_frame} />
+          <FPPAPlot fppaPerFrame={valgusAnalysis.fppa_per_frame} fps={fps} calculationResults={calculationResults} />
         </div>
       )}
     </div>

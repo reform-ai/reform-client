@@ -10,13 +10,14 @@ import RepConsistencyAnalysis from './analysis/RepConsistencyAnalysis';
 import KneeValgusAnalysis from './analysis/KneeValgusAnalysis';
 import AsymmetryPlot from './charts/AsymmetryPlot';
 import PerRepPlot from './charts/PerRepPlot';
+import { getVideoMetadata } from '../utils/videoMetadata';
 
 const detailCardStyle = {
   marginTop: '12px',
   padding: '12px',
-  backgroundColor: '#f8f9fa',
+  backgroundColor: 'var(--card-bg)',
   borderRadius: '10px',
-  border: '1px solid #e0e0e0'
+  border: '1px solid var(--border-color)'
 };
 
 function ScoreBreakdown({ 
@@ -26,54 +27,64 @@ function ScoreBreakdown({
   squatPhases,
   frameCount,
   expandedStates,
-  onToggleExpanded 
+  onToggleExpanded,
+  fps: fpsOverride = null
 }) {
   if (!formAnalysis?.final_score) return null;
 
   const finalScore = formAnalysis.final_score.final_score;
   const grade = formAnalysis.final_score.grade;
+  
+  // Get video metadata using centralized function
+  const { fps } = getVideoMetadata({
+    calculationResults,
+    formAnalysis,
+    squatPhases,
+    frameCount,
+    fpsOverride
+  });
 
-  const scoreColor = finalScore >= 90 ? '#28a745' :
-                     finalScore >= 75 ? '#ffc107' :
-                     finalScore >= 60 ? '#fd7e14' : '#dc3545';
+  const scoreColor = finalScore >= 90 ? 'var(--score-excellent)' :
+                     finalScore >= 75 ? 'var(--score-good)' :
+                     finalScore >= 60 ? 'var(--score-warning)' : 'var(--score-poor)';
 
   return (
     <div style={{
       marginTop: '20px',
-      padding: '20px',
-      backgroundColor: '#f8f9fa',
-      border: '3px solid #007bff',
+      padding: '16px',
+      backgroundColor: 'var(--card-bg)',
+      border: `3px solid ${scoreColor}`,
       borderRadius: '8px',
       textAlign: 'center'
     }}>
-      <h2 style={{ margin: '0 0 10px 0', fontSize: '18px', color: '#333' }}>
+      <h2 className="overall-score-header" style={{ margin: '0 0 8px 0', fontSize: '16px', color: 'var(--text-primary)', fontWeight: 600 }}>
         Overall Form Score
       </h2>
-      <div style={{
-        fontSize: '48px',
+      <div className="overall-score-display" style={{
+        fontSize: '36px',
         fontWeight: 'bold',
         color: scoreColor,
-        margin: '10px 0'
+        margin: '8px 0'
       }}>
         {finalScore}/100
       </div>
       <p style={{
-        margin: '5px 0',
-        fontSize: '20px',
+        margin: '4px 0',
+        fontSize: '16px',
         fontWeight: 'bold',
-        color: '#666'
+        color: 'var(--text-secondary)'
       }}>
         {grade}
       </p>
       <div style={{
-        marginTop: '15px',
+        marginTop: '12px',
         padding: '10px',
-        backgroundColor: '#e9ecef',
+        backgroundColor: 'var(--bg-tertiary)',
         borderRadius: '4px',
         fontSize: '12px',
         textAlign: 'left'
       }}>
-        <p style={{ margin: '5px 0', fontWeight: 'bold' }}>Score Breakdown:</p>
+        <p style={{ margin: '5px 0', fontWeight: 'bold', color: 'var(--text-primary)' }}>Score Breakdown:</p>
         
         {/* Torso Angle */}
         <div style={{ margin: '2px 0' }}>
@@ -84,9 +95,10 @@ function ScoreBreakdown({
               style={{
                 marginLeft: '8px',
                 padding: '2px 6px',
-                border: '1px solid #ccc',
+                border: '1px solid var(--border-color)',
                 borderRadius: '3px',
-                backgroundColor: '#fff',
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)',
                 cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: 'bold'
@@ -97,7 +109,7 @@ function ScoreBreakdown({
           )}
         </div>
         {expandedStates.torso_angle && formAnalysis.torso_angle && (
-          <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
+          <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: 'var(--card-bg)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
             <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Torso Angle Analysis</h5>
             <AngleAnalysis analysis={formAnalysis.torso_angle} title="Torso Angle Analysis" angleKey="max_angle" />
           </div>
@@ -112,9 +124,10 @@ function ScoreBreakdown({
               style={{
                 marginLeft: '8px',
                 padding: '2px 6px',
-                border: '1px solid #ccc',
+                border: '1px solid var(--border-color)',
                 borderRadius: '3px',
-                backgroundColor: '#fff',
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)',
                 cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: 'bold'
@@ -125,7 +138,7 @@ function ScoreBreakdown({
           )}
         </div>
         {expandedStates.quad_angle && formAnalysis.quad_angle && (
-          <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
+          <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: 'var(--card-bg)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
             <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Quad Angle Analysis</h5>
             <AngleAnalysis analysis={formAnalysis.quad_angle} title="Quad Angle Analysis (Squat Depth)" angleKey="max_angle" />
           </div>
@@ -141,9 +154,10 @@ function ScoreBreakdown({
                 style={{
                   marginLeft: '8px',
                   padding: '2px 6px',
-                  border: '1px solid #ccc',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '3px',
-                  backgroundColor: '#fff',
+                  backgroundColor: 'var(--card-bg)',
+                  color: 'var(--text-primary)',
                   cursor: 'pointer',
                   fontSize: '12px',
                   fontWeight: 'bold'
@@ -153,138 +167,124 @@ function ScoreBreakdown({
               </button>
             </div>
             {expandedStates.movement && formAnalysis.glute_dominance && (
-              <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
+              <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: 'var(--card-bg)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
                 <MovementAnalysis movementAnalysis={formAnalysis.glute_dominance} />
               </div>
             )}
           </>
         )}
 
-        {/* Torso Asymmetry */}
-        <div style={{ margin: '2px 0' }}>
-          <span>Torso Asymmetry: {componentScores.torso_asymmetry || 'N/A'}/100</span>
-          {formAnalysis.torso_asymmetry && (
-            <button
-              onClick={() => onToggleExpanded('torso_asymmetry')}
-              style={{
-                marginLeft: '8px',
-                padding: '2px 6px',
-                border: '1px solid #ccc',
-                borderRadius: '3px',
-                backgroundColor: '#fff',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 'bold'
-              }}
-            >
-              {expandedStates.torso_asymmetry ? '−' : '+'}
-            </button>
-          )}
-        </div>
-        {expandedStates.torso_asymmetry && formAnalysis.torso_asymmetry && (
-          <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
-            <div style={{ marginBottom: '15px' }}>
-              <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Torso Asymmetry Analysis</h5>
-              <AsymmetryAnalysis asymmetryAnalysis={formAnalysis.torso_asymmetry} title="Torso Asymmetry Analysis" />
-            </div>
-            {calculationResults?.asymmetry_per_frame?.torso_asymmetry && (
-              <div>
-                <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Torso Asymmetry Plot</h5>
-                <AsymmetryPlot 
-                  asymmetryData={calculationResults.asymmetry_per_frame.torso_asymmetry}
-                  frameCount={frameCount}
-                  label="Torso Asymmetry (positive = right leaning, negative = left leaning)"
-                  color="rgb(75, 192, 192)"
-                  backgroundColor="rgba(75, 192, 192, 0.2)"
-                />
+        {/* Asymmetry (Grouped) */}
+        {(formAnalysis.torso_asymmetry || formAnalysis.quad_asymmetry || formAnalysis.ankle_asymmetry) && (() => {
+          const asymmetryScores = [
+            componentScores.torso_asymmetry,
+            componentScores.quad_asymmetry,
+            componentScores.ankle_asymmetry
+          ].filter(score => score !== undefined && score !== null && score !== 'N/A');
+          
+          const averageScore = asymmetryScores.length > 0
+            ? Math.round(asymmetryScores.reduce((sum, score) => sum + (typeof score === 'number' ? score : parseInt(score) || 0), 0) / asymmetryScores.length)
+            : 'N/A';
+          
+          return (
+            <>
+              <div style={{ margin: '2px 0' }}>
+                <span>Asymmetry: {averageScore}/100</span>
+                <button
+                  onClick={() => onToggleExpanded('asymmetry')}
+                  style={{
+                    marginLeft: '8px',
+                    padding: '2px 6px',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '3px',
+                    backgroundColor: 'var(--card-bg)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {expandedStates.asymmetry ? '−' : '+'}
+                </button>
               </div>
-            )}
-          </div>
-        )}
+              {expandedStates.asymmetry && (
+                <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px' }}>
+                  {/* Torso Asymmetry */}
+                  {formAnalysis.torso_asymmetry && (
+                    <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: 'var(--card-bg)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ marginBottom: '15px' }}>
+                        <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Torso Asymmetry Analysis</h5>
+                        <AsymmetryAnalysis asymmetryAnalysis={formAnalysis.torso_asymmetry} title="Torso Asymmetry Analysis" />
+                      </div>
+                      {calculationResults?.asymmetry_per_frame?.torso_asymmetry && (
+                        <div>
+                          <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Torso Asymmetry Plot</h5>
+                          <AsymmetryPlot 
+                            asymmetryData={calculationResults.asymmetry_per_frame.torso_asymmetry}
+                            frameCount={frameCount}
+                            label="Torso Asymmetry (positive = right leaning, negative = left leaning)"
+                            color="rgb(75, 192, 192)"
+                            backgroundColor="rgba(75, 192, 192, 0.2)"
+                            fps={fps}
+                            calculationResults={calculationResults}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-        {/* Quad Asymmetry */}
-        <div style={{ margin: '2px 0' }}>
-          <span>Quad Asymmetry: {componentScores.quad_asymmetry || 'N/A'}/100</span>
-          {formAnalysis.quad_asymmetry && (
-            <button
-              onClick={() => onToggleExpanded('quad_asymmetry')}
-              style={{
-                marginLeft: '8px',
-                padding: '2px 6px',
-                border: '1px solid #ccc',
-                borderRadius: '3px',
-                backgroundColor: '#fff',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 'bold'
-              }}
-            >
-              {expandedStates.quad_asymmetry ? '−' : '+'}
-            </button>
-          )}
-        </div>
-        {expandedStates.quad_asymmetry && formAnalysis.quad_asymmetry && (
-          <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
-            <div style={{ marginBottom: '15px' }}>
-              <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Quad Asymmetry Analysis</h5>
-              <AsymmetryAnalysis asymmetryAnalysis={formAnalysis.quad_asymmetry} title="Quad Asymmetry Analysis" />
-            </div>
-            {calculationResults?.asymmetry_per_frame?.quad_asymmetry && (
-              <div>
-                <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Quad Asymmetry Plot</h5>
-                <AsymmetryPlot 
-                  asymmetryData={calculationResults.asymmetry_per_frame.quad_asymmetry}
-                  frameCount={frameCount}
-                  label="Quad Asymmetry (positive = right forward, negative = left forward)"
-                  color="rgb(255, 99, 132)"
-                  backgroundColor="rgba(255, 99, 132, 0.2)"
-                />
-              </div>
-            )}
-          </div>
-        )}
+                  {/* Quad Asymmetry */}
+                  {formAnalysis.quad_asymmetry && (
+                    <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: 'var(--card-bg)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ marginBottom: '15px' }}>
+                        <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Quad Asymmetry Analysis</h5>
+                        <AsymmetryAnalysis asymmetryAnalysis={formAnalysis.quad_asymmetry} title="Quad Asymmetry Analysis" />
+                      </div>
+                      {calculationResults?.asymmetry_per_frame?.quad_asymmetry && (
+                        <div>
+                          <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Quad Asymmetry Plot</h5>
+                          <AsymmetryPlot 
+                            asymmetryData={calculationResults.asymmetry_per_frame.quad_asymmetry}
+                            frameCount={frameCount}
+                            label="Quad Asymmetry (positive = right forward, negative = left forward)"
+                            color="rgb(255, 99, 132)"
+                            backgroundColor="rgba(255, 99, 132, 0.2)"
+                            fps={fps}
+                            calculationResults={calculationResults}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-        {/* Ankle Asymmetry */}
-        <div style={{ margin: '2px 0' }}>
-          <span>Ankle Asymmetry: {componentScores.ankle_asymmetry || 'N/A'}/100</span>
-          {formAnalysis.ankle_asymmetry && (
-            <button
-              onClick={() => onToggleExpanded('ankle_asymmetry')}
-              style={{
-                marginLeft: '8px',
-                padding: '2px 6px',
-                border: '1px solid #ccc',
-                borderRadius: '3px',
-                backgroundColor: '#fff',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 'bold'
-              }}
-            >
-              {expandedStates.ankle_asymmetry ? '−' : '+'}
-            </button>
-          )}
-        </div>
-        {expandedStates.ankle_asymmetry && formAnalysis.ankle_asymmetry && (
-          <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
-            <div style={{ marginBottom: '15px' }}>
-              <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Ankle Asymmetry Analysis</h5>
-              <AsymmetryAnalysis asymmetryAnalysis={formAnalysis.ankle_asymmetry} title="Ankle Asymmetry Analysis" />
-            </div>
-            {calculationResults?.asymmetry_per_frame?.ankle_asymmetry && (
-              <div>
-                <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Ankle Asymmetry Plot</h5>
-                <AsymmetryPlot 
-                  asymmetryData={calculationResults.asymmetry_per_frame.ankle_asymmetry}
-                  frameCount={frameCount}
-                  label="Ankle Asymmetry (positive = right forward, negative = left forward)"
-                  color="rgb(54, 162, 235)"
-                  backgroundColor="rgba(54, 162, 235, 0.2)"
-                />
-              </div>
-            )}
-          </div>
-        )}
+                  {/* Ankle Asymmetry */}
+                  {formAnalysis.ankle_asymmetry && (
+                    <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: 'var(--card-bg)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                      <div style={{ marginBottom: '15px' }}>
+                        <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Ankle Asymmetry Analysis</h5>
+                        <AsymmetryAnalysis asymmetryAnalysis={formAnalysis.ankle_asymmetry} title="Ankle Asymmetry Analysis" />
+                      </div>
+                      {calculationResults?.asymmetry_per_frame?.ankle_asymmetry && (
+                        <div>
+                          <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Ankle Asymmetry Plot</h5>
+                          <AsymmetryPlot 
+                            asymmetryData={calculationResults.asymmetry_per_frame.ankle_asymmetry}
+                            frameCount={frameCount}
+                            label="Ankle Asymmetry (positive = right forward, negative = left forward)"
+                            color="rgb(54, 162, 235)"
+                            backgroundColor="rgba(54, 162, 235, 0.2)"
+                            fps={fps}
+                            calculationResults={calculationResults}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* Rep Consistency */}
         <div style={{ margin: '2px 0' }}>
@@ -295,9 +295,10 @@ function ScoreBreakdown({
               style={{
                 marginLeft: '8px',
                 padding: '2px 6px',
-                border: '1px solid #ccc',
+                border: '1px solid var(--border-color)',
                 borderRadius: '3px',
-                backgroundColor: '#fff',
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)',
                 cursor: 'pointer',
                 fontSize: '12px',
                 fontWeight: 'bold'
@@ -308,7 +309,7 @@ function ScoreBreakdown({
           )}
         </div>
         {expandedStates.rep_consistency && formAnalysis.rep_consistency && (
-          <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
+          <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: 'var(--card-bg)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
             <div style={{ marginBottom: '15px' }}>
               <h5 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 'bold' }}>Rep-to-Rep Consistency Analysis</h5>
               <RepConsistencyAnalysis consistencyAnalysis={formAnalysis.rep_consistency} />
@@ -321,9 +322,9 @@ function ScoreBreakdown({
                     cursor: 'pointer', 
                     fontWeight: 'bold',
                     padding: '8px',
-                    backgroundColor: '#f5f5f5',
+                    backgroundColor: 'var(--bg-tertiary)',
                     borderRadius: '4px',
-                    border: '1px solid #ddd'
+                    border: '1px solid var(--border-color)'
                   }}>
                     📊 Per-Rep Angle Analysis ({squatPhases.reps.length} {squatPhases.reps.length === 1 ? 'Rep' : 'Reps'})
                   </summary>
@@ -359,6 +360,8 @@ function ScoreBreakdown({
                           ankleAngles={repAnkleAngles}
                           startFrame={rep.start_frame}
                           endFrame={rep.end_frame}
+                          fps={fps}
+                          calculationResults={calculationResults}
                         />
                       );
                     })}
@@ -391,8 +394,8 @@ function ScoreBreakdown({
               </button>
             </div>
             {expandedStates.knee_valgus && formAnalysis.knee_valgus && (
-              <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #dee2e6' }}>
-                <KneeValgusAnalysis valgusAnalysis={formAnalysis.knee_valgus} />
+              <div style={{ marginLeft: '20px', marginTop: '10px', marginBottom: '10px', padding: '10px', backgroundColor: 'var(--card-bg)', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                <KneeValgusAnalysis valgusAnalysis={formAnalysis.knee_valgus} fps={fps} calculationResults={calculationResults} />
               </div>
             )}
           </div>

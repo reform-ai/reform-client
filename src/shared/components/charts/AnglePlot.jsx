@@ -3,12 +3,23 @@
 
 import React from 'react';
 import { Line } from 'react-chartjs-2';
-import { getAngleChartOptions, createFrameNumbers } from '../../utils/chartConfig';
+import { getAngleChartOptions, createFrameIndices } from '../../utils/chartConfig';
+import { getVideoMetadata } from '../../utils/videoMetadata';
 
-function AnglePlot({ anglesPerFrame, frameCount, squatPhases }) {
+function AnglePlot({ anglesPerFrame, frameCount, squatPhases, fps = 30, calculationResults = null }) {
   if (!anglesPerFrame) return null;
 
-  const frameNumbers = createFrameNumbers(frameCount || anglesPerFrame.torso_angle?.length || 0);
+  // Get video metadata using centralized function
+  const metadata = getVideoMetadata({
+    calculationResults,
+    squatPhases,
+    frameCount,
+    fpsOverride: fps,
+    dataArray: anglesPerFrame
+  });
+  const { fps: actualFps, totalFrames } = metadata;
+
+  const frameLabels = createFrameIndices(totalFrames);
   
   // Get min and max values for vertical line range
   const allAngles = [
@@ -44,13 +55,30 @@ function AnglePlot({ anglesPerFrame, frameCount, squatPhases }) {
   ];
 
   const combinedData = {
-    labels: frameNumbers,
+    labels: frameLabels,
     datasets: datasets
   };
 
+  const frameInterval = 60; // Configurable interval for tick display
+
+  // Calculate minimum width based on number of frames (approximately 3px per frame for better readability)
+  const minWidth = Math.max(totalFrames * 3, 1200);
+
   return (
-    <div style={{ height: '400px' }}>
-      <Line data={combinedData} options={getAngleChartOptions(squatPhases)} />
+    <div style={{ 
+      height: '400px',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      padding: '10px 0'
+    }}>
+      <div style={{ 
+        minWidth: `${minWidth}px`,
+        height: '100%',
+        paddingRight: '20px',
+        paddingLeft: '10px'
+      }}>
+        <Line data={combinedData} options={getAngleChartOptions(squatPhases, actualFps, frameInterval, metadata)} />
+      </div>
     </div>
   );
 }

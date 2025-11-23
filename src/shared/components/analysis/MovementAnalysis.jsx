@@ -4,10 +4,10 @@
 import React from 'react';
 
 const statusColors = {
-  good: { bg: '#d4edda', border: '#c3e6cb', text: '#155724' },
-  warning: { bg: '#fff3cd', border: '#ffc107', text: '#856404' },
-  poor: { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24' },
-  error: { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24' }
+  good: { bg: 'var(--card-bg)', border: 'var(--score-excellent)', text: 'var(--text-primary)' },
+  warning: { bg: 'var(--card-bg)', border: 'var(--score-warning)', text: 'var(--text-primary)' },
+  poor: { bg: 'var(--card-bg)', border: 'var(--score-poor)', text: 'var(--text-primary)' },
+  error: { bg: 'var(--card-bg)', border: 'var(--score-poor)', text: 'var(--text-primary)' }
 };
 
 function MovementAnalysis({ movementAnalysis }) {
@@ -49,10 +49,10 @@ function MovementAnalysis({ movementAnalysis }) {
       <div style={{
         marginTop: '10px',
         padding: '10px',
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        backgroundColor: 'var(--bg-tertiary)',
         borderRadius: '4px'
       }}>
-        <p style={{ margin: '5px 0', fontStyle: 'italic' }}>
+        <p style={{ margin: '5px 0', fontStyle: 'italic', color: 'var(--text-secondary)' }}>
           {movementAnalysis.message}
         </p>
       </div>

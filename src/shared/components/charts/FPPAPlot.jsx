@@ -3,16 +3,25 @@
 
 import React from 'react';
 import { Line } from 'react-chartjs-2';
-import { getFPPAChartOptions, createFrameNumbers } from '../../utils/chartConfig';
+import { getFPPAChartOptions, createFrameIndices } from '../../utils/chartConfig';
+import { getVideoMetadata } from '../../utils/videoMetadata';
 
-function FPPAPlot({ fppaPerFrame }) {
+function FPPAPlot({ fppaPerFrame, fps = 30, calculationResults = null }) {
   if (!fppaPerFrame || fppaPerFrame.length === 0) return null;
 
-  const frameNumbers = createFrameNumbers(fppaPerFrame.length);
+  // Get video metadata using centralized function
+  const metadata = getVideoMetadata({
+    calculationResults,
+    fpsOverride: fps,
+    dataArray: fppaPerFrame
+  });
+  const { fps: actualFps, totalFrames } = metadata;
+
+  const frameLabels = createFrameIndices(totalFrames);
   const validData = fppaPerFrame.map((val) => val !== null ? val : null);
   
   const chartData = {
-    labels: frameNumbers,
+    labels: frameLabels,
     datasets: [
       {
         label: 'FPPA (180° = neutral)',
@@ -33,7 +42,9 @@ function FPPAPlot({ fppaPerFrame }) {
     ]
   };
 
-  return <Line data={chartData} options={getFPPAChartOptions()} />;
+  const frameInterval = 60; // Configurable interval for tick display
+
+  return <Line data={chartData} options={getFPPAChartOptions(actualFps, frameInterval, metadata)} />;
 }
 
 export default FPPAPlot;

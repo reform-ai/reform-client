@@ -1,0 +1,167 @@
+/* Reform - Dark Theme Global Styles */
+/* Matching landing page: https://reform-landing-page.onrender.com */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Color palette matching landing page */
+  --bg-primary: rgb(10, 14, 26);
+  --bg-secondary: rgb(20, 24, 36);
+  --bg-tertiary: rgb(30, 34, 46);
+  --text-primary: rgb(226, 232, 240);
+  --text-secondary: rgb(148, 163, 184);
+  --text-muted: rgb(100, 116, 139);
+  --border-color: rgba(226, 232, 240, 0.1);
+  --border-color-hover: rgba(226, 232, 240, 0.2);
+  
+  /* Accent colors for scores */
+  --score-excellent: #10b981; /* Green */
+  --score-good: #f59e0b; /* Amber */
+  --score-warning: #f97316; /* Orange */
+  --score-poor: #ef4444; /* Red */
+  
+  /* Button colors */
+  --button-bg: rgba(0, 0, 0, 0);
+  --button-text: rgb(255, 255, 255);
+  --button-border: rgba(226, 232, 240, 0.2);
+  --button-hover: rgba(226, 232, 240, 0.1);
+  
+  /* Card colors */
+  --card-bg: rgb(20, 24, 36);
+  --card-border: rgba(226, 232, 240, 0.1);
+  --card-hover: rgb(30, 34, 46);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, 'system-ui', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', -apple-system, 'system-ui', sans-serif;
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.app-header {
+  white-space: nowrap;
+  width: 100%;
+  font-size: clamp(0.9rem, 5vw, 2.5rem);
+  overflow: visible;
+}
+
+h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+p {
+  color: var(--text-secondary);
+}
+
+/* Buttons */
+button {
+  font-family: 'Inter', -apple-system, 'system-ui', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inputs */
+input[type="file"] {
+  font-family: 'Inter', -apple-system, 'system-ui', sans-serif;
+}
+
+label {
+  font-family: 'Inter', -apple-system, 'system-ui', sans-serif;
+  color: var(--text-primary);
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(226, 232, 240, 0.2);
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(226, 232, 240, 0.2);
+  color: var(--text-primary);
+}
+
+/* Select/Dropdown styling */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e2e8f0' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+}
+
+select option {
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+  padding: 8px;
+}
+
+select option:disabled {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* Analysis Results Layout - Desktop */
+.analysis-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  align-items: flex-start;
+}
+

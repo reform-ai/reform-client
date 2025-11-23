@@ -1,11 +1,8 @@
-// Video upload handler for iPhone - React component
-// Handles user input when upload button is clicked
-
-import React, { useState, useRef } from 'react';
-// Chart.js registration is handled in shared/utils/chartConfig.js
+import React, { useState, useRef, useEffect } from 'react';
 import '../../shared/utils/chartConfig';
 import ScoreBreakdown from '../../shared/components/ScoreBreakdown';
 import AnglePlot from '../../shared/components/charts/AnglePlot';
+import { API_ENDPOINTS } from '../../config/api';
 
 function UploadVideo() {
   const [videoFile, setVideoFile] = useState(null);
@@ -16,6 +13,7 @@ function UploadVideo() {
   const [expandedStates, setExpandedStates] = useState({
     torso_angle: false,
     quad_angle: false,
+    asymmetry: false,
     torso_asymmetry: false,
     quad_asymmetry: false,
     ankle_asymmetry: false,
@@ -24,6 +22,10 @@ function UploadVideo() {
     knee_valgus: false
   });
   const [exerciseType, setExerciseType] = useState(null);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isVideoExpanded, setIsVideoExpanded] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const videoRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const handleToggleExpanded = (key) => {
@@ -32,6 +34,79 @@ function UploadVideo() {
       [key]: !prev[key]
     }));
   };
+
+  const handleVideoPlay = () => {
+    setIsVideoPlaying(true);
+  };
+
+  const handleVideoPause = () => {
+    setIsVideoPlaying(false);
+  };
+
+  useEffect(() => {
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    console.log = (...args) => {
+      originalLog(...args);
+      setLogs(prev => [...prev, { type: 'log', message: args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '), timestamp: new Date().toLocaleTimeString() }]);
+    };
+
+    console.error = (...args) => {
+      originalError(...args);
+      setLogs(prev => [...prev, { type: 'error', message: args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '), timestamp: new Date().toLocaleTimeString() }]);
+    };
+
+    console.warn = (...args) => {
+      originalWarn(...args);
+      setLogs(prev => [...prev, { type: 'warn', message: args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' '), timestamp: new Date().toLocaleTimeString() }]);
+    };
+
+    return () => {
+      console.log = originalLog;
+      console.error = originalError;
+      console.warn = originalWarn;
+    };
+  }, []);
+
+  const handleExpandVideo = () => {
+    if (videoRef.current) {
+      if (videoRef.current.requestFullscreen) {
+        videoRef.current.requestFullscreen();
+      } else if (videoRef.current.webkitRequestFullscreen) {
+        videoRef.current.webkitRequestFullscreen();
+      } else if (videoRef.current.mozRequestFullScreen) {
+        videoRef.current.mozRequestFullScreen();
+      } else if (videoRef.current.msRequestFullscreen) {
+        videoRef.current.msRequestFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      setIsVideoExpanded(isFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
 
   const hasSuccessfulUpload = uploadStatus?.success;
   const finalScoreData = hasSuccessfulUpload ? uploadStatus.data.form_analysis?.final_score : null;
@@ -42,7 +117,16 @@ function UploadVideo() {
   };
 
   const handleFileChange = (event) => {
-    const file = event.target.files[0];
+    const files = event.target.files;
+    
+    if (files.length > 1) {
+      alert('Please select only one video file at a time.');
+      event.target.value = '';
+      setVideoFile(null);
+      return;
+    }
+    
+    const file = files[0];
     if (file && file.type.startsWith('video/')) {
       const MAX_FILE_SIZE_BYTES = 500 * 1024 * 1024; // 500 MB
       const WARNING_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
@@ -71,12 +155,12 @@ function UploadVideo() {
       
       const createVideoObject = (duration = null) => {
         const obj = {
-          file: file,
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified
-        };
+        file: file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified
+      };
         if (duration !== null && !isNaN(duration) && duration > 0) {
           obj.duration = duration;
         }
@@ -114,9 +198,9 @@ function UploadVideo() {
         }
         
         const videoObject = createVideoObject(duration);
-        setVideoFile(videoObject);
-        console.log('✅ Video file selected and stored:', videoObject);
-        console.log('📹 Full File object:', file);
+      setVideoFile(videoObject);
+      console.log('✅ Video file selected and stored:', videoObject);
+      console.log('📹 Full File object:', file);
       };
       
       video.onerror = () => {
@@ -139,7 +223,6 @@ function UploadVideo() {
     }
   };
 
-  // Render functions moved to shared components
 
   const handleSendToBackend = async () => {
     if (!videoFile || !videoFile.file) {
@@ -202,27 +285,40 @@ function UploadVideo() {
           } else {
             try {
               const errorData = JSON.parse(xhr.responseText);
-              console.error('❌ Backend Error Response:', errorData);
-              console.error('❌ Full XHR Response:', {
-                status: xhr.status,
-                statusText: xhr.statusText,
-                responseText: xhr.responseText,
-                responseHeaders: xhr.getAllResponseHeaders()
-              });
+              if (process.env.NODE_ENV === 'development') {
+                console.error('❌ Backend Error Response:', errorData);
+                console.error('❌ Full XHR Response:', {
+                  status: xhr.status,
+                  statusText: xhr.statusText,
+                  responseText: xhr.responseText,
+                  responseHeaders: xhr.getAllResponseHeaders()
+                });
+              }
               const errorMessage = errorData.detail?.message || errorData.detail?.error || errorData.message || `Upload failed with status ${xhr.status}`;
-              const errorDetail = errorData.detail || errorData || {};
+              const sanitizedErrorDetail = {
+                error: errorData.detail?.error || errorData.error || 'unknown_error',
+                message: errorMessage
+              };
+              if (errorData.detail?.recommendation) {
+                sanitizedErrorDetail.recommendation = errorData.detail.recommendation;
+              }
+              if (errorData.detail?.angle_estimate !== undefined) {
+                sanitizedErrorDetail.angle_estimate = errorData.detail.angle_estimate;
+              }
               resolve({ 
                 success: false, 
                 error: errorMessage,
-                errorDetail: errorDetail,
-                rawError: errorData,
+                errorDetail: sanitizedErrorDetail,
+                rawError: process.env.NODE_ENV === 'development' ? errorData : undefined,
                 status: xhr.status,
                 statusText: xhr.statusText
               });
             } catch (parseError) {
-              console.error('❌ Failed to parse error response:', parseError);
-              console.error('❌ Raw response text:', xhr.responseText);
-              reject(new Error(`Upload failed with status ${xhr.status}. Response: ${xhr.responseText}`));
+              if (process.env.NODE_ENV === 'development') {
+                console.error('❌ Failed to parse error response:', parseError);
+                console.error('❌ Raw response text:', xhr.responseText);
+              }
+              reject(new Error(`Upload failed with status ${xhr.status}`));
             }
           }
         });
@@ -237,7 +333,11 @@ function UploadVideo() {
           reject(new Error('Upload aborted'));
         });
 
-        xhr.open('POST', 'http://127.0.0.1:8000/upload-video');
+        const uploadUrl = API_ENDPOINTS.UPLOAD_VIDEO;
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📤 Uploading to:', uploadUrl);
+        }
+        xhr.open('POST', uploadUrl);
         xhr.send(formData);
       });
 
@@ -259,16 +359,17 @@ function UploadVideo() {
       }
     } catch (error) {
       setAnalyzing(false);
-      console.error('❌ Exception during upload:', error);
-      console.error('❌ Error stack:', error.stack);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Exception during upload:', error);
+        console.error('❌ Error stack:', error.stack);
+      }
+      const sanitizedMessage = error.message || 'An unexpected error occurred during upload';
       setUploadStatus({ 
         success: false, 
-        error: error.message,
+        error: sanitizedMessage,
         errorDetail: {
           error: 'upload_exception',
-          message: error.message,
-          stack: error.stack,
-          name: error.name
+          message: sanitizedMessage
         }
       });
     } finally {
@@ -287,114 +388,354 @@ function UploadVideo() {
           100% { transform: rotate(360deg); }
         }
       `}</style>
-      <div style={{ marginBottom: '15px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-          Select Exercise Type:
-        </label>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => setExerciseType(1)}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: exerciseType === 1 ? '#4CAF50' : '#f0f0f0',
-              color: exerciseType === 1 ? 'white' : 'black',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Squat
-          </button>
-          <button
-            onClick={() => {}}
-            disabled
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#f0f0f0',
-              color: '#888',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              cursor: 'not-allowed',
-              opacity: 0.6
-            }}
-          >
-            Bench (Coming Soon)
-          </button>
-          <button
-            onClick={() => {}}
-            disabled
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#f0f0f0',
-              color: '#888',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              cursor: 'not-allowed',
-              opacity: 0.6
-            }}
-          >
-            Deadlift (Coming Soon)
-          </button>
-        </div>
-      </div>
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
         accept="video/*"
+        multiple={false}
         style={{ display: 'none' }}
       />
-      <button
-        onClick={handleUploadClick}
-        style={{ padding: '10px 20px', margin: '10px 0', marginRight: '10px' }}
-      >
-        Select Video
-      </button>
-      {videoFile && (
-        <div>
-          <button
-            onClick={handleSendToBackend}
-            disabled={uploading || analyzing}
-            style={{ 
-              padding: '10px 20px', 
-              margin: '10px 0',
-              backgroundColor: (uploading || analyzing) ? '#ccc' : '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: (uploading || analyzing) ? 'not-allowed' : 'pointer'
+      {uploadStatus && uploadStatus.success ? (
+        <div className="results-controls-container" style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'nowrap' }}>
+          <label style={{ 
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            fontSize: '1rem',
+            margin: 0,
+            whiteSpace: 'nowrap'
+          }}>
+            Select Exercise Type:
+          </label>
+          <select
+            value={exerciseType || ''}
+            onChange={(e) => {
+              const value = e.target.value ? parseInt(e.target.value) : null;
+              setExerciseType(value);
+            }}
+            style={{
+              padding: '12px 40px 12px 16px',
+              backgroundColor: 'var(--card-bg)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: 500,
+              fontSize: '1rem',
+              fontFamily: 'Inter, sans-serif',
+              minWidth: '200px',
+              transition: 'all 0.2s ease',
+              outline: 'none',
+              flexShrink: 0
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = 'var(--border-color-hover)';
+              e.target.style.backgroundColor = 'var(--card-hover)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'var(--border-color)';
+              e.target.style.backgroundColor = 'var(--card-bg)';
+            }}
+            onMouseEnter={(e) => {
+              if (document.activeElement !== e.target) {
+                e.target.style.borderColor = 'var(--border-color-hover)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (document.activeElement !== e.target) {
+                e.target.style.borderColor = 'var(--border-color)';
+              }
             }}
           >
-            {analyzing ? 'Analyzing...' : uploading ? 'Uploading...' : 'Send to Backend'}
-          </button>
+            <option value="" disabled>
+              -- Select Exercise --
+            </option>
+            <option value="1">
+              Squat
+            </option>
+            <option value="2" disabled>
+              Bench (Coming Soon)
+            </option>
+            <option value="3" disabled>
+              Deadlift (Coming Soon)
+            </option>
+          </select>
+          <div className="results-buttons-container" style={{ marginLeft: 'auto', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'nowrap' }}>
+            <button
+              onClick={handleUploadClick}
+              style={{ 
+                padding: '12px 24px', 
+                margin: 0,
+                backgroundColor: 'var(--button-bg)',
+                color: 'var(--button-text)',
+                border: `1px solid var(--button-border)`,
+                borderRadius: '8px',
+                fontWeight: 500,
+                fontFamily: 'Inter, sans-serif',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'var(--button-hover)';
+                e.target.style.borderColor = 'var(--border-color-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'var(--button-bg)';
+                e.target.style.borderColor = 'var(--button-border)';
+              }}
+            >
+              {videoFile ? 'Change video' : 'Select Video'}
+            </button>
+            {videoFile && (
+              <span className="results-filename-desktop" style={{ 
+                fontSize: '12px', 
+                color: 'var(--text-secondary)',
+                fontStyle: 'italic',
+                maxWidth: '200px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                flexShrink: 1
+              }} title={videoFile.name}>
+                {videoFile.name}
+              </span>
+            )}
+            <button
+              onClick={handleSendToBackend}
+              disabled={!videoFile || uploading || analyzing}
+              style={{ 
+                padding: '12px 24px', 
+                margin: 0,
+                backgroundColor: (!videoFile || uploading || analyzing) ? 'var(--bg-tertiary)' : 'var(--score-excellent)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: (!videoFile || uploading || analyzing) ? 'not-allowed' : 'pointer',
+                fontWeight: 500,
+                fontFamily: 'Inter, sans-serif',
+                transition: 'all 0.2s ease',
+                opacity: (!videoFile || uploading || analyzing) ? 0.6 : 1,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+              onMouseEnter={(e) => {
+                if (videoFile && !uploading && !analyzing) {
+                  e.target.style.opacity = '0.9';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (videoFile && !uploading && !analyzing) {
+                  e.target.style.opacity = '1';
+                }
+              }}
+            >
+              {analyzing ? 'Analyzing...' : uploading ? 'Uploading...' : 'Analyze!'}
+            </button>
+          </div>
+          {videoFile && (
+            <p className="results-filename-mobile" style={{ 
+              margin: '8px 0 0 0', 
+              fontSize: '12px', 
+              color: 'var(--text-secondary)',
+              fontStyle: 'italic',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              textAlign: 'center',
+              display: 'none'
+            }} title={videoFile.name}>
+              {videoFile.name}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="pre-analysis-controls-container" style={{ marginBottom: '30px' }}>
+          <div className="pre-analysis-exercise-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'nowrap', marginBottom: '12px' }}>
+            <label style={{ 
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              fontSize: '1rem',
+              margin: 0,
+              whiteSpace: 'nowrap'
+            }}>
+              Select Exercise Type:
+            </label>
+            <select
+              value={exerciseType || ''}
+              onChange={(e) => {
+                const value = e.target.value ? parseInt(e.target.value) : null;
+                setExerciseType(value);
+              }}
+              style={{
+                padding: '12px 40px 12px 16px',
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 500,
+                fontSize: '1rem',
+                fontFamily: 'Inter, sans-serif',
+                minWidth: '200px',
+                transition: 'all 0.2s ease',
+                outline: 'none',
+                flexShrink: 0
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'var(--border-color-hover)';
+                e.target.style.backgroundColor = 'var(--card-hover)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'var(--border-color)';
+                e.target.style.backgroundColor = 'var(--card-bg)';
+              }}
+              onMouseEnter={(e) => {
+                if (document.activeElement !== e.target) {
+                  e.target.style.borderColor = 'var(--border-color-hover)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (document.activeElement !== e.target) {
+                  e.target.style.borderColor = 'var(--border-color)';
+                }
+              }}
+            >
+              <option value="" disabled>
+                -- Select Exercise --
+              </option>
+              <option value="1">
+                Squat
+              </option>
+              <option value="2" disabled>
+                Bench (Coming Soon)
+              </option>
+              <option value="3" disabled>
+                Deadlift (Coming Soon)
+              </option>
+            </select>
+          </div>
+          <div className="pre-analysis-buttons-container" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'nowrap' }}>
+            <button
+              onClick={handleUploadClick}
+              style={{ 
+                padding: '12px 24px', 
+                margin: 0,
+                backgroundColor: 'var(--button-bg)',
+                color: 'var(--button-text)',
+                border: `1px solid var(--button-border)`,
+                borderRadius: '8px',
+                fontWeight: 500,
+                fontFamily: 'Inter, sans-serif',
+                transition: 'all 0.2s ease',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = 'var(--button-hover)';
+                e.target.style.borderColor = 'var(--border-color-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'var(--button-bg)';
+                e.target.style.borderColor = 'var(--button-border)';
+              }}
+            >
+              {videoFile ? 'Change video' : 'Select Video'}
+            </button>
+            {videoFile && (
+              <span className="pre-analysis-filename-desktop" style={{ 
+                fontSize: '12px', 
+                color: 'var(--text-secondary)',
+                fontStyle: 'italic',
+                maxWidth: '200px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                flexShrink: 1
+              }} title={videoFile.name}>
+                {videoFile.name}
+              </span>
+            )}
+            <button
+              onClick={handleSendToBackend}
+              disabled={!videoFile || uploading || analyzing}
+              style={{ 
+                padding: '12px 24px', 
+                margin: 0,
+                backgroundColor: (!videoFile || uploading || analyzing) ? 'var(--bg-tertiary)' : 'var(--score-excellent)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: (!videoFile || uploading || analyzing) ? 'not-allowed' : 'pointer',
+                fontWeight: 500,
+                fontFamily: 'Inter, sans-serif',
+                transition: 'all 0.2s ease',
+                opacity: (!videoFile || uploading || analyzing) ? 0.6 : 1,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+              onMouseEnter={(e) => {
+                if (videoFile && !uploading && !analyzing) {
+                  e.target.style.opacity = '0.9';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (videoFile && !uploading && !analyzing) {
+                  e.target.style.opacity = '1';
+                }
+              }}
+            >
+              {analyzing ? 'Analyzing...' : uploading ? 'Uploading...' : 'Analyze!'}
+            </button>
+          </div>
+          {videoFile && (
+            <p className="pre-analysis-filename-mobile" style={{ 
+              margin: '8px 0 0 0', 
+              fontSize: '12px', 
+              color: 'var(--text-secondary)',
+              fontStyle: 'italic',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              textAlign: 'center',
+              display: 'none'
+            }} title={videoFile.name}>
+              {videoFile.name}
+            </p>
+          )}
+        </div>
+      )}
+      {videoFile && (
+        <div>
           {(uploading || analyzing) && (
-            <div style={{ marginTop: '10px', width: '300px' }}>
+            <div className="analysis-progress-container" style={{ marginTop: '10px', width: '300px' }}>
               {uploading && !analyzing && (
                 <>
                   <div style={{
                     width: '100%',
                     height: '20px',
-                    backgroundColor: '#e0e0e0',
+                    backgroundColor: 'var(--bg-tertiary)',
                     borderRadius: '10px',
                     overflow: 'hidden',
-                    position: 'relative'
+                    position: 'relative',
+                    border: '1px solid var(--border-color)'
                   }}>
                     <div style={{
                       width: `${uploadProgress}%`,
                       height: '100%',
-                      backgroundColor: '#4CAF50',
+                      backgroundColor: 'var(--score-excellent)',
                       transition: 'width 0.3s ease',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: 'white',
                       fontSize: '12px',
-                      fontWeight: 'bold'
+                      fontWeight: '600'
                     }}>
                       {uploadProgress >= 10 && `${uploadProgress.toFixed(0)}%`}
                     </div>
                   </div>
-                  <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#666' }}>
+                  <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: 'var(--text-secondary)' }}>
                     Uploading: {uploadProgress.toFixed(1)}%
                   </p>
                 </>
@@ -402,24 +743,24 @@ function UploadVideo() {
               {analyzing && (
                 <div style={{
                   padding: '15px',
-                  backgroundColor: '#e3f2fd',
-                  border: '1px solid #2196F3',
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '8px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{
                       width: '20px',
                       height: '20px',
-                      border: '3px solid #f3f3f3',
-                      borderTop: '3px solid #2196F3',
+                      border: '3px solid var(--bg-tertiary)',
+                      borderTop: '3px solid var(--score-excellent)',
                       borderRadius: '50%',
                       animation: 'spin 1s linear infinite'
                     }}></div>
-                    <p style={{ margin: 0, fontSize: '14px', color: '#1976D2', fontWeight: 'bold' }}>
+                    <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-primary)', fontWeight: '600' }}>
                       Analyzing video...
                     </p>
                   </div>
-                  <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#666' }}>
+                  <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
                     Extracting frames, detecting pose, and analyzing form. This may take a moment.
                   </p>
                 </div>
@@ -432,45 +773,33 @@ function UploadVideo() {
         <div style={{ 
           marginTop: '15px', 
           padding: '10px', 
-          backgroundColor: uploadStatus.success ? '#d4edda' : '#f8d7da',
-          border: `1px solid ${uploadStatus.success ? '#c3e6cb' : '#f5c6cb'}`,
-          borderRadius: '4px'
+          backgroundColor: uploadStatus.success ? 'var(--card-bg)' : 'var(--card-bg)',
+          border: `1px solid ${uploadStatus.success ? 'var(--score-excellent)' : 'var(--score-poor)'}`,
+          borderRadius: '8px',
+          maxHeight: '85vh',
+          overflowY: 'auto'
         }}>
           {uploadStatus.success ? (
             <div>
-              {/* Final Score - Always Visible */}
-              {uploadStatus.data.form_analysis?.final_score && (
-                <ScoreBreakdown
-                  formAnalysis={uploadStatus.data.form_analysis}
-                  componentScores={componentScores}
-                  calculationResults={uploadStatus.data.calculation_results}
-                  squatPhases={uploadStatus.data.squat_phases}
-                  frameCount={uploadStatus.data.frame_count}
-                  expandedStates={expandedStates}
-                  onToggleExpanded={handleToggleExpanded}
-                />
-              )}
-
-              {/* Camera Angle Warning */}
               {uploadStatus.data.camera_angle_info?.should_warn && (
                 <details style={{ marginTop: '15px' }}>
                   <summary style={{ 
                     cursor: 'pointer', 
                     fontWeight: 'bold',
                     padding: '12px',
-                    backgroundColor: '#fff3cd',
-                    border: '1px solid #ffc107',
-                    borderRadius: '4px',
-                    color: '#856404'
+                    backgroundColor: 'var(--card-bg)',
+                    border: '1px solid var(--score-warning)',
+                    borderRadius: '8px',
+                    color: 'var(--text-primary)'
                   }}>
-                    ⚠️ Camera Angle Warning (Click to Expand)
+                    ⚠️ Camera Angle Warning
                   </summary>
-                  <div style={{ padding: '12px', backgroundColor: '#fff3cd', borderRadius: '4px', marginTop: '5px' }}>
-                    <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                  <div style={{ padding: '12px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', marginTop: '5px', border: '1px solid var(--border-color)' }}>
+                    <p style={{ margin: '8px 0 0 0', fontSize: '14px', color: 'var(--text-primary)' }}>
                       {uploadStatus.data.camera_angle_info.message}
                     </p>
                     {uploadStatus.data.camera_angle_info.angle_estimate && (
-                      <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontStyle: 'italic' }}>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontStyle: 'italic', color: 'var(--text-secondary)' }}>
                         Estimated angle: {uploadStatus.data.camera_angle_info.angle_estimate}°
                       </p>
                     )}
@@ -478,80 +807,140 @@ function UploadVideo() {
                 </details>
               )}
 
-              {/* Visualization Video - Expandable */}
-              {uploadStatus.data.visualization_url && (
-                <details style={{ marginTop: '15px' }}>
-                  <summary style={{ 
-                    cursor: 'pointer', 
-                    fontWeight: 'bold',
-                    padding: '8px',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '4px',
-                    border: '1px solid #ddd'
+              {uploadStatus.data.form_analysis?.final_score && (
+                <div className="analysis-layout" style={{ marginTop: '15px' }}>
+                  <div className="form-score-container" style={{
+                    flex: '1',
+                    minWidth: 0
                   }}>
-                    🎥 Visualization Video (Click to Expand)
-                  </summary>
-                  <div style={{ marginTop: '10px' }}>
-                    <video 
-                      src={uploadStatus.data.visualization_url}
-                      controls
-                      style={{
-                        width: '100%',
-                        maxWidth: '800px',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc'
-                      }}
-                    >
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                </details>
-              )}
-
-              {/* Angle Plots - Expandable */}
-              {uploadStatus.data.calculation_results?.angles_per_frame && (
-                <details style={{ marginTop: '15px' }}>
-                  <summary style={{ 
-                    cursor: 'pointer', 
-                    fontWeight: 'bold',
-                    padding: '8px',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '4px',
-                    border: '1px solid #ddd'
-                  }}>
-                    📈 Angle Analysis Plots (Click to Expand)
-                  </summary>
-                  <div style={{ marginTop: '10px' }}>
-                    <AnglePlot
-                      anglesPerFrame={uploadStatus.data.calculation_results.angles_per_frame}
-                      frameCount={uploadStatus.data.frame_count}
+                    <ScoreBreakdown
+                      formAnalysis={uploadStatus.data.form_analysis}
+                      componentScores={componentScores}
+                      calculationResults={uploadStatus.data.calculation_results}
                       squatPhases={uploadStatus.data.squat_phases}
+                      frameCount={uploadStatus.data.frame_count}
+                      expandedStates={expandedStates}
+                      onToggleExpanded={handleToggleExpanded}
+                      fps={uploadStatus.data.calculation_results?.fps || uploadStatus.data.fps || null}
                     />
+                    
+                    {uploadStatus.data.calculation_results?.angles_per_frame && (
+                      <details style={{ marginTop: '20px' }}>
+                        <summary style={{ 
+                          cursor: 'pointer', 
+                          fontWeight: 'bold',
+                          padding: '12px',
+                          backgroundColor: 'var(--card-bg)',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}>
+                          📈 Angle Analysis Plots
+                        </summary>
+                        <div className="angle-analysis-plot-container" style={{ marginTop: '10px' }}>
+                          <AnglePlot
+                            anglesPerFrame={uploadStatus.data.calculation_results.angles_per_frame}
+                            frameCount={uploadStatus.data.frame_count}
+                            squatPhases={uploadStatus.data.squat_phases}
+                            fps={uploadStatus.data.calculation_results?.fps || uploadStatus.data.fps || 30}
+                            calculationResults={uploadStatus.data.calculation_results}
+                          />
+                        </div>
+                      </details>
+                    )}
                   </div>
-                </details>
+
+                  <div style={{
+                    flex: '1',
+                    minWidth: 0
+                  }}>
+                    {uploadStatus.data.visualization_url && (
+                      <div className="video-container" style={{ 
+                        position: 'relative',
+                        width: '100%'
+                      }}>
+                        <div style={{ 
+                          position: 'relative',
+                          width: '100%',
+                          backgroundColor: 'var(--card-bg)',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          overflow: 'hidden'
+                        }}>
+                          <video 
+                            ref={videoRef}
+                            src={uploadStatus.data.visualization_url}
+                            controls
+                            onPlay={handleVideoPlay}
+                            onPause={handleVideoPause}
+                            style={{
+                              width: '100%',
+                              height: 'auto',
+                              maxHeight: '50vh',
+                              display: 'block',
+                              objectFit: 'contain'
+                            }}
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                          {isVideoPlaying && (
+                            <button
+                              onClick={handleExpandVideo}
+                              style={{
+                                position: 'absolute',
+                                top: '10px',
+                                right: '10px',
+                                padding: '8px 16px',
+                                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                color: 'white',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: 500,
+                                fontSize: '14px',
+                                fontFamily: 'Inter, sans-serif',
+                                transition: 'all 0.2s ease',
+                                zIndex: 10
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                              }}
+                            >
+                              ⛶ Expand
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
 
-              {/* JSON Response Data - Expandable */}
-              <details style={{ marginTop: '15px' }}>
+              <details style={{ marginTop: '15px', display: 'none' }}>
                 <summary style={{ 
                   cursor: 'pointer', 
                   fontWeight: 'bold',
-                  padding: '8px',
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: '4px',
-                  border: '1px solid #ddd'
+                  padding: '12px',
+                  backgroundColor: 'var(--card-bg)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)'
                 }}>
-                  📋 View Response Data (Click to Expand)
+                  📋 View Response Data
                 </summary>
                 <pre style={{ 
                   marginTop: '10px', 
                   padding: '10px', 
                   fontSize: '12px',
-                  backgroundColor: '#f5f5f5',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
+                  backgroundColor: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '8px',
                   overflow: 'auto',
-                  maxHeight: '400px'
+                  maxHeight: '400px',
+                  color: 'var(--text-primary)'
                 }}>
                   {JSON.stringify(
                     {
@@ -572,57 +961,56 @@ function UploadVideo() {
                 </pre>
               </details>
 
-              {/* Video Selected - Moved to End */}
               {videoFile && (
-                <div style={{ marginTop: '15px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
-                  <p><strong>Video Selected:</strong> {videoFile.name}</p>
-                  <p><strong>Size:</strong> {(videoFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                <div style={{ marginTop: '15px', padding: '12px', border: '1px solid var(--border-color)', borderRadius: '8px', backgroundColor: 'var(--card-bg)', display: 'none' }}>
+                  <p style={{ color: 'var(--text-primary)', margin: '4px 0' }}><strong>Video Selected:</strong> {videoFile.name}</p>
+                  <p style={{ color: 'var(--text-secondary)', margin: '4px 0' }}><strong>Size:</strong> {(videoFile.size / 1024 / 1024).toFixed(2)} MB</p>
                   {videoFile.duration && (
-                    <p><strong>Duration:</strong> {Math.floor(videoFile.duration / 60)}:{(Math.floor(videoFile.duration % 60)).toString().padStart(2, '0')} ({videoFile.duration.toFixed(1)} seconds)</p>
+                    <p style={{ color: 'var(--text-secondary)', margin: '4px 0' }}><strong>Duration:</strong> {Math.floor(videoFile.duration / 60)}:{(Math.floor(videoFile.duration % 60)).toString().padStart(2, '0')} ({videoFile.duration.toFixed(1)} seconds)</p>
                   )}
-                  <p><strong>Type:</strong> {videoFile.type}</p>
-                  <details style={{ marginTop: '10px' }}>
-                    <summary style={{ cursor: 'pointer', fontWeight: 'bold' }}>🔍 View Full videoFile Object (Click to Expand)</summary>
-                    <pre style={{ 
-                      marginTop: '10px', 
-                      padding: '10px', 
-                      background: '#f5f5f5', 
-                      border: '1px solid #ddd', 
-                      borderRadius: '4px',
-                      overflow: 'auto',
-                      maxHeight: '300px'
-                    }}>
-                      {JSON.stringify(videoFile, (key, value) => {
-                        if (value instanceof File) {
-                          return {
-                            name: value.name,
-                            size: value.size,
-                            type: value.type,
-                            lastModified: value.lastModified,
-                            _type: 'File object (binary data not shown)'
-                          };
-                        }
-                        return value;
-                      }, 2)}
-                    </pre>
-                  </details>
+                  <p style={{ color: 'var(--text-secondary)', margin: '4px 0' }}><strong>Type:</strong> {videoFile.type}</p>
+          <details style={{ marginTop: '10px' }}>
+                    <summary style={{ cursor: 'pointer', fontWeight: 'bold', color: 'var(--text-primary)' }}>🔍 View Full videoFile Object</summary>
+            <pre style={{ 
+              marginTop: '10px', 
+              padding: '10px', 
+                      background: 'var(--bg-tertiary)', 
+                      border: '1px solid var(--border-color)', 
+                      borderRadius: '8px',
+              overflow: 'auto',
+                      maxHeight: '300px',
+                      color: 'var(--text-primary)'
+            }}>
+              {JSON.stringify(videoFile, (key, value) => {
+                if (value instanceof File) {
+                  return {
+                    name: value.name,
+                    size: value.size,
+                    type: value.type,
+                    lastModified: value.lastModified,
+                    _type: 'File object (binary data not shown)'
+                  };
+                }
+                return value;
+              }, 2)}
+            </pre>
+          </details>
                 </div>
               )}
             </div>
           ) : (
             <div>
-              <p style={{ color: '#721c24', fontWeight: 'bold' }}>❌ Error: {uploadStatus.error}</p>
+              <p style={{ color: 'var(--score-poor)', fontWeight: 'bold' }}>❌ Error: {uploadStatus.error}</p>
               
-              {/* Full Error Log - For Debugging */}
               <details style={{ marginTop: '10px' }}>
                 <summary style={{ 
                   cursor: 'pointer', 
                   fontWeight: 'bold',
                   padding: '8px',
-                  backgroundColor: '#fff3cd',
-                  borderRadius: '4px',
-                  border: '1px solid #ffc107',
-                  color: '#856404'
+                  backgroundColor: 'var(--card-bg)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--score-warning)',
+                  color: 'var(--text-primary)'
                 }}>
                   🔍 Full Error Details (Click to Expand - Debug Mode)
                 </summary>
@@ -632,8 +1020,9 @@ function UploadVideo() {
                     margin: '5px 0 10px 0', 
                     padding: '10px', 
                     fontSize: '11px',
-                    backgroundColor: '#f5f5f5',
-                    border: '1px solid #ddd',
+                    backgroundColor: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
                     borderRadius: '4px',
                     overflow: 'auto',
                     maxHeight: '200px'
@@ -641,13 +1030,14 @@ function UploadVideo() {
                     {uploadStatus.error}
                   </pre>
                   
-                  <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>Full Error Detail Object:</p>
+                  <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>Error Details:</p>
                   <pre style={{ 
                     margin: '5px 0', 
-                    padding: '10px', 
+              padding: '10px', 
                     fontSize: '11px',
-                    backgroundColor: '#f5f5f5',
-                    border: '1px solid #ddd',
+                    backgroundColor: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
                     borderRadius: '4px',
                     overflow: 'auto',
                     maxHeight: '400px'
@@ -655,9 +1045,9 @@ function UploadVideo() {
                     {JSON.stringify(uploadStatus.errorDetail || {}, null, 2)}
                   </pre>
                   
-                  {uploadStatus.rawError && (
+                  {process.env.NODE_ENV === 'development' && uploadStatus.rawError && (
                     <>
-                      <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>Raw Backend Error Response:</p>
+                      <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>Raw Backend Error Response (Dev Only):</p>
                       <pre style={{ 
                         margin: '5px 0 10px 0', 
                         padding: '10px', 
@@ -672,38 +1062,14 @@ function UploadVideo() {
                       </pre>
                     </>
                   )}
-                  {(uploadStatus.status || uploadStatus.statusText) && (
+                  {process.env.NODE_ENV === 'development' && (uploadStatus.status || uploadStatus.statusText) && (
                     <>
-                      <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>HTTP Status:</p>
+                      <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>HTTP Status (Dev Only):</p>
                       <p style={{ margin: '5px 0 10px 0', fontSize: '11px', color: '#666' }}>
                         Status: {uploadStatus.status} {uploadStatus.statusText}
                       </p>
                     </>
                   )}
-                  <p style={{ margin: '10px 0 5px 0', fontSize: '12px', fontWeight: 'bold' }}>Full Upload Status Object:</p>
-                  <pre style={{ 
-                    margin: '5px 0', 
-                    padding: '10px', 
-                    fontSize: '11px',
-                    backgroundColor: '#f5f5f5',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    overflow: 'auto',
-                    maxHeight: '400px'
-                  }}>
-                    {JSON.stringify(uploadStatus, (key, value) => {
-                      if (value instanceof File) {
-                        return {
-                          name: value.name,
-                          size: value.size,
-                          type: value.type,
-                          lastModified: value.lastModified,
-                          _type: 'File object (binary data not shown)'
-                        };
-                      }
-                      return value;
-                    }, 2)}
-                  </pre>
                 </div>
               </details>
               
@@ -711,10 +1077,10 @@ function UploadVideo() {
                 <div style={{
                   marginTop: '10px',
                   padding: '12px',
-                  backgroundColor: '#f8d7da',
-                  border: '1px solid #f5c6cb',
-                  borderRadius: '4px',
-                  color: '#721c24'
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--score-poor)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
                 }}>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>
                     📹 Camera Angle Too Extreme
@@ -738,10 +1104,10 @@ function UploadVideo() {
                 <div style={{
                   marginTop: '10px',
                   padding: '12px',
-                  backgroundColor: '#f8d7da',
-                  border: '1px solid #f5c6cb',
-                  borderRadius: '4px',
-                  color: '#721c24'
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--score-poor)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
                 }}>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>
                     👤 Insufficient Pose Detection
@@ -765,10 +1131,10 @@ function UploadVideo() {
                 <div style={{
                   marginTop: '10px',
                   padding: '12px',
-                  backgroundColor: '#f8d7da',
-                  border: '1px solid #f5c6cb',
-                  borderRadius: '4px',
-                  color: '#721c24'
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--score-poor)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
                 }}>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>
                     🔒 Invalid File Headers
@@ -792,10 +1158,10 @@ function UploadVideo() {
                 <div style={{
                   marginTop: '10px',
                   padding: '12px',
-                  backgroundColor: '#f8d7da',
-                  border: '1px solid #f5c6cb',
-                  borderRadius: '4px',
-                  color: '#721c24'
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--score-poor)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
                 }}>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>
                     🎬 Invalid File Content
@@ -850,10 +1216,10 @@ function UploadVideo() {
                 <div style={{
                   marginTop: '10px',
                   padding: '12px',
-                  backgroundColor: '#f8d7da',
-                  border: '1px solid #f5c6cb',
-                  borderRadius: '4px',
-                  color: '#721c24'
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--score-poor)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
                 }}>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>
                     🎥 Video Format Not Supported
@@ -877,10 +1243,10 @@ function UploadVideo() {
                 <div style={{
                   marginTop: '10px',
                   padding: '12px',
-                  backgroundColor: '#f8d7da',
-                  border: '1px solid #f5c6cb',
-                  borderRadius: '4px',
-                  color: '#721c24'
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--score-poor)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
                 }}>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>
                     🎬 Frame Extraction Failed
@@ -904,10 +1270,10 @@ function UploadVideo() {
                 <div style={{
                   marginTop: '10px',
                   padding: '12px',
-                  backgroundColor: '#f8d7da',
-                  border: '1px solid #f5c6cb',
-                  borderRadius: '4px',
-                  color: '#721c24'
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--score-poor)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
                 }}>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>
                     ⏱️ FPS Validation Failed
@@ -940,10 +1306,10 @@ function UploadVideo() {
                 <div style={{
                   marginTop: '10px',
                   padding: '12px',
-                  backgroundColor: '#f8d7da',
-                  border: '1px solid #f5c6cb',
-                  borderRadius: '4px',
-                  color: '#721c24'
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px solid var(--score-poor)',
+                  borderRadius: '8px',
+                  color: 'var(--text-primary)'
                 }}>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>
                     ⏱️ Video Duration Exceeded
@@ -970,6 +1336,83 @@ function UploadVideo() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Console Logs Display - Hidden */}
+      {logs.length > 0 && (
+        <div style={{
+          marginTop: '20px',
+          padding: '15px',
+          backgroundColor: 'var(--card-bg)',
+          border: '1px solid var(--border-color)',
+          borderRadius: '8px',
+          display: 'none'  // Hidden as requested
+        }}>
+          <details open>
+            <summary style={{
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              padding: '8px',
+              color: 'var(--text-primary)',
+              fontSize: '14px'
+            }}>
+              📋 Console Logs ({logs.length})
+            </summary>
+            <div style={{
+              marginTop: '10px',
+              maxHeight: '400px',
+              overflowY: 'auto',
+              fontFamily: 'monospace',
+              fontSize: '12px'
+            }}>
+              {logs.map((log, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: '4px 8px',
+                    marginBottom: '2px',
+                    backgroundColor: log.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 
+                                   log.type === 'warn' ? 'rgba(245, 158, 11, 0.1)' : 
+                                   'var(--bg-tertiary)',
+                    borderLeft: `3px solid ${
+                      log.type === 'error' ? 'var(--score-poor)' : 
+                      log.type === 'warn' ? 'var(--score-warning)' : 
+                      'var(--border-color)'
+                    }`,
+                    color: 'var(--text-primary)'
+                  }}
+                >
+                  <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>
+                    [{log.timestamp}]
+                  </span>
+                  <span style={{ 
+                    marginLeft: '8px',
+                    color: log.type === 'error' ? 'var(--score-poor)' : 
+                           log.type === 'warn' ? 'var(--score-warning)' : 
+                           'var(--text-primary)'
+                  }}>
+                    {log.message}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setLogs([])}
+              style={{
+                marginTop: '10px',
+                padding: '6px 12px',
+                backgroundColor: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '4px',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              Clear Logs
+            </button>
+          </details>
         </div>
       )}
     </div>

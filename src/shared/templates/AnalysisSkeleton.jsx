@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { API_ENDPOINTS } from '../../config/api';
+import { API_ENDPOINTS, API_URL } from '../../config/api';
 import { isUserLoggedIn } from '../utils/authStorage';
 import { uploadVideo } from '../utils/uploadHandler';
 import { getVideoDuration, getVideoFPS } from '../utils/videoDuration';
@@ -52,6 +52,7 @@ const AnalysisSkeleton = ({
   const [videoDuration, setVideoDuration] = useState(null); // Video duration in seconds
   const [videoFPS, setVideoFPS] = useState(null); // Video FPS (if available from metadata)
   const [videoFrameCount, setVideoFrameCount] = useState(null); // Video frame count (from response - source of truth)
+  const [videoFileSize, setVideoFileSize] = useState(null); // Video file size in MB
   const [errorMessage, setErrorMessage] = useState('');  // User-friendly error message
   const [errorData, setErrorData] = useState(null);     // Structured error data (e.g., needs_activation flag)
   const [hasCompletedAnalysis, setHasCompletedAnalysis] = useState(() => {
@@ -118,9 +119,19 @@ const AnalysisSkeleton = ({
     }
   };
 
-  // Estimate analysis time: 5s base + (frame_count * 0.015978 s/frame)
-  // Uses frame_count from response if available, otherwise estimates from duration and FPS
-  const estimateAnalysisTime = (durationSeconds, fps = null, frameCount = null) => {
+  // Check if we're on beta (Heroku beta app)
+  const isBeta = API_URL.includes('herokuapp.com') || API_URL.includes('beta');
+
+  // Estimate analysis time
+  // For beta: uses file size (9s base + file_size_mb * 0.613)
+  // For local: uses frame count (5s base + frame_count * 0.015978)
+  const estimateAnalysisTime = (durationSeconds, fps = null, frameCount = null, fileSizeMB = null) => {
+    // Beta: use file size-based estimation
+    if (isBeta && fileSizeMB != null && fileSizeMB > 0) {
+      return Math.min(Math.round(9 + (fileSizeMB * 0.613)), 90);
+    }
+    
+    // Local: use frame count-based estimation
     if (frameCount != null && frameCount > 0) {
       return Math.min(Math.round(5 + (frameCount * 0.015978)), 90);
     }
@@ -141,7 +152,7 @@ const AnalysisSkeleton = ({
       clearInterval(analysisProgressIntervalRef.current);
     }
 
-    const estimatedTime = estimateAnalysisTime(videoDuration, videoFPS, videoFrameCount);
+    const estimatedTime = estimateAnalysisTime(videoDuration, videoFPS, videoFrameCount, videoFileSize);
     const startTime = Date.now();
     const stages = [
       { name: 'Extracting frames', duration: 0.15 },
@@ -292,22 +303,27 @@ const AnalysisSkeleton = ({
               // Clear any previous errors when user selects a new file
               setErrorMessage('');
               setErrorData(null);
-              // Get video duration and FPS when file is selected
+              // Get video duration, FPS, and file size when file is selected
               if (file) {
                 try {
                   const duration = await getVideoDuration(file);
                   setVideoDuration(duration);
                   const fps = await getVideoFPS(file);
                   setVideoFPS(fps);
+                  // Get file size in MB
+                  const fileSizeMB = file.size / (1024 * 1024);
+                  setVideoFileSize(fileSizeMB);
                 } catch (error) {
                   console.warn('Could not get video metadata:', error);
                   setVideoDuration(null);
                   setVideoFPS(null);
+                  setVideoFileSize(null);
                 }
               } else {
                 setVideoDuration(null);
                 setVideoFPS(null);
                 setVideoFrameCount(null);
+                setVideoFileSize(null);
               }
             }}
             disabled={isDisabled}

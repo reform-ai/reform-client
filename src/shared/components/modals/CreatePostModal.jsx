@@ -1,12 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../../config/api';
-import { getUserToken } from '../../utils/authStorage';
+import { authenticatedFetch, authenticatedFetchJson } from '../../utils/authenticatedFetch';
 import '../../styles/social/CreatePostModal.css';
 
 const MAX_IMAGES = 5;
 
-const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
+const CreatePostModal = ({ isOpen, onClose, onPostCreated, preloadedImageUrl, preloadedThumbnailUrl, prefilledCaption }) => {
   const navigate = useNavigate();
   const [postType, setPostType] = useState('text');
   const [content, setContent] = useState('');
@@ -14,6 +14,60 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
+
+  // Handle pre-loaded images when modal opens or when preloadedImageUrl becomes available
+  useEffect(() => {
+    if (isOpen && preloadedImageUrl) {
+      // Add pre-loaded image to images array
+      const preloadedImage = {
+        id: 'preloaded-' + Date.now(),
+        file: null,
+        preview: preloadedImageUrl,
+        url: preloadedImageUrl,
+        thumbnailUrl: preloadedThumbnailUrl || preloadedImageUrl,
+        uploading: false,
+        error: null
+      };
+      setImages([preloadedImage]);
+    } else if (isOpen && !preloadedImageUrl) {
+      // Reset images when modal opens without pre-loaded image
+      setImages([]);
+    }
+  }, [isOpen, preloadedImageUrl, preloadedThumbnailUrl]);
+
+  // Also handle case where modal opens before preloadedImageUrl is set
+  // This ensures the image appears even if there's a timing issue
+  useEffect(() => {
+    if (isOpen && preloadedImageUrl && images.length === 0) {
+      const preloadedImage = {
+        id: 'preloaded-' + Date.now(),
+        file: null,
+        preview: preloadedImageUrl,
+        url: preloadedImageUrl,
+        thumbnailUrl: preloadedThumbnailUrl || preloadedImageUrl,
+        uploading: false,
+        error: null
+      };
+      setImages([preloadedImage]);
+    }
+  }, [isOpen, preloadedImageUrl, preloadedThumbnailUrl, images.length]);
+
+  // Handle pre-filled caption when modal opens or when prefilledCaption becomes available
+  useEffect(() => {
+    if (isOpen && prefilledCaption) {
+      setContent(prefilledCaption);
+    } else if (isOpen && !prefilledCaption && !preloadedImageUrl) {
+      // Reset content when modal opens without pre-filled caption and no pre-loaded image
+      setContent('');
+    }
+  }, [isOpen, prefilledCaption, preloadedImageUrl]);
+
+  // Also handle case where modal opens before prefilledCaption is set
+  useEffect(() => {
+    if (isOpen && prefilledCaption && !content) {
+      setContent(prefilledCaption);
+    }
+  }, [isOpen, prefilledCaption, content]);
 
   const handleImageSelect = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -47,7 +101,6 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
     if (validFiles.length === 0) return;
 
     setError('');
-    const token = getUserToken();
 
     // Create preview entries first
     const newImages = validFiles.map(file => {
@@ -91,19 +144,14 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
         const formData = new FormData();
         formData.append('image', file);
 
-        const response = await fetch(API_ENDPOINTS.POST_IMAGE_UPLOAD, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
+        const response = await authenticatedFetch(
+          API_ENDPOINTS.POST_IMAGE_UPLOAD,
+          {
+            method: 'POST',
+            body: formData,
           },
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          const errorMessage = errorData.detail || 'Failed to upload image';
-          throw new Error(errorMessage);
-        }
+          navigate
+        );
 
         const data = await response.json();
         
@@ -164,28 +212,24 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
     }
 
     setIsSubmitting(true);
-    const token = getUserToken();
 
     try {
-      const response = await fetch(API_ENDPOINTS.POSTS, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      await authenticatedFetchJson(
+        API_ENDPOINTS.POSTS,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            post_type: postType,
+            content: content.trim() || null,
+            image_urls: images.length > 0 ? images.filter(img => img.url).map(img => img.url) : null,
+            thumbnail_urls: images.length > 0 ? images.filter(img => img.url).map(img => img.thumbnailUrl || img.url) : null,
+          }),
         },
-        body: JSON.stringify({
-          post_type: postType,
-          content: content.trim() || null,
-          image_urls: images.length > 0 ? images.filter(img => img.url).map(img => img.url) : null,
-          thumbnail_urls: images.length > 0 ? images.filter(img => img.url).map(img => img.thumbnailUrl || img.url) : null,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage = errorData.detail || 'Failed to create post';
-        throw new Error(errorMessage);
-      }
+        navigate
+      );
 
       setContent('');
       setPostType('text');

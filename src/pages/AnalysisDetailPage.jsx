@@ -91,16 +91,29 @@ const AnalysisDetailPage = () => {
         navigate
       );
       
-      // Set pre-loaded image URLs
+      // Validate response
+      if (!response || !response.image_url) {
+        console.error('Invalid response from generate-share-image:', response);
+        throw new Error('Invalid response from server: missing image_url');
+      }
+      
+      console.log('Share image generated:', {
+        image_url: response.image_url,
+        thumbnail_url: response.thumbnail_url
+      });
+      
+      // Set pre-loaded image URLs first
       setPreloadedImageUrl(response.image_url);
       setPreloadedThumbnailUrl(response.thumbnail_url || response.image_url);
       
-      // Open modal
-      setShowCreatePost(true);
+      // Use setTimeout to ensure state is updated before opening modal
+      // This ensures the useEffect in CreatePostModal receives the preloadedImageUrl
+      setTimeout(() => {
+        setShowCreatePost(true);
+      }, 0);
     } catch (err) {
       console.error('Error generating share image:', err);
       alert('Failed to generate share image. Please try again.');
-    } finally {
       setIsGeneratingImage(false);
     }
   };

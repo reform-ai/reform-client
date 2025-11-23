@@ -5,11 +5,14 @@ import { isUserLoggedIn } from '../shared/utils/authStorage';
 import { formatDateTime, formatDateOnly, formatTimeOnly, parseUTCDate } from '../shared/utils/dateFormat';
 import { normalizeAnalysisResults, getFpsFromAnalysis, getComponentScores as getComponentScoresFromNormalizer } from '../shared/utils/analysisDataNormalizer';
 import { getScoreColor } from '../shared/utils/scoreUtils';
+import { API_ENDPOINTS } from '../config/api';
+import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
 import ScoreBreakdown from '../shared/components/ScoreBreakdown';
 import AnglePlot from '../shared/components/charts/AnglePlot';
 import AnalysisFilterBar from '../shared/components/analysis/AnalysisFilterBar';
+import CreatePostModal from '../shared/components/modals/CreatePostModal';
 import '../shared/styles/AnalysisSkeleton.css';
 import './AnalysisHistoryPage.css';
 
@@ -22,6 +25,10 @@ const AnalysisHistoryPage = () => {
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
   const [selectedAnalysisDetails, setSelectedAnalysisDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [preloadedImageUrl, setPreloadedImageUrl] = useState(null);
+  const [preloadedThumbnailUrl, setPreloadedThumbnailUrl] = useState(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [expandedStates, setExpandedStates] = useState({
     torso_angle: false,
     quad_angle: false,
@@ -208,6 +215,44 @@ const AnalysisHistoryPage = () => {
   };
 
   const dateCounts = getDateCounts();
+
+  const handleShareToFeed = async () => {
+    if (!selectedAnalysisDetails) return;
+    
+    setIsGeneratingImage(true);
+    try {
+      // Generate share image
+      const response = await authenticatedFetchJson(
+        API_ENDPOINTS.ANALYSIS_GENERATE_SHARE_IMAGE(selectedAnalysisDetails.id),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        navigate
+      );
+      
+      // Set pre-loaded image URLs
+      setPreloadedImageUrl(response.image_url);
+      setPreloadedThumbnailUrl(response.thumbnail_url || response.image_url);
+      
+      // Open modal
+      setShowCreatePost(true);
+    } catch (err) {
+      console.error('Error generating share image:', err);
+      alert('Failed to generate share image. Please try again.');
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const handlePostCreated = () => {
+    setShowCreatePost(false);
+    setPreloadedImageUrl(null);
+    setPreloadedThumbnailUrl(null);
+    navigate('/feed');
+  };
 
   // Format date display: show time on second line if multiple analyses on same date
   // All dates from API are in UTC - uses dateFormat utilities to convert to user's local timezone
@@ -617,6 +662,35 @@ const AnalysisHistoryPage = () => {
                         </p>
                       </div>
                     </div>
+                    
+                    {/* Share to Feed Button */}
+                    <div style={{ marginTop: '16px' }}>
+                      <button
+                        onClick={handleShareToFeed}
+                        disabled={isGeneratingImage}
+                        className="btn btn-primary"
+                        style={{
+                          width: '100%',
+                          padding: '10px 20px',
+                          fontSize: '0.95rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        {isGeneratingImage ? (
+                          <>
+                            <span className="btn-spinner"></span>
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            📤 Share to Feed
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Score Breakdown and Charts */}
@@ -732,6 +806,21 @@ const AnalysisHistoryPage = () => {
           </article>
         </div>
       </div>
+
+      {showCreatePost && (
+        <CreatePostModal
+          isOpen={showCreatePost}
+          onClose={() => {
+            setShowCreatePost(false);
+            setPreloadedImageUrl(null);
+            setPreloadedThumbnailUrl(null);
+          }}
+          onPostCreated={handlePostCreated}
+          preloadedImageUrl={preloadedImageUrl}
+          preloadedThumbnailUrl={preloadedThumbnailUrl}
+          prefilledCaption={selectedAnalysisDetails ? `Just completed ${selectedAnalysisDetails.exercise_name} analysis! Score: ${selectedAnalysisDetails.score}/100` : ''}
+        />
+      )}
     </PageContainer>
   );
 };

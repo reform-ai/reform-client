@@ -5,10 +5,13 @@ import { useRequireAuth } from '../shared/utils/useRequireAuth';
 import { formatDateTime } from '../shared/utils/dateFormat';
 import { normalizeAnalysisResults, getFpsFromAnalysis, getComponentScores as getComponentScoresFromNormalizer } from '../shared/utils/analysisDataNormalizer';
 import { getScoreColor } from '../shared/utils/scoreUtils';
+import { API_ENDPOINTS } from '../config/api';
+import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
 import ScoreBreakdown from '../shared/components/ScoreBreakdown';
 import AnglePlot from '../shared/components/charts/AnglePlot';
+import CreatePostModal from '../shared/components/modals/CreatePostModal';
 import '../shared/styles/AnalysisSkeleton.css';
 import './AnalysisDetailPage.css';
 
@@ -18,6 +21,10 @@ const AnalysisDetailPage = () => {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [preloadedImageUrl, setPreloadedImageUrl] = useState(null);
+  const [preloadedThumbnailUrl, setPreloadedThumbnailUrl] = useState(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [expandedStates, setExpandedStates] = useState({
     torso_angle: false,
     quad_angle: false,
@@ -65,6 +72,44 @@ const AnalysisDetailPage = () => {
     if (!analysis) return {};
     // Use the normalizer's getComponentScores function for consistency
     return getComponentScoresFromNormalizer(analysis.form_analysis);
+  };
+
+  const handleShareToFeed = async () => {
+    if (!analysis) return;
+    
+    setIsGeneratingImage(true);
+    try {
+      // Generate share image
+      const response = await authenticatedFetchJson(
+        API_ENDPOINTS.ANALYSIS_GENERATE_SHARE_IMAGE(analysis.id),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        navigate
+      );
+      
+      // Set pre-loaded image URLs
+      setPreloadedImageUrl(response.image_url);
+      setPreloadedThumbnailUrl(response.thumbnail_url || response.image_url);
+      
+      // Open modal
+      setShowCreatePost(true);
+    } catch (err) {
+      console.error('Error generating share image:', err);
+      alert('Failed to generate share image. Please try again.');
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const handlePostCreated = () => {
+    setShowCreatePost(false);
+    setPreloadedImageUrl(null);
+    setPreloadedThumbnailUrl(null);
+    navigate('/feed');
   };
 
   if (loading) {
@@ -141,6 +186,31 @@ const AnalysisDetailPage = () => {
             <p className="skeleton-subtitle">
               {formatDateTime(analysis.created_at)}
             </p>
+          </div>
+          <div>
+            <button
+              onClick={handleShareToFeed}
+              disabled={isGeneratingImage}
+              className="btn btn-primary"
+              style={{
+                padding: '10px 20px',
+                fontSize: '0.95rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              {isGeneratingImage ? (
+                <>
+                  <span className="btn-spinner"></span>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  📤 Share to Feed
+                </>
+              )}
+            </button>
           </div>
         </header>
 
@@ -330,6 +400,21 @@ const AnalysisDetailPage = () => {
           )}
         </div>
       </div>
+
+      {showCreatePost && (
+        <CreatePostModal
+          isOpen={showCreatePost}
+          onClose={() => {
+            setShowCreatePost(false);
+            setPreloadedImageUrl(null);
+            setPreloadedThumbnailUrl(null);
+          }}
+          onPostCreated={handlePostCreated}
+          preloadedImageUrl={preloadedImageUrl}
+          preloadedThumbnailUrl={preloadedThumbnailUrl}
+          prefilledCaption={`Just completed ${analysis.exercise_name} analysis! Score: ${analysis.score}/100`}
+        />
+      )}
     </PageContainer>
   );
 };

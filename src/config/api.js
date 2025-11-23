@@ -52,6 +52,7 @@ export const API_ENDPOINTS = {
   ANALYSES: `${API_URL}/api/analyses`,
   ANALYSIS: (analysisId) => `${API_URL}/api/analyses/${analysisId}`,
   ANALYSIS_PROGRESS: `${API_URL}/api/analyses/progress/metrics`,
+  ANALYSIS_GENERATE_SHARE_IMAGE: (analysisId) => `${API_URL}/api/analyses/${analysisId}/generate-share-image`,
   // Contact endpoint
   CONTACT_SUBMIT: `${API_URL}/api/contact/submit`
 };

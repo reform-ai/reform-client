@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { API_ENDPOINTS } from '../../config/api';
 import { isUserLoggedIn } from '../utils/authStorage';
 import { uploadVideo } from '../utils/uploadHandler';
+import { getVideoDuration, getVideoFPS } from '../utils/videoDuration';
 import FileUploader from '../components/upload/FileUploader';
 import ExerciseSelector from '../components/upload/ExerciseSelector';
 import NotesInput from '../components/upload/NotesInput';
@@ -48,6 +49,9 @@ const AnalysisSkeleton = ({
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState('');
+  const [videoDuration, setVideoDuration] = useState(null); // Video duration in seconds
+  const [videoFPS, setVideoFPS] = useState(null); // Video FPS (if available from metadata)
+  const [videoFrameCount, setVideoFrameCount] = useState(null); // Video frame count (from response - source of truth)
   const [errorMessage, setErrorMessage] = useState('');  // User-friendly error message
   const [errorData, setErrorData] = useState(null);     // Structured error data (e.g., needs_activation flag)
   const [hasCompletedAnalysis, setHasCompletedAnalysis] = useState(() => {
@@ -55,6 +59,9 @@ const AnalysisSkeleton = ({
     return localStorage.getItem('anonymousAnalysisCompleted') === 'true';
   });
   const [notes, setNotes] = useState('');
+
+  // Analysis progress tracking (similar to upload progress)
+  const analysisProgressIntervalRef = useRef(null);
 
   // Refs
   const leftCardRef = useRef(null);
@@ -111,6 +118,76 @@ const AnalysisSkeleton = ({
     }
   };
 
+  // Estimate analysis time: 5s base + (frame_count * 0.015978 s/frame)
+  // Uses frame_count from response if available, otherwise estimates from duration and FPS
+  const estimateAnalysisTime = (durationSeconds, fps = null, frameCount = null) => {
+    if (frameCount != null && frameCount > 0) {
+      return Math.min(Math.round(5 + (frameCount * 0.015978)), 90);
+    }
+    
+    if (!durationSeconds || durationSeconds <= 0) {
+      return 30;
+    }
+    
+    const estimatedFPS = fps || 25;
+    const estimatedFrameCount = durationSeconds * estimatedFPS;
+    return Math.min(Math.round(5 + (estimatedFrameCount * 0.015978)), 90);
+  };
+
+  // Start analysis progress tracking
+  const startAnalysisProgress = () => {
+    // Clear any existing interval
+    if (analysisProgressIntervalRef.current) {
+      clearInterval(analysisProgressIntervalRef.current);
+    }
+
+    const estimatedTime = estimateAnalysisTime(videoDuration, videoFPS, videoFrameCount);
+    const startTime = Date.now();
+    const stages = [
+      { name: 'Extracting frames', duration: 0.15 },
+      { name: 'Detecting pose', duration: 0.25 },
+      { name: 'Analyzing form', duration: 0.35 },
+      { name: 'Calculating scores', duration: 0.25 },
+    ];
+    
+    let currentStage = 0;
+    let stageStartTime = startTime;
+
+    // Update progress every 100ms for smooth animation
+    analysisProgressIntervalRef.current = setInterval(() => {
+      const now = Date.now();
+      const elapsedTotal = (now - startTime) / 1000;
+      const elapsedStage = (now - stageStartTime) / 1000;
+      
+      // Calculate progress based on elapsed time (smooth and continuous)
+      const progress = Math.min((elapsedTotal / estimatedTime) * 100, 99);
+      const timeRemaining = Math.max(0, Math.round(estimatedTime - elapsedTotal));
+      updateProgress(progress, `${stages[currentStage].name}... (~${timeRemaining}s remaining)`);
+
+      // Move to next stage if current stage is complete
+      const currentStageDuration = estimatedTime * stages[currentStage].duration;
+      if (elapsedStage >= currentStageDuration && currentStage < stages.length - 1) {
+        currentStage++;
+        stageStartTime = now;
+      }
+    }, 100);
+  };
+
+  // Stop analysis progress tracking
+  const stopAnalysisProgress = () => {
+    if (analysisProgressIntervalRef.current) {
+      clearInterval(analysisProgressIntervalRef.current);
+      analysisProgressIntervalRef.current = null;
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopAnalysisProgress();
+    };
+  }, []);
+
   const handleStartAnalysis = async () => {
     if (!selectedFile) {
       alert('Please select a video file first');
@@ -137,7 +214,8 @@ const AnalysisSkeleton = ({
           if (progress >= 99.9) {
             setUploading(false);
             setAnalyzing(true);
-            updateProgress(100, 'Upload complete, analyzing...');
+            // Start analysis progress tracking
+            startAnalysisProgress();
           }
         }
       });
@@ -146,6 +224,16 @@ const AnalysisSkeleton = ({
       setAnalyzing(false);
       setProgress(0);
       setProgressText('');
+      
+      // Extract frame_count and fps from response for estimation (read-only, same source as plots)
+      if (data.frame_count != null) {
+        setVideoFrameCount(data.frame_count);
+      }
+      if (data.fps != null) {
+        setVideoFPS(data.fps);
+      } else if (data.calculation_results?.fps != null) {
+        setVideoFPS(data.calculation_results.fps);
+      }
       
       // Check if analysis completed successfully (has form_analysis or status === 'success')
       if (data.form_analysis || data.status === 'success') {
@@ -171,6 +259,7 @@ const AnalysisSkeleton = ({
     } catch (error) {
       setUploading(false);
       setAnalyzing(false);
+      stopAnalysisProgress();
       setProgress(0);
       setProgressText('');
       
@@ -198,11 +287,28 @@ const AnalysisSkeleton = ({
         <article className="skeleton-card" ref={shouldSyncHeights ? leftCardRef : null}>
           <FileUploader
             selectedFile={selectedFile}
-            onFileChange={(file) => {
+            onFileChange={async (file) => {
               setSelectedFile(file);
               // Clear any previous errors when user selects a new file
               setErrorMessage('');
               setErrorData(null);
+              // Get video duration and FPS when file is selected
+              if (file) {
+                try {
+                  const duration = await getVideoDuration(file);
+                  setVideoDuration(duration);
+                  const fps = await getVideoFPS(file);
+                  setVideoFPS(fps);
+                } catch (error) {
+                  console.warn('Could not get video metadata:', error);
+                  setVideoDuration(null);
+                  setVideoFPS(null);
+                }
+              } else {
+                setVideoDuration(null);
+                setVideoFPS(null);
+                setVideoFrameCount(null);
+              }
             }}
             disabled={isDisabled}
           />
@@ -234,7 +340,9 @@ const AnalysisSkeleton = ({
               >
                 {analyzing ? 'Analyzing...' : uploading ? 'Uploading...' : 'Start Analysis'}
               </button>
-              <p className="skeleton-note">Processing takes ~45s.</p>
+              <p className="skeleton-note">
+                Processing takes ~30s.
+              </p>
             </div>
             
             {isDisabled && (

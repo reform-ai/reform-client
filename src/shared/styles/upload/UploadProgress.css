@@ -16,6 +16,24 @@
   transition: width 0.3s ease;
 }
 
+.progress-fill-analyzing {
+  background: linear-gradient(90deg, 
+    var(--accent-green) 0%, 
+    var(--primary-color, #4CAF50) 50%, 
+    var(--accent-green) 100%);
+  background-size: 200% 100%;
+  animation: progress-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes progress-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .progress-text {
   margin-top: 8px;
   color: var(--text-secondary);

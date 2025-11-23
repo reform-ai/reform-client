@@ -17,11 +17,11 @@ const UploadProgress = ({ progress, progressText, uploading, analyzing }) => {
     <div className="progress">
       <div className="progress-bar">
         <div 
-          className="progress-fill"
+          className={`progress-fill ${analyzing ? 'progress-fill-analyzing' : ''}`}
           style={{ width: `${progress}%` }}
         ></div>
       </div>
-      <p className="progress-text">{progressText}</p>
+      <p className="progress-text">{progressText || (analyzing ? 'Analyzing...' : 'Uploading...')}</p>
     </div>
   );
 };

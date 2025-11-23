@@ -35,6 +35,7 @@ export const API_ENDPOINTS = {
   DELETE_POST: (postId) => `${API_URL}/api/social/posts/${postId}`,
   POST_LIKE: (postId) => `${API_URL}/api/social/posts/${postId}/like`,
   POST_COMMENTS: (postId) => `${API_URL}/api/social/posts/${postId}/comments`,
+  POST_IMAGE_UPLOAD: `${API_URL}/api/social/posts/images/upload`,
   COMMENT: (commentId) => `${API_URL}/api/social/comments/${commentId}`,
   USER_FOLLOW: (username) => `${API_URL}/api/social/users/${username}/follow`,
   USER_FOLLOW_STATUS: (username) => `${API_URL}/api/social/users/${username}/follow`,

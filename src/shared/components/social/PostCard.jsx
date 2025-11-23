@@ -221,6 +221,37 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
         </div>
       )}
 
+      {/* Display images if present */}
+      {post.image_urls && post.image_urls.length > 0 && (
+        <div className="post-images" style={{ marginBottom: '16px' }}>
+          {post.image_urls.map((imageUrl, index) => (
+            <img
+              key={index}
+              src={imageUrl}
+              alt={`Post image ${index + 1}`}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '300px',
+                width: 'auto',
+                height: 'auto',
+                objectFit: 'contain',
+                borderRadius: '8px',
+                marginBottom: index < post.image_urls.length - 1 ? '8px' : '0',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-tertiary)',
+                cursor: 'pointer',
+                display: 'block',
+                margin: index < post.image_urls.length - 1 ? '0 auto 8px auto' : '0 auto'
+              }}
+              onClick={() => window.open(imageUrl, '_blank')}
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <div className="post-content">
         {renderPostContent()}
       </div>

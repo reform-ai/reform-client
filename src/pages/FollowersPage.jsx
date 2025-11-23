@@ -19,15 +19,15 @@ const FollowersPage = () => {
     setLoading(true);
     setError(null);
 
-    try {
+      try {
       const data = await authenticatedFetchJson(API_ENDPOINTS.MY_FOLLOWERS, {}, navigate);
-      setFollowers(data.followers || []);
-    } catch (err) {
-      console.error('Error fetching followers:', err);
-      setError(err.message || 'Failed to load followers');
-    } finally {
-      setLoading(false);
-    }
+        setFollowers(data.followers || []);
+      } catch (err) {
+        console.error('Error fetching followers:', err);
+        setError(err.message || 'Failed to load followers');
+      } finally {
+        setLoading(false);
+      }
   }, [navigate]);
 
   const fetchFollowing = useCallback(async () => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAnalyses, getAnalysis } from '../shared/utils/analysisApi';
 import { isUserLoggedIn } from '../shared/utils/authStorage';
-import { formatDateTime, formatDateOnly } from '../shared/utils/dateFormat';
+import { formatDateTime, formatDateOnly, formatTimeOnly, parseUTCDate } from '../shared/utils/dateFormat';
 import { normalizeAnalysisResults, getFpsFromAnalysis, getComponentScores as getComponentScoresFromNormalizer } from '../shared/utils/analysisDataNormalizer';
 import { getScoreColor } from '../shared/utils/scoreUtils';
 import PageContainer from '../shared/components/layout/PageContainer';
@@ -77,7 +77,13 @@ const AnalysisHistoryPage = () => {
       };
 
       const data = await getAnalyses(params);
-      setAnalyses(data.analyses || []);
+      // Sort by created_at descending (newest first) as a safety measure
+      const sortedAnalyses = (data.analyses || []).sort((a, b) => {
+        const dateA = new Date(a.created_at);
+        const dateB = new Date(b.created_at);
+        return dateB - dateA; // Descending order (newest first)
+      });
+      setAnalyses(sortedAnalyses);
       setTotal(data.total || 0);
     } catch (err) {
       console.error('Error fetching analyses:', err);
@@ -191,6 +197,41 @@ const AnalysisHistoryPage = () => {
   const analysisResults = getAnalysisResults();
   const componentScores = getComponentScores();
 
+  // Check if there are multiple analyses on the same date
+  const getDateCounts = () => {
+    const dateCounts = {};
+    analyses.forEach(analysis => {
+      const dateKey = formatDateOnly(analysis.created_at);
+      dateCounts[dateKey] = (dateCounts[dateKey] || 0) + 1;
+    });
+    return dateCounts;
+  };
+
+  const dateCounts = getDateCounts();
+
+  // Format date display: show time on second line if multiple analyses on same date
+  // All dates from API are in UTC - uses dateFormat utilities to convert to user's local timezone
+  const formatAnalysisDate = (analysis) => {
+    const dateKey = formatDateOnly(analysis.created_at);
+    const hasMultipleOnDate = dateCounts[dateKey] > 1;
+    
+    if (hasMultipleOnDate) {
+      // Use formatTimeOnly from dateFormat.js - ensures consistent UTC->local conversion
+      return {
+        date: formatDateOnly(analysis.created_at), // formatDateOnly handles UTC->local conversion
+        time: formatTimeOnly(analysis.created_at), // formatTimeOnly handles UTC->local conversion
+        showTime: true
+      };
+    } else {
+      // Just show date (formatDateOnly already handles UTC->local conversion)
+      return {
+        date: formatDateOnly(analysis.created_at),
+        time: '',
+        showTime: false
+      };
+    }
+  };
+
   if (loading && analyses.length === 0) {
     return (
       <PageContainer>
@@ -234,33 +275,33 @@ const AnalysisHistoryPage = () => {
           hasActiveFilters={hasActiveFilters}
         />
 
-        {/* Error Message */}
-        {error && (
-          <div style={{
-            marginTop: '16px',
-            padding: '12px 16px',
-            background: 'var(--accent-orange)',
-            color: 'white',
-            borderRadius: '8px',
-            fontSize: '0.9rem'
-          }}>
-            {error}
-            <button
-              onClick={fetchAnalyses}
-              className="btn"
-              style={{
-                marginLeft: '12px',
-                padding: '4px 12px',
-                fontSize: '0.85rem',
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                color: 'white'
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
+              {/* Error Message */}
+              {error && (
+                <div style={{
+                  marginTop: '16px',
+                  padding: '12px 16px',
+                  background: 'var(--accent-orange)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem'
+                }}>
+                  {error}
+                  <button
+                    onClick={fetchAnalyses}
+                    className="btn"
+                    style={{
+                      marginLeft: '12px',
+                      padding: '4px 12px',
+                      fontSize: '0.85rem',
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      color: 'white'
+                    }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
 
         {/* Main Content: List and Details */}
         <div className="skeleton-grid">
@@ -362,9 +403,28 @@ const AnalysisHistoryPage = () => {
                             fontSize: '0.9rem',
                             fontWeight: 600,
                             color: 'var(--text-primary)',
-                            flex: 1
+                            flex: 1,
+                            lineHeight: '1.2',
+                            textAlign: 'center'
                           }}>
-                            {formatDateOnly(analysis.created_at)}
+                            {(() => {
+                              const dateInfo = formatAnalysisDate(analysis);
+                              return (
+                                <>
+                                  <div>{dateInfo.date}</div>
+                                  {dateInfo.showTime && (
+                                    <div style={{
+                                      fontSize: '0.9rem',
+                                      fontWeight: 400,
+                                      color: 'var(--text-secondary)',
+                                      marginTop: '2px'
+                                    }}>
+                                      {dateInfo.time}
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                           <div style={{
                             padding: '4px 8px',

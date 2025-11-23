@@ -140,6 +140,7 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
               <FollowButton 
                 username={post.username}
                 initialFollowing={post.is_following}
+                isOwnProfile={isOwnPost}
                 onUpdate={(following) => {
                   // Update post's follow status if callback provided
                   if (onUpdate) {
@@ -172,42 +173,27 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
                 🗑️
               </button>
             ) : (
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Delete?</span>
-                <button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  style={{
-                    padding: '4px 12px',
-                    fontSize: '0.85rem',
-                    background: 'var(--accent-orange)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: isDeleting ? 'not-allowed' : 'pointer',
-                    opacity: isDeleting ? 0.7 : 1
-                  }}
-                >
-                  {isDeleting ? 'Deleting...' : 'Yes'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setIsDeleting(false);
-                  }}
-                  disabled={isDeleting}
-                  style={{
-                    padding: '4px 12px',
-                    fontSize: '0.85rem',
-                    background: 'transparent',
-                    color: 'var(--text-secondary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '4px',
-                    cursor: isDeleting ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
+              <div className="delete-confirm-container">
+                <span className="delete-confirm-text">Delete?</span>
+                <div className="delete-confirm-buttons">
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="delete-confirm-yes"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Yes'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setIsDeleting(false);
+                    }}
+                    disabled={isDeleting}
+                    className="delete-confirm-cancel"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -224,31 +210,205 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
       {/* Display images if present */}
       {post.image_urls && post.image_urls.length > 0 && (
         <div className="post-images" style={{ marginBottom: '16px' }}>
-          {post.image_urls.map((imageUrl, index) => (
-            <img
-              key={index}
-              src={imageUrl}
-              alt={`Post image ${index + 1}`}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '300px',
-                width: 'auto',
-                height: 'auto',
-                objectFit: 'contain',
-                borderRadius: '8px',
-                marginBottom: index < post.image_urls.length - 1 ? '8px' : '0',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-tertiary)',
-                cursor: 'pointer',
-                display: 'block',
-                margin: index < post.image_urls.length - 1 ? '0 auto 8px auto' : '0 auto'
-              }}
-              onClick={() => window.open(imageUrl, '_blank')}
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-          ))}
+          {(() => {
+            // Use thumbnails if available, fallback to full images
+            const getThumbnail = (index) => {
+              return (post.thumbnail_urls && post.thumbnail_urls[index]) || post.image_urls[index];
+            };
+            const getFullImage = (index) => post.image_urls[index];
+            
+            if (post.image_urls.length === 1) {
+              // Single image - full width, use thumbnail for display
+              return (
+                <img
+                  src={getThumbnail(0)}
+                  alt="Post image"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '300px',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-tertiary)',
+                    cursor: 'pointer',
+                    display: 'block',
+                    margin: '0 auto'
+                  }}
+                  onClick={() => window.open(getFullImage(0), '_blank')}
+                  onError={(e) => {
+                    // Fallback to full image if thumbnail fails
+                    if (e.target.src !== getFullImage(0)) {
+                      e.target.src = getFullImage(0);
+                    } else {
+                      e.target.style.display = 'none';
+                    }
+                  }}
+                />
+              );
+            } else if (post.image_urls.length === 2) {
+              // Two images - side by side
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {post.image_urls.map((imageUrl, index) => (
+                    <img
+                      key={index}
+                      src={getThumbnail(index)}
+                      alt={`Post image ${index + 1}`}
+                      style={{
+                        width: '100%',
+                        aspectRatio: '1',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-tertiary)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => window.open(getFullImage(index), '_blank')}
+                      onError={(e) => {
+                        // Fallback to full image if thumbnail fails
+                        if (e.target.src !== getFullImage(index)) {
+                          e.target.src = getFullImage(index);
+                        } else {
+                          e.target.style.display = 'none';
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              );
+            } else if (post.image_urls.length === 3) {
+              // Three images - 2 on top, 1 on bottom
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <img
+                    src={getThumbnail(0)}
+                    alt="Post image 1"
+                    style={{
+                      width: '100%',
+                      aspectRatio: '1',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-tertiary)',
+                      cursor: 'pointer',
+                      gridRow: 'span 2'
+                    }}
+                    onClick={() => window.open(getFullImage(0), '_blank')}
+                    onError={(e) => {
+                      if (e.target.src !== getFullImage(0)) {
+                        e.target.src = getFullImage(0);
+                      } else {
+                        e.target.style.display = 'none';
+                      }
+                    }}
+                  />
+                  <img
+                    src={getThumbnail(1)}
+                    alt="Post image 2"
+                    style={{
+                      width: '100%',
+                      aspectRatio: '1',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-tertiary)',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => window.open(getFullImage(1), '_blank')}
+                    onError={(e) => {
+                      if (e.target.src !== getFullImage(1)) {
+                        e.target.src = getFullImage(1);
+                      } else {
+                        e.target.style.display = 'none';
+                      }
+                    }}
+                  />
+                  <img
+                    src={getThumbnail(2)}
+                    alt="Post image 3"
+                    style={{
+                      width: '100%',
+                      aspectRatio: '1',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-tertiary)',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => window.open(getFullImage(2), '_blank')}
+                    onError={(e) => {
+                      if (e.target.src !== getFullImage(2)) {
+                        e.target.src = getFullImage(2);
+                      } else {
+                        e.target.style.display = 'none';
+                      }
+                    }}
+                  />
+                </div>
+              );
+            } else {
+              // Four or more images - grid layout
+              return (
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: post.image_urls.length === 4 ? '1fr 1fr' : 'repeat(3, 1fr)',
+                  gap: '8px'
+                }}>
+                  {post.image_urls.slice(0, 6).map((imageUrl, index) => (
+                    <div key={index} style={{ position: 'relative' }}>
+                      <img
+                        src={getThumbnail(index)}
+                        alt={`Post image ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          aspectRatio: '1',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-tertiary)',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => window.open(getFullImage(index), '_blank')}
+                        onError={(e) => {
+                          // Fallback to full image if thumbnail fails
+                          if (e.target.src !== getFullImage(index)) {
+                            e.target.src = getFullImage(index);
+                          } else {
+                            e.target.style.display = 'none';
+                          }
+                        }}
+                      />
+                      {index === 5 && post.image_urls.length > 6 && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '1.2rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => window.open(getFullImage(index), '_blank')}
+                        >
+                          +{post.image_urls.length - 6}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+          })()}
         </div>
       )}
 

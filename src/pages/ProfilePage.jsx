@@ -28,7 +28,7 @@ function ProfilePage() {
   const checkTokenActivationStatus = useCallback(async () => {
     try {
       const data = await authenticatedFetchJson(API_ENDPOINTS.TOKEN_BALANCE, {}, navigate);
-      setIsTokenActivated(data.is_activated !== false);
+        setIsTokenActivated(data.is_activated !== false);
     } catch (err) {
       console.error('Failed to check token activation status:', err);
     }
@@ -40,10 +40,10 @@ function ProfilePage() {
         authenticatedFetchJson(API_ENDPOINTS.ME, {}, navigate),
         authenticatedFetchJson(API_ENDPOINTS.PRIVACY, {}, navigate).catch(() => null)
       ]);
-      
+
       if (userData.status === 'fulfilled') {
         const data = userData.value;
-        setUserInfo(data);
+      setUserInfo(data);
       } else {
         throw new Error(userData.reason?.message || 'Failed to load profile information');
       }
@@ -170,45 +170,45 @@ function ProfilePage() {
           <article className="skeleton-card">
             <h3>Account Information</h3>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                marginBottom: '8px'
-              }}>
-                Full Name
-              </label>
-              <div style={{
-                padding: '12px',
-                background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                color: 'var(--text-primary)'
-              }}>
-                {userInfo?.full_name}
-              </div>
-            </div>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{
+            display: 'block',
+            color: 'var(--text-secondary)',
+            fontSize: '0.9rem',
+            marginBottom: '8px'
+          }}>
+            Full Name
+          </label>
+          <div style={{
+            padding: '12px',
+            background: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            color: 'var(--text-primary)'
+          }}>
+            {userInfo?.full_name}
+          </div>
+        </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                marginBottom: '8px'
-              }}>
-                Email
-              </label>
-              <div style={{
-                padding: '12px',
-                background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                color: 'var(--text-primary)'
-              }}>
-                {userInfo?.email}
-              </div>
-            </div>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{
+            display: 'block',
+            color: 'var(--text-secondary)',
+            fontSize: '0.9rem',
+            marginBottom: '8px'
+          }}>
+            Email
+          </label>
+          <div style={{
+            padding: '12px',
+            background: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            color: 'var(--text-primary)'
+          }}>
+            {userInfo?.email}
+          </div>
+        </div>
 
             <UsernameEditor 
               userInfo={userInfo} 
@@ -216,47 +216,47 @@ function ProfilePage() {
               onUpdate={handleUserInfoUpdate}
             />
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                marginBottom: '8px'
-              }}>
-                Email Verification Status
-              </label>
-              <div style={{
-                padding: '12px',
-                background: userInfo?.is_verified ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                border: `1px solid ${userInfo?.is_verified ? 'var(--accent-green)' : 'var(--accent-orange)'}`,
-                borderRadius: '8px',
-                color: userInfo?.is_verified ? 'var(--accent-green)' : 'var(--accent-orange)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                {userInfo?.is_verified ? '✅ Verified' : '❌ Unverified'}
-                {!userInfo?.is_verified && (
-                  <span style={{ fontSize: '0.85rem', marginLeft: 'auto' }}>
-                    <button
-                      onClick={() => setShowVerificationModal(true)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--accent-green)',
-                        textDecoration: 'underline',
-                        cursor: 'pointer',
-                        padding: 0,
-                        fontSize: '0.85rem',
-                        fontFamily: 'inherit'
-                      }}
-                    >
-                      Verify now
-                    </button>
-                  </span>
-                )}
-              </div>
-            </div>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{
+            display: 'block',
+            color: 'var(--text-secondary)',
+            fontSize: '0.9rem',
+            marginBottom: '8px'
+          }}>
+            Email Verification Status
+          </label>
+          <div style={{
+            padding: '12px',
+            background: userInfo?.is_verified ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            border: `1px solid ${userInfo?.is_verified ? 'var(--accent-green)' : 'var(--accent-orange)'}`,
+            borderRadius: '8px',
+            color: userInfo?.is_verified ? 'var(--accent-green)' : 'var(--accent-orange)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            {userInfo?.is_verified ? '✅ Verified' : '❌ Unverified'}
+            {!userInfo?.is_verified && (
+              <span style={{ fontSize: '0.85rem', marginLeft: 'auto' }}>
+                <button
+                  onClick={() => setShowVerificationModal(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--accent-green)',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontSize: '0.85rem',
+                    fontFamily: 'inherit'
+                  }}
+                >
+                  Verify now
+                </button>
+              </span>
+            )}
+          </div>
+        </div>
 
             <TokenActivationSection 
               isTokenActivated={isTokenActivated}

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import { useRequireAuth } from '../shared/utils/useRequireAuth';
 import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
+import { isUserLoggedIn } from '../shared/utils/authStorage';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PostCard from '../shared/components/social/PostCard';
@@ -22,6 +23,18 @@ const UserProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentUserUsername, setCurrentUserUsername] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const userData = await authenticatedFetchJson(API_ENDPOINTS.ME, {}, navigate);
+      setCurrentUserUsername(userData.username);
+      setCurrentUserId(userData.id);
+    } catch (err) {
+      console.warn('Failed to fetch current user:', err);
+    }
+  }, [navigate]);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -42,7 +55,28 @@ const UserProfilePage = () => {
     }
   }, [username, navigate]);
 
-  useRequireAuth(navigate, fetchProfile);
+  const initializePage = useCallback(async () => {
+    await fetchCurrentUser();
+    await fetchProfile();
+  }, [fetchCurrentUser, fetchProfile]);
+
+  useRequireAuth(navigate, initializePage);
+
+  const isOwnProfile = useMemo(() => {
+    // Decode URL parameter in case it's encoded
+    const decodedUsername = decodeURIComponent(username || '');
+    
+    // Use profile username if available (more reliable than URL param)
+    const profileUsername = profile?.username || decodedUsername;
+    
+    if (!currentUserUsername || !profileUsername) {
+      return false;
+    }
+    // Compare usernames (case-insensitive, trimmed)
+    const currentUsernameNormalized = currentUserUsername.toLowerCase().trim();
+    const profileUsernameNormalized = profileUsername.toLowerCase().trim();
+    return currentUsernameNormalized === profileUsernameNormalized;
+  }, [currentUserUsername, username, profile?.username]);
 
 
   const handlePostUpdate = () => {
@@ -142,11 +176,14 @@ const UserProfilePage = () => {
                 </div>
               )}
             </div>
-            <FollowButton
-              username={profile.username}
-              initialFollowing={null}
-              onUpdate={handlePostUpdate}
-            />
+            {!isOwnProfile && currentUserUsername && profile?.username && (
+              <FollowButton
+                username={profile.username}
+                initialFollowing={null}
+                isOwnProfile={isOwnProfile}
+                onUpdate={handlePostUpdate}
+              />
+            )}
           </div>
 
           {/* Privacy and PT indicators */}
@@ -195,6 +232,7 @@ const UserProfilePage = () => {
                   <PostCard
                     key={post.id}
                     post={post}
+                    currentUserId={currentUserId}
                     onUpdate={handlePostUpdate}
                   />
                 ))}
@@ -223,11 +261,14 @@ const UserProfilePage = () => {
             <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
               This user's posts are private. Follow them to see their posts.
             </p>
-            <FollowButton
-              username={profile.username}
-              initialFollowing={false}
-              onUpdate={handlePostUpdate}
-            />
+            {!isOwnProfile && currentUserUsername && profile?.username && (
+              <FollowButton
+                username={profile.username}
+                initialFollowing={false}
+                isOwnProfile={isOwnProfile}
+                onUpdate={handlePostUpdate}
+              />
+            )}
           </div>
         )}
       </div>

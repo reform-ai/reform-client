@@ -14,7 +14,7 @@ export const storeUserData = (data) => {
   // Store access token temporarily as fallback for browsers that block third-party cookies
   // Cookies are preferred, but we need a fallback
   if (data.access_token) {
-    localStorage.setItem('access_token', data.access_token);
+  localStorage.setItem('access_token', data.access_token);
   }
   
   // Store user ID (keeping both for backward compatibility)

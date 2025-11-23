@@ -21,7 +21,10 @@ const FollowButton = ({ username, initialFollowing = null, onUpdate, isOwnProfil
     if (initialFollowing === null && !isOwnProfile && username) {
       const fetchFollowStatus = async () => {
         const token = getUserToken();
-        if (!token) return;
+        if (!token) {
+          setIsChecking(false);
+          return;
+        }
 
         try {
           const response = await fetch(API_ENDPOINTS.USER_FOLLOW(username), {
@@ -33,9 +36,18 @@ const FollowButton = ({ username, initialFollowing = null, onUpdate, isOwnProfil
           if (response.ok) {
             const data = await response.json();
             setIsFollowing(data.following || false);
+          } else if (response.status === 401) {
+            // Unauthorized - token expired or invalid, don't show follow button
+            console.warn('Unauthorized to check follow status');
+            setIsFollowing(false);
+          } else {
+            // Other errors - default to not following
+            console.warn('Failed to fetch follow status:', response.status);
+            setIsFollowing(false);
           }
         } catch (err) {
           console.error('Error fetching follow status:', err);
+          setIsFollowing(false);
         } finally {
           setIsChecking(false);
         }
@@ -64,7 +76,17 @@ const FollowButton = ({ username, initialFollowing = null, onUpdate, isOwnProfil
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to toggle follow');
+        const errorMessage = errorData.detail || 'Failed to toggle follow';
+        
+        // If backend says "cannot follow yourself", this is the user's own profile
+        if (errorMessage.toLowerCase().includes('cannot follow yourself') || 
+            errorMessage.toLowerCase().includes('follow yourself')) {
+          console.warn('[FollowButton] Backend detected own profile:', errorMessage);
+          // Don't show alert, just silently fail - the button should be hidden by isOwnProfile
+          return;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -76,7 +98,11 @@ const FollowButton = ({ username, initialFollowing = null, onUpdate, isOwnProfil
       }
     } catch (err) {
       console.error('Error toggling follow:', err);
-      alert(err.message || 'Failed to toggle follow');
+      // Only show alert if it's not the "cannot follow yourself" error
+      if (!err.message.toLowerCase().includes('cannot follow yourself') && 
+          !err.message.toLowerCase().includes('follow yourself')) {
+        alert(err.message || 'Failed to toggle follow');
+      }
     } finally {
       setIsLoading(false);
     }

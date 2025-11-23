@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_ENDPOINTS } from '../../config/api';
 import { getUserToken, clearUserData, isUserLoggedIn } from '../utils/authStorage';
+import { authenticatedFetchJson } from '../utils/authenticatedFetch';
 
 const ProfileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [tokensRemaining, setTokensRemaining] = useState(null);
   const menuRef = useRef(null);
+  const intervalRef = useRef(null);
 
   // Get user initials from localStorage
   const getUserInitials = () => {
@@ -36,43 +38,75 @@ const ProfileMenu = () => {
 
   // Fetch token count from API
   const fetchTokens = async () => {
-    try {
-      const response = await fetch(API_ENDPOINTS.ME, {
-        credentials: 'include', // Include cookies for authentication
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+    // Only fetch if user is logged in
+    if (!isUserLoggedIn()) {
+      // Stop interval if user is not logged in
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setTokensRemaining(null);
+      return;
+    }
 
-      if (response.ok) {
-        const data = await response.json();
+    try {
+      // Use authenticatedFetchJson which handles token refresh automatically
+      // Pass null for navigate to prevent redirects, but allow token refresh
+      const data = await authenticatedFetchJson(API_ENDPOINTS.ME, {}, null);
+      if (data && data.tokens_remaining !== undefined) {
         setTokensRemaining(data.tokens_remaining);
       }
     } catch (error) {
-      // Silently fail - tokens will just not show
-      console.warn('Failed to fetch token count:', error);
+      // If 401 after refresh attempt, user is logged out - stop the interval
+      // authenticatedFetchJson will try to refresh, so if it still fails, user is logged out
+      if (error.message && (error.message.includes('401') || error.message.includes('Unauthorized'))) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        setTokensRemaining(null);
+      }
+      // Silently fail for other errors - tokens will just not show
+      // Don't log to console to avoid noise
     }
   };
 
   useEffect(() => {
-    fetchTokens();
-    
-    // Listen for token updates from analysis completion
-    const handleTokensUpdated = (event) => {
-      if (event.detail?.tokens_remaining !== undefined) {
-        setTokensRemaining(event.detail.tokens_remaining);
-      }
-    };
-    
-    window.addEventListener('tokensUpdated', handleTokensUpdated);
-    
-    // Refresh tokens every 30 seconds
-    const interval = setInterval(fetchTokens, 30000);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('tokensUpdated', handleTokensUpdated);
-    };
+    // Only set up token fetching if user is logged in
+    if (isUserLoggedIn()) {
+      fetchTokens();
+      
+      // Listen for token updates from analysis completion
+      const handleTokensUpdated = (event) => {
+        if (event.detail?.tokens_remaining !== undefined) {
+          setTokensRemaining(event.detail.tokens_remaining);
+        }
+      };
+      
+      window.addEventListener('tokensUpdated', handleTokensUpdated);
+      
+      // Refresh tokens every 30 seconds
+      intervalRef.current = setInterval(() => {
+        // Check if still logged in before fetching
+        if (isUserLoggedIn()) {
+          fetchTokens();
+        } else {
+          // Stop interval if user logged out
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+        }
+      }, 30000);
+      
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        window.removeEventListener('tokensUpdated', handleTokensUpdated);
+      };
+    }
   }, []);
 
   useEffect(() => {

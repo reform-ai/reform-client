@@ -18,15 +18,15 @@ const TransactionHistoryPage = () => {
     setLoading(true);
     setError(null);
 
-    try {
+      try {
       const data = await authenticatedFetchJson(API_ENDPOINTS.TOKEN_TRANSACTIONS, {}, navigate);
-      setTransactions(data.transactions || []);
-    } catch (err) {
-      console.error('Error fetching transaction history:', err);
-      setError(err.message || 'Failed to load transaction history');
-    } finally {
-      setLoading(false);
-    }
+        setTransactions(data.transactions || []);
+      } catch (err) {
+        console.error('Error fetching transaction history:', err);
+        setError(err.message || 'Failed to load transaction history');
+      } finally {
+        setLoading(false);
+      }
   }, [navigate]);
 
   useRequireAuth(navigate, fetchTransactions);

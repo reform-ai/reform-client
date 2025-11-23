@@ -16,9 +16,8 @@
  * 
  * @param {string|Date} dateValue - Date to parse
  * @returns {Date|null} Parsed Date object, or null if invalid
- * @private
  */
-const parseUTCDate = (dateValue) => {
+export const parseUTCDate = (dateValue) => {
   if (!dateValue) return null;
   
   // If already a Date object, return as-is
@@ -150,5 +149,35 @@ export const formatDateOnly = (dateValue) => {
     month: 'short',
     day: 'numeric'
   });
+};
+
+/**
+ * Format time only (no date) for display.
+ * Properly handles UTC dates from the API and converts to user's local timezone.
+ * Uses the exact same timezone conversion logic as formatDateTime for consistency.
+ * 
+ * @param {string|Date} dateValue - Date to format
+ * @returns {string} Formatted time string ("N/A" if invalid)
+ */
+export const formatTimeOnly = (dateValue) => {
+  // Use formatDateTime and extract just the time portion
+  // This ensures 100% consistency with formatDateTime's timezone conversion
+  // (which is proven to work correctly on token history page)
+  const dateTimeString = formatDateTime(dateValue, { includeTime: true });
+  
+  if (dateTimeString === 'N/A') {
+    return 'N/A';
+  }
+  
+  // formatDateTime returns format like "Jan 15, 2024, 03:45 PM"
+  // Extract the time portion (after the last comma and space)
+  const parts = dateTimeString.split(', ');
+  if (parts.length >= 2) {
+    // Return the last part which should be the time (e.g., "03:45 PM")
+    return parts[parts.length - 1];
+  }
+  
+  // Fallback: if format is unexpected, return as-is
+  return dateTimeString;
 };
 

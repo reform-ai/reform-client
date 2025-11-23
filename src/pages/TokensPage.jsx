@@ -18,20 +18,20 @@ const TokensPage = () => {
     setLoading(true);
     setError(null);
 
-    try {
+      try {
       const data = await authenticatedFetchJson(API_ENDPOINTS.TOKEN_BALANCE, {}, navigate);
-      setBalance(data);
-      
-      // If not activated, set error to show activation message
-      if (data.is_activated === false) {
-        setError('not_activated');
+        setBalance(data);
+        
+        // If not activated, set error to show activation message
+        if (data.is_activated === false) {
+          setError('not_activated');
+        }
+      } catch (err) {
+        console.error('Error fetching token balance:', err);
+        setError(err.message || 'Failed to load token balance');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error fetching token balance:', err);
-      setError(err.message || 'Failed to load token balance');
-    } finally {
-      setLoading(false);
-    }
   }, [navigate]);
 
   useRequireAuth(navigate, fetchTokenBalance);

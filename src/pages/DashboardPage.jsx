@@ -59,22 +59,12 @@ const DashboardPage = () => {
         <div className="skeleton-grid">
           {/* Most Recent Analysis */}
           <article className="skeleton-card">
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '20px'
-            }}>
+            <div className="dashboard-recent-header">
               <h3 style={{ margin: 0 }}>Most Recent Analysis</h3>
               {metrics && metrics.total_analyses > 0 && (
                 <Link
                   to="/analyses"
-                  style={{
-                    fontSize: '0.9rem',
-                    color: 'var(--accent-green)',
-                    textDecoration: 'none',
-                    fontWeight: 500
-                  }}
+                  className="dashboard-view-all-link"
                 >
                   View All →
                 </Link>
@@ -178,69 +168,27 @@ const DashboardPage = () => {
 
                 {/* Quick Stats */}
                 {metrics && metrics.total_analyses > 0 && (
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-                    gap: '12px',
-                    marginTop: '16px',
-                    padding: '16px',
-                    background: 'var(--bg-tertiary)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '8px'
-                  }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <p style={{
-                        margin: '0 0 4px 0',
-                        fontSize: '1.5rem',
-                        fontWeight: 700,
-                        color: 'var(--text-primary)'
-                      }}>
+                  <div className="dashboard-quick-stats">
+                    <div className="dashboard-stat-item">
+                      <p className="dashboard-stat-value" style={{ color: 'var(--text-primary)' }}>
                         {metrics.total_analyses}
                       </p>
-                      <p style={{
-                        margin: 0,
-                        fontSize: '0.85rem',
-                        color: 'var(--text-secondary)'
-                      }}>
-                        Total
-                      </p>
+                      <p className="dashboard-stat-label">Total</p>
                     </div>
                     {metrics.average_score !== null && (
-                      <div style={{ textAlign: 'center' }}>
-                        <p style={{
-                          margin: '0 0 4px 0',
-                          fontSize: '1.5rem',
-                          fontWeight: 700,
-                          color: getScoreColor(Math.round(metrics.average_score))
-                        }}>
+                      <div className="dashboard-stat-item">
+                        <p className="dashboard-stat-value" style={{ color: getScoreColor(Math.round(metrics.average_score)) }}>
                           {metrics.average_score.toFixed(1)}
                         </p>
-                        <p style={{
-                          margin: 0,
-                          fontSize: '0.85rem',
-                          color: 'var(--text-secondary)'
-                        }}>
-                          Average
-                        </p>
+                        <p className="dashboard-stat-label">Average</p>
                       </div>
                     )}
                     {metrics.best_score !== null && (
-                      <div style={{ textAlign: 'center' }}>
-                        <p style={{
-                          margin: '0 0 4px 0',
-                          fontSize: '1.5rem',
-                          fontWeight: 700,
-                          color: getScoreColor(metrics.best_score)
-                        }}>
+                      <div className="dashboard-stat-item">
+                        <p className="dashboard-stat-value" style={{ color: getScoreColor(metrics.best_score) }}>
                           {metrics.best_score}
                         </p>
-                        <p style={{
-                          margin: 0,
-                          fontSize: '0.85rem',
-                          color: 'var(--text-secondary)'
-                        }}>
-                          Best
-                        </p>
+                        <p className="dashboard-stat-label">Best</p>
                       </div>
                     )}
                   </div>
@@ -295,22 +243,14 @@ const DashboardPage = () => {
           {/* Community Feed */}
           <article className="skeleton-card">
             <h3>Community Feed</h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
+            <p className="dashboard-feed-description">
               Connect with the community and share your progress
             </p>
             <Link 
               to="/feed" 
               className="btn btn-view-feed"
-              style={{ 
-                display: 'inline-block',
-                background: 'transparent',
-                border: '1px solid var(--accent-green)',
-                color: 'var(--text-primary)',
-                padding: '6px 12px',
-                fontSize: '0.9rem'
-              }}
             >
-              View Feed
+              View Feed →
             </Link>
           </article>
         </div>

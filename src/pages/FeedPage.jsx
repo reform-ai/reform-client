@@ -27,9 +27,9 @@ const FeedPage = () => {
   const fetchCurrentUser = useCallback(async () => {
     try {
       const userData = await authenticatedFetchJson(API_ENDPOINTS.ME, {}, navigate);
-      setCurrentUserId(userData.id);
-      setCurrentUserEmail(userData.email);
-      setIsVerified(userData.is_verified || false);
+        setCurrentUserId(userData.id);
+        setCurrentUserEmail(userData.email);
+        setIsVerified(userData.is_verified || false);
     } catch (err) {
       console.warn('Failed to fetch current user:', err);
     }

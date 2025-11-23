@@ -31,14 +31,15 @@ const FollowButton = ({ username, initialFollowing = null, onUpdate, isOwnProfil
             headers: {
               'Authorization': `Bearer ${token}`,
             },
+            credentials: 'include', // Include httpOnly cookies for authentication
           });
 
           if (response.ok) {
             const data = await response.json();
             setIsFollowing(data.following || false);
           } else if (response.status === 401) {
-            // Unauthorized - token expired or invalid, don't show follow button
-            console.warn('Unauthorized to check follow status');
+            // Unauthorized - token expired or invalid, silently fail
+            // This is expected when user is not logged in or token expired
             setIsFollowing(false);
           } else {
             // Other errors - default to not following
@@ -72,6 +73,7 @@ const FollowButton = ({ username, initialFollowing = null, onUpdate, isOwnProfil
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include httpOnly cookies for authentication
       });
 
       if (!response.ok) {

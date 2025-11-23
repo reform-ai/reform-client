@@ -29,8 +29,11 @@ export async function authenticatedFetch(url, options = {}, navigate = null, ret
   // Try cookies first (preferred), but also include Authorization header as fallback
   // Many browsers block third-party cookies, so we need both
   const token = getUserToken();
+  
+  // Don't set Content-Type for FormData - browser will set it with boundary
+  const isFormData = options.body instanceof FormData;
   const headers = {
-    'Content-Type': 'application/json',
+    ...(!isFormData && { 'Content-Type': 'application/json' }),
     ...options.headers,
   };
   

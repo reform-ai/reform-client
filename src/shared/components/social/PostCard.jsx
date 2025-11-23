@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../../config/api';
-import { getUserToken } from '../../utils/authStorage';
+import { authenticatedFetch } from '../../utils/authenticatedFetch';
 import { formatDate } from '../../utils/dateFormat';
 import LikeButton from './LikeButton';
 import CommentSection from './CommentSection';
 import FollowButton from './FollowButton';
 import ScoreBreakdown from '../ScoreBreakdown';
 import AnglePlot from '../charts/AnglePlot';
+import ImageLightboxModal from '../modals/ImageLightboxModal';
 import '../../styles/social/PostCard.css';
 
 const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete }) => {
@@ -15,6 +16,9 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
   const [showComments, setShowComments] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showImageLightbox, setShowImageLightbox] = useState(false);
+  const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const handleUserClick = () => {
     if (post.username) {
@@ -29,20 +33,15 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
     }
 
     setIsDeleting(true);
-    const token = getUserToken();
 
     try {
-      const response = await fetch(API_ENDPOINTS.DELETE_POST(post.id), {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
+      await authenticatedFetch(
+        API_ENDPOINTS.DELETE_POST(post.id),
+        {
+          method: 'DELETE',
         },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to delete post');
-      }
+        navigate
+      );
 
       // Call onDelete callback to refresh the feed
       if (onDelete) {
@@ -57,6 +56,33 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
   };
 
   const isOwnPost = currentUserId && post.user_id === currentUserId;
+
+  const handleImageClick = (index) => {
+    setLightboxImageIndex(index);
+    setShowImageLightbox(true);
+  };
+
+  const handleImageNav = (direction, e) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    if (direction === 'prev') {
+      setCurrentImageIndex((prev) => 
+        prev === 0 ? (post.image_urls.length - 1) : prev - 1
+      );
+    } else {
+      setCurrentImageIndex((prev) => 
+        prev === post.image_urls.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const handleDotClick = (index, e) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setCurrentImageIndex(index);
+  };
 
   const renderPostContent = () => {
     if (post.post_type === 'score' && post.score_data) {
@@ -207,9 +233,9 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
         </div>
       )}
 
-      {/* Display images if present */}
+      {/* Display images if present - show only one at a time with navigation */}
       {post.image_urls && post.image_urls.length > 0 && (
-        <div className="post-images" style={{ marginBottom: '16px' }}>
+        <div className="post-images" style={{ marginBottom: '16px', position: 'relative' }}>
           {(() => {
             // Use thumbnails if available, fallback to full images
             const getThumbnail = (index) => {
@@ -217,197 +243,130 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
             };
             const getFullImage = (index) => post.image_urls[index];
             
-            if (post.image_urls.length === 1) {
-              // Single image - full width, use thumbnail for display
-              return (
-                <img
-                  src={getThumbnail(0)}
-                  alt="Post image"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '300px',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-tertiary)',
-                    cursor: 'pointer',
-                    display: 'block',
-                    margin: '0 auto'
-                  }}
-                  onClick={() => window.open(getFullImage(0), '_blank')}
-                  onError={(e) => {
-                    // Fallback to full image if thumbnail fails
-                    if (e.target.src !== getFullImage(0)) {
-                      e.target.src = getFullImage(0);
-                    } else {
-                      e.target.style.display = 'none';
-                    }
-                  }}
-                />
-              );
-            } else if (post.image_urls.length === 2) {
-              // Two images - side by side
-              return (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  {post.image_urls.map((imageUrl, index) => (
-                    <img
-                      key={index}
-                      src={getThumbnail(index)}
-                      alt={`Post image ${index + 1}`}
-                      style={{
-                        width: '100%',
-                        aspectRatio: '1',
-                        objectFit: 'cover',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        background: 'var(--bg-tertiary)',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => window.open(getFullImage(index), '_blank')}
-                      onError={(e) => {
-                        // Fallback to full image if thumbnail fails
-                        if (e.target.src !== getFullImage(index)) {
-                          e.target.src = getFullImage(index);
-                        } else {
-                          e.target.style.display = 'none';
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              );
-            } else if (post.image_urls.length === 3) {
-              // Three images - 2 on top, 1 on bottom
-              return (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            return (
+              <div style={{ position: 'relative' }}>
+                {/* Single image display */}
+                <div style={{ position: 'relative' }}>
                   <img
-                    src={getThumbnail(0)}
-                    alt="Post image 1"
+                    src={getThumbnail(currentImageIndex)}
+                    alt={`Post image ${currentImageIndex + 1}`}
                     style={{
-                      width: '100%',
-                      aspectRatio: '1',
-                      objectFit: 'cover',
+                      maxWidth: '100%',
+                      maxHeight: '400px',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
                       borderRadius: '8px',
                       border: '1px solid var(--border-color)',
                       background: 'var(--bg-tertiary)',
                       cursor: 'pointer',
-                      gridRow: 'span 2'
+                      display: 'block',
+                      margin: '0 auto'
                     }}
-                    onClick={() => window.open(getFullImage(0), '_blank')}
+                    onClick={() => handleImageClick(currentImageIndex)}
                     onError={(e) => {
-                      if (e.target.src !== getFullImage(0)) {
-                        e.target.src = getFullImage(0);
+                      // Fallback to full image if thumbnail fails
+                      if (e.target.src !== getFullImage(currentImageIndex)) {
+                        e.target.src = getFullImage(currentImageIndex);
                       } else {
                         e.target.style.display = 'none';
                       }
                     }}
                   />
-                  <img
-                    src={getThumbnail(1)}
-                    alt="Post image 2"
-                    style={{
-                      width: '100%',
-                      aspectRatio: '1',
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-tertiary)',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => window.open(getFullImage(1), '_blank')}
-                    onError={(e) => {
-                      if (e.target.src !== getFullImage(1)) {
-                        e.target.src = getFullImage(1);
-                      } else {
-                        e.target.style.display = 'none';
-                      }
-                    }}
-                  />
-                  <img
-                    src={getThumbnail(2)}
-                    alt="Post image 3"
-                    style={{
-                      width: '100%',
-                      aspectRatio: '1',
-                      objectFit: 'cover',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      background: 'var(--bg-tertiary)',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => window.open(getFullImage(2), '_blank')}
-                    onError={(e) => {
-                      if (e.target.src !== getFullImage(2)) {
-                        e.target.src = getFullImage(2);
-                      } else {
-                        e.target.style.display = 'none';
-                      }
-                    }}
-                  />
-                </div>
-              );
-            } else {
-              // Four or more images - grid layout
-              return (
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: post.image_urls.length === 4 ? '1fr 1fr' : 'repeat(3, 1fr)',
-                  gap: '8px'
-                }}>
-                  {post.image_urls.slice(0, 6).map((imageUrl, index) => (
-                    <div key={index} style={{ position: 'relative' }}>
-                      <img
-                        src={getThumbnail(index)}
-                        alt={`Post image ${index + 1}`}
+                  
+                  {/* Navigation arrows (only show if multiple images) */}
+                  {post.image_urls.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => handleImageNav('prev', e)}
                         style={{
-                          width: '100%',
-                          aspectRatio: '1',
-                          objectFit: 'cover',
-                          borderRadius: '8px',
-                          border: '1px solid var(--border-color)',
-                          background: 'var(--bg-tertiary)',
-                          cursor: 'pointer'
+                          position: 'absolute',
+                          left: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: 'none',
+                          color: 'white',
+                          fontSize: '1.5rem',
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.2s ease',
+                          zIndex: 10
                         }}
-                        onClick={() => window.open(getFullImage(index), '_blank')}
-                        onError={(e) => {
-                          // Fallback to full image if thumbnail fails
-                          if (e.target.src !== getFullImage(index)) {
-                            e.target.src = getFullImage(index);
-                          } else {
-                            e.target.style.display = 'none';
-                          }
+                        onMouseEnter={(e) => e.target.style.background = 'rgba(0, 0, 0, 0.7)'}
+                        onMouseLeave={(e) => e.target.style.background = 'rgba(0, 0, 0, 0.5)'}
+                        aria-label="Previous image"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        onClick={(e) => handleImageNav('next', e)}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: 'none',
+                          color: 'white',
+                          fontSize: '1.5rem',
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.2s ease',
+                          zIndex: 10
                         }}
-                      />
-                      {index === 5 && post.image_urls.length > 6 && (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'rgba(0, 0, 0, 0.6)',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontSize: '1.2rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer'
-                          }}
-                          onClick={() => window.open(getFullImage(index), '_blank')}
-                        >
-                          +{post.image_urls.length - 6}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        onMouseEnter={(e) => e.target.style.background = 'rgba(0, 0, 0, 0.7)'}
+                        onMouseLeave={(e) => e.target.style.background = 'rgba(0, 0, 0, 0.5)'}
+                        aria-label="Next image"
+                      >
+                        ›
+                      </button>
+                    </>
+                  )}
                 </div>
-              );
-            }
+                
+                {/* Navigation dots (only show if multiple images) */}
+                {post.image_urls.length > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    marginTop: '12px',
+                    padding: '0 10px'
+                  }}>
+                    {post.image_urls.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={(e) => handleDotClick(index, e)}
+                        style={{
+                          width: index === currentImageIndex ? '24px' : '8px',
+                          height: '8px',
+                          borderRadius: '4px',
+                          border: 'none',
+                          background: index === currentImageIndex 
+                            ? 'var(--accent-green, #27ae60)' 
+                            : 'rgba(0, 0, 0, 0.3)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          padding: 0
+                        }}
+                        aria-label={`Go to image ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
           })()}
         </div>
       )}
@@ -437,6 +396,16 @@ const PostCard = ({ post, currentUserId, currentUserEmail, onUpdate, onDelete })
           currentUserId={currentUserId}
           currentUserEmail={currentUserEmail}
           onUpdate={onUpdate}
+        />
+      )}
+
+      {/* Image Lightbox Modal */}
+      {post.image_urls && post.image_urls.length > 0 && (
+        <ImageLightboxModal
+          isOpen={showImageLightbox}
+          images={post.image_urls}
+          initialIndex={lightboxImageIndex}
+          onClose={() => setShowImageLightbox(false)}
         />
       )}
     </article>

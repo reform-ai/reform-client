@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../../config/api';
-import { getUserToken } from '../../utils/authStorage';
+import { authenticatedFetchJson } from '../../utils/authenticatedFetch';
+import { isUserLoggedIn } from '../../utils/authStorage';
 
 /**
  * Follow button component
@@ -12,42 +14,34 @@ import { getUserToken } from '../../utils/authStorage';
  * @param {boolean} props.isOwnProfile - Whether this is the current user's own profile (optional)
  */
 const FollowButton = ({ username, initialFollowing = null, onUpdate, isOwnProfile = false }) => {
+  const navigate = useNavigate();
   const [isFollowing, setIsFollowing] = useState(initialFollowing);
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(initialFollowing === null);
 
   // Fetch follow status if not provided
   useEffect(() => {
-    if (initialFollowing === null && !isOwnProfile && username) {
+    // Only check follow status if user is logged in and not own profile
+    if (initialFollowing === null && !isOwnProfile && username && isUserLoggedIn()) {
       const fetchFollowStatus = async () => {
-        const token = getUserToken();
-        if (!token) {
-          setIsChecking(false);
-          return;
-        }
-
         try {
-          const response = await fetch(API_ENDPOINTS.USER_FOLLOW(username), {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-            credentials: 'include', // Include httpOnly cookies for authentication
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            setIsFollowing(data.following || false);
-          } else if (response.status === 401) {
-            // Unauthorized - token expired or invalid, silently fail
-            // This is expected when user is not logged in or token expired
-            setIsFollowing(false);
-          } else {
-            // Other errors - default to not following
-            console.warn('Failed to fetch follow status:', response.status);
-            setIsFollowing(false);
-          }
+          const data = await authenticatedFetchJson(
+            API_ENDPOINTS.USER_FOLLOW(username),
+            {},
+            navigate
+          );
+          setIsFollowing(data.following || false);
         } catch (err) {
-          console.error('Error fetching follow status:', err);
+          // Silently fail on 401 (expected when not logged in or token expired)
+          // Only log unexpected errors
+          const isUnauthorized = err.message && (
+            err.message.includes('401') || 
+            err.message.includes('Unauthorized') ||
+            err.message.includes('Authentication required')
+          );
+          if (!isUnauthorized) {
+            console.warn('Error fetching follow status:', err.message);
+          }
           setIsFollowing(false);
         } finally {
           setIsChecking(false);
@@ -58,40 +52,25 @@ const FollowButton = ({ username, initialFollowing = null, onUpdate, isOwnProfil
     } else {
       setIsChecking(false);
     }
-  }, [username, initialFollowing, isOwnProfile]);
+  }, [username, initialFollowing, isOwnProfile, navigate]);
 
   const handleToggleFollow = async () => {
     if (!username || isOwnProfile || isLoading) return;
 
     setIsLoading(true);
-    const token = getUserToken();
 
     try {
-      const response = await fetch(API_ENDPOINTS.USER_FOLLOW(username), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const data = await authenticatedFetchJson(
+        API_ENDPOINTS.USER_FOLLOW(username),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-        credentials: 'include', // Include httpOnly cookies for authentication
-      });
+        navigate
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.detail || 'Failed to toggle follow';
-        
-        // If backend says "cannot follow yourself", this is the user's own profile
-        if (errorMessage.toLowerCase().includes('cannot follow yourself') || 
-            errorMessage.toLowerCase().includes('follow yourself')) {
-          console.warn('[FollowButton] Backend detected own profile:', errorMessage);
-          // Don't show alert, just silently fail - the button should be hidden by isOwnProfile
-          return;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
       setIsFollowing(data.following);
 
       // Call update callback if provided
@@ -100,11 +79,18 @@ const FollowButton = ({ username, initialFollowing = null, onUpdate, isOwnProfil
       }
     } catch (err) {
       console.error('Error toggling follow:', err);
-      // Only show alert if it's not the "cannot follow yourself" error
-      if (!err.message.toLowerCase().includes('cannot follow yourself') && 
-          !err.message.toLowerCase().includes('follow yourself')) {
-        alert(err.message || 'Failed to toggle follow');
+      
+      // If backend says "cannot follow yourself", this is the user's own profile
+      const errorMessage = err.message || 'Failed to toggle follow';
+      if (errorMessage.toLowerCase().includes('cannot follow yourself') || 
+          errorMessage.toLowerCase().includes('follow yourself')) {
+        console.warn('[FollowButton] Backend detected own profile:', errorMessage);
+        // Don't show alert, just silently fail - the button should be hidden by isOwnProfile
+        return;
       }
+      
+      // Show alert for other errors
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }

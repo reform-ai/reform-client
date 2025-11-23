@@ -1,186 +1,79 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../../config/api';
-import { authenticatedFetch, authenticatedFetchJson } from '../../utils/authenticatedFetch';
+import { authenticatedFetchJson } from '../../utils/authenticatedFetch';
+import { useImageUpload } from '../../hooks/useImageUpload';
+import { UPLOAD_CONSTANTS } from '../../constants/upload';
 import '../../styles/social/CreatePostModal.css';
-
-const MAX_IMAGES = 5;
 
 const CreatePostModal = ({ isOpen, onClose, onPostCreated, preloadedImageUrl, preloadedThumbnailUrl, prefilledCaption }) => {
   const navigate = useNavigate();
   const [postType, setPostType] = useState('text');
   const [content, setContent] = useState('');
-  const [images, setImages] = useState([]); // Array of { preview, url, uploading, error }
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
-  // Handle pre-loaded images when modal opens or when preloadedImageUrl becomes available
-  useEffect(() => {
-    if (isOpen && preloadedImageUrl) {
-      // Add pre-loaded image to images array
-      const preloadedImage = {
-        id: 'preloaded-' + Date.now(),
-        file: null,
-        preview: preloadedImageUrl,
-        url: preloadedImageUrl,
-        thumbnailUrl: preloadedThumbnailUrl || preloadedImageUrl,
-        uploading: false,
-        error: null
-      };
-      setImages([preloadedImage]);
-    } else if (isOpen && !preloadedImageUrl) {
-      // Reset images when modal opens without pre-loaded image
-      setImages([]);
-    }
-  }, [isOpen, preloadedImageUrl, preloadedThumbnailUrl]);
+  // Use custom hook for image upload functionality
+  const {
+    images,
+    error,
+    setError,
+    handleImageSelect,
+    removeImage,
+    addPreloadedImage,
+    resetImages,
+  } = useImageUpload(UPLOAD_CONSTANTS.MAX_IMAGES);
 
-  // Also handle case where modal opens before preloadedImageUrl is set
-  // This ensures the image appears even if there's a timing issue
+  // Handle modal open/close and preloaded data
   useEffect(() => {
-    if (isOpen && preloadedImageUrl && images.length === 0) {
-      const preloadedImage = {
-        id: 'preloaded-' + Date.now(),
-        file: null,
-        preview: preloadedImageUrl,
-        url: preloadedImageUrl,
-        thumbnailUrl: preloadedThumbnailUrl || preloadedImageUrl,
-        uploading: false,
-        error: null
-      };
-      setImages([preloadedImage]);
+    if (!isOpen) {
+      // Reset everything when modal closes
+      resetImages();
+      setContent('');
+      setPostType('text');
+      setError('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
     }
-  }, [isOpen, preloadedImageUrl, preloadedThumbnailUrl, images.length]);
 
-  // Handle pre-filled caption when modal opens or when prefilledCaption becomes available
-  useEffect(() => {
-    if (isOpen && prefilledCaption) {
+    // Handle preloaded image when modal opens
+    if (preloadedImageUrl) {
+      addPreloadedImage(preloadedImageUrl, preloadedThumbnailUrl);
+    } else {
+      resetImages();
+    }
+
+    // Handle prefilled caption when modal opens
+    if (prefilledCaption) {
       setContent(prefilledCaption);
-    } else if (isOpen && !prefilledCaption && !preloadedImageUrl) {
-      // Reset content when modal opens without pre-filled caption and no pre-loaded image
+    } else if (!preloadedImageUrl) {
+      // Only reset content if there's no preloaded image
       setContent('');
     }
-  }, [isOpen, prefilledCaption, preloadedImageUrl]);
+  }, [isOpen, preloadedImageUrl, preloadedThumbnailUrl, prefilledCaption, addPreloadedImage, resetImages]);
 
-  // Also handle case where modal opens before prefilledCaption is set
+  // Handle case where preloadedImageUrl becomes available after modal opens
+  useEffect(() => {
+    if (isOpen && preloadedImageUrl && images.length === 0) {
+      addPreloadedImage(preloadedImageUrl, preloadedThumbnailUrl);
+    }
+  }, [isOpen, preloadedImageUrl, preloadedThumbnailUrl, images.length, addPreloadedImage]);
+
+  // Handle case where prefilledCaption becomes available after modal opens
   useEffect(() => {
     if (isOpen && prefilledCaption && !content) {
       setContent(prefilledCaption);
     }
   }, [isOpen, prefilledCaption, content]);
 
-  const handleImageSelect = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    // Check if adding these files would exceed max
-    if (images.length + files.length > MAX_IMAGES) {
-      setError(`You can only upload up to ${MAX_IMAGES} images. Please remove some images first.`);
-      return;
-    }
-
-    // Validate all files
-    const validFiles = [];
-    for (const file of files) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setError(`${file.name} is not a valid image file`);
-        continue;
-      }
-
-      // Validate file size (10MB max)
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        setError(`${file.name} is too large (max 10MB)`);
-        continue;
-      }
-
-      validFiles.push(file);
-    }
-
-    if (validFiles.length === 0) return;
-
-    setError('');
-
-    // Create preview entries first
-    const newImages = validFiles.map(file => {
-      const reader = new FileReader();
-      const previewPromise = new Promise((resolve) => {
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(file);
-      });
-
-      return {
-        id: Date.now() + Math.random(),
-        file,
-        preview: null,
-        url: null,
-        uploading: true,
-        error: null
-      };
-    });
-
-    // Set previews immediately
-    const imagesWithPreviews = await Promise.all(
-      newImages.map(async (img, idx) => {
-        const reader = new FileReader();
-        return new Promise((resolve) => {
-          reader.onloadend = () => {
-            resolve({ ...img, preview: reader.result });
-          };
-          reader.readAsDataURL(img.file);
-        });
-      })
-    );
-
-    setImages(prev => [...prev, ...imagesWithPreviews]);
-
-    // Upload each image
-    for (let i = 0; i < validFiles.length; i++) {
-      const file = validFiles[i];
-      const imageId = imagesWithPreviews[i].id;
-
-      try {
-        const formData = new FormData();
-        formData.append('image', file);
-
-        const response = await authenticatedFetch(
-          API_ENDPOINTS.POST_IMAGE_UPLOAD,
-          {
-            method: 'POST',
-            body: formData,
-          },
-          navigate
-        );
-
-        const data = await response.json();
-        
-        // Update the image with URL and thumbnail URL, remove uploading state
-        setImages(prev => prev.map(img => 
-          img.id === imageId 
-            ? { ...img, url: data.image_url, thumbnailUrl: data.thumbnail_url || data.image_url, uploading: false, error: null }
-            : img
-        ));
-      } catch (err) {
-        // Mark this image as having an error
-        setImages(prev => prev.map(img => 
-          img.id === imageId 
-            ? { ...img, uploading: false, error: err.message || 'Failed to upload' }
-            : img
-        ));
-        setError(err.message || 'Failed to upload image');
-      }
-    }
-
-    // Clear file input
+  const handleFileInputChange = (e) => {
+    handleImageSelect(e.target.files);
+    // Clear file input so same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
-
-  const handleRemoveImage = (imageId) => {
-    setImages(prev => prev.filter(img => img.id !== imageId));
-    setError('');
   };
 
   const handleSubmit = async (e) => {
@@ -231,13 +124,7 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, preloadedImageUrl, pr
         navigate
       );
 
-      setContent('');
-      setPostType('text');
-      setImages([]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      onClose(); // Close modal after successful post
+      onClose(); // Close modal after successful post (reset happens in useEffect)
       if (onPostCreated) {
         onPostCreated();
       }
@@ -301,16 +188,16 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, preloadedImageUrl, pr
 
           <div className="form-group">
             <label>
-              Images (Optional) {images.length > 0 && `(${images.length}/${MAX_IMAGES})`}
+              Images (Optional) {images.length > 0 && `(${images.length}/${UPLOAD_CONSTANTS.MAX_IMAGES})`}
             </label>
-            {images.length < MAX_IMAGES && (
+            {images.length < UPLOAD_CONSTANTS.MAX_IMAGES && (
               <div>
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   multiple
-                  onChange={handleImageSelect}
+                  onChange={handleFileInputChange}
                   disabled={isSubmitting || images.some(img => img.uploading)}
                   style={{ display: 'none' }}
                 />
@@ -327,7 +214,7 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, preloadedImageUrl, pr
                     cursor: (isSubmitting || images.some(img => img.uploading)) ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  {images.some(img => img.uploading) ? 'Uploading...' : `+ Add Photo${images.length > 0 ? 's' : ''} (${MAX_IMAGES - images.length} remaining)`}
+                  {images.some(img => img.uploading) ? 'Uploading...' : `+ Add Photo${images.length > 0 ? 's' : ''} (${UPLOAD_CONSTANTS.MAX_IMAGES - images.length} remaining)`}
                 </button>
               </div>
             )}
@@ -385,7 +272,7 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, preloadedImageUrl, pr
                     )}
                     <button
                       type="button"
-                      onClick={() => handleRemoveImage(image.id)}
+                      onClick={() => removeImage(image.id)}
                       disabled={isSubmitting || image.uploading}
                       style={{
                         position: 'absolute',

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../../config/api';
-import { getUserToken } from '../../utils/authStorage';
+import { authenticatedFetchJson } from '../../utils/authenticatedFetch';
 
 const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCount, onUpdate }) => {
+  const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(initialIsLiked);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -11,22 +13,19 @@ const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCou
     if (isLoading) return;
 
     setIsLoading(true);
-    const token = getUserToken();
 
     try {
-      const response = await fetch(API_ENDPOINTS.POST_LIKE(postId), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const data = await authenticatedFetchJson(
+        API_ENDPOINTS.POST_LIKE(postId),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      });
+        navigate
+      );
 
-      if (!response.ok) {
-        throw new Error('Failed to toggle like');
-      }
-
-      const data = await response.json();
       setIsLiked(data.liked);
       setLikeCount(prev => data.liked ? prev + 1 : prev - 1);
       

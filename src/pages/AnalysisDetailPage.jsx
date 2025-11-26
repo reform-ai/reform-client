@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getAnalysis } from '../shared/utils/analysisApi';
 import { useRequireAuth } from '../shared/utils/useRequireAuth';
@@ -25,6 +25,9 @@ const AnalysisDetailPage = () => {
   const [preloadedImageUrl, setPreloadedImageUrl] = useState(null);
   const [preloadedThumbnailUrl, setPreloadedThumbnailUrl] = useState(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isVideoExpanded, setIsVideoExpanded] = useState(false);
+  const videoRef = useRef(null);
   const [expandedStates, setExpandedStates] = useState({
     torso_angle: false,
     quad_angle: false,
@@ -54,11 +57,58 @@ const AnalysisDetailPage = () => {
 
   useRequireAuth(navigate, fetchAnalysis);
 
+  // Fullscreen change handler
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      setIsVideoExpanded(isFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
   const handleToggleExpanded = (key) => {
     setExpandedStates(prev => ({
       ...prev,
       [key]: !prev[key]
     }));
+  };
+
+  const handleVideoPlay = () => {
+    setIsVideoPlaying(true);
+  };
+
+  const handleVideoPause = () => {
+    setIsVideoPlaying(false);
+  };
+
+  const handleExpandVideo = () => {
+    if (videoRef.current) {
+      if (videoRef.current.requestFullscreen) {
+        videoRef.current.requestFullscreen();
+      } else if (videoRef.current.webkitRequestFullscreen) {
+        videoRef.current.webkitRequestFullscreen();
+      } else if (videoRef.current.mozRequestFullScreen) {
+        videoRef.current.mozRequestFullScreen();
+      } else if (videoRef.current.msRequestFullscreen) {
+        videoRef.current.msRequestFullscreen();
+      }
+    }
   };
 
   // Transform API response to match component expectations
@@ -406,6 +456,78 @@ const AnalysisDetailPage = () => {
                         {analysis.notes || 'no notes'}
                       </p>
                     </div>
+                  </div>
+
+                  {/* Video Display */}
+                  <div style={{
+                    flex: '1',
+                    minWidth: 0
+                  }}>
+                    {analysisResults.visualization_url && !analysisResults.visualization_url.startsWith('blob:') ? (
+                      <div className="video-container" style={{ 
+                        position: 'relative',
+                        width: '100%'
+                      }}>
+                        <div style={{ 
+                          position: 'relative',
+                          width: '100%',
+                          backgroundColor: 'var(--card-bg)',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          overflow: 'hidden'
+                        }}>
+                          <video 
+                            ref={videoRef}
+                            src={analysisResults.visualization_url}
+                            controls
+                            onPlay={handleVideoPlay}
+                            onPause={handleVideoPause}
+                            onError={(e) => {
+                              console.error('Video load error:', e);
+                              console.error('Video src:', analysisResults.visualization_url);
+                            }}
+                            style={{
+                              width: '100%',
+                              height: 'auto',
+                              maxHeight: '50vh',
+                              display: 'block',
+                              objectFit: 'contain'
+                            }}
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                          {isVideoPlaying && (
+                            <button
+                              onClick={handleExpandVideo}
+                              style={{
+                                position: 'absolute',
+                                top: '10px',
+                                right: '10px',
+                                padding: '8px 16px',
+                                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                color: 'white',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: 500,
+                                fontSize: '14px',
+                                fontFamily: 'Inter, sans-serif',
+                                transition: 'all 0.2s ease',
+                                zIndex: 10
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                              }}
+                            >
+                              ⛶ Expand
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>

@@ -11,6 +11,7 @@ import UsernameEditor from '../shared/components/profile/UsernameEditor';
 import PrivacyToggle from '../shared/components/profile/PrivacyToggle';
 import ProfileAttributes from '../shared/components/profile/ProfileAttributes';
 import TokenActivationSection from '../shared/components/profile/TokenActivationSection';
+import XConnectionSection from '../shared/components/profile/XConnectionSection';
 import '../shared/styles/AnalysisSkeleton.css';
 import './DashboardPage.css';
 
@@ -24,6 +25,8 @@ function ProfilePage() {
   const [isPublic, setIsPublic] = useState(true);
   const [isTokenActivated, setIsTokenActivated] = useState(null);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [xOAuthSuccess, setXOAuthSuccess] = useState(false);
+  const [xOAuthError, setXOAuthError] = useState('');
 
   const checkTokenActivationStatus = useCallback(async () => {
     try {
@@ -65,6 +68,29 @@ function ProfilePage() {
     if (searchParams.get('verified') === 'true') {
       setVerificationSuccess(true);
       setTimeout(() => setVerificationSuccess(false), 5000);
+      navigate('/profile', { replace: true });
+    }
+    
+    // Handle X OAuth callback
+    if (searchParams.get('x_oauth_success') === 'true') {
+      setXOAuthSuccess(true);
+      setTimeout(() => setXOAuthSuccess(false), 5000);
+      navigate('/profile', { replace: true });
+    }
+    
+    if (searchParams.get('x_oauth_error')) {
+      const errorCode = searchParams.get('x_oauth_error');
+      const errorMessages = {
+        'missing_parameters': 'OAuth callback missing required parameters. Please try again.',
+        'invalid_state': 'OAuth session expired. Please try connecting again.',
+        'user_not_found': 'User not found. Please log in and try again.',
+        'token_exchange_failed': 'Failed to exchange authorization code. Please try again.',
+        'no_access_token': 'X did not provide an access token. Please try again.',
+        'timeout': 'Request to X timed out. Please try again.',
+        'server_error': 'An error occurred during X connection. Please try again.'
+      };
+      setXOAuthError(errorMessages[errorCode] || 'Failed to connect X account. Please try again.');
+      setTimeout(() => setXOAuthError(''), 5000);
       navigate('/profile', { replace: true });
     }
   }, [fetchUserInfo, checkTokenActivationStatus, searchParams, navigate]);
@@ -163,6 +189,34 @@ function ProfilePage() {
             textAlign: 'center'
           }}>
             ✅ Email verified successfully! You can now use all social features.
+          </div>
+        )}
+
+        {xOAuthSuccess && (
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '2px solid var(--accent-green)',
+            borderRadius: '12px',
+            padding: '16px',
+            margin: '20px 0',
+            color: 'var(--accent-green)',
+            textAlign: 'center'
+          }}>
+            ✅ X account connected successfully! You can now share posts to X.
+          </div>
+        )}
+
+        {xOAuthError && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '2px solid var(--accent-orange)',
+            borderRadius: '12px',
+            padding: '16px',
+            margin: '20px 0',
+            color: 'var(--accent-orange)',
+            textAlign: 'center'
+          }}>
+            ❌ {xOAuthError}
           </div>
         )}
 
@@ -273,6 +327,11 @@ function ProfilePage() {
               isPublic={isPublic}
               navigate={navigate}
               onUpdate={handlePrivacyUpdate}
+            />
+
+            <XConnectionSection 
+              navigate={navigate}
+              refreshTrigger={xOAuthSuccess}
             />
 
             <ProfileAttributes 

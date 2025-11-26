@@ -179,7 +179,7 @@ const DashboardAnalyze = () => {
               flex: '1',
               minWidth: 0
             }}>
-              {analysisResults.visualization_url && (
+              {analysisResults.visualization_url && !analysisResults.visualization_url.startsWith('blob:') && (
                 <div className="video-container" style={{ 
                   position: 'relative',
                   width: '100%'
@@ -198,6 +198,10 @@ const DashboardAnalyze = () => {
                       controls
                       onPlay={handleVideoPlay}
                       onPause={handleVideoPause}
+                      onError={(e) => {
+                        console.error('Video load error:', e);
+                        console.error('Video src:', analysisResults.visualization_url);
+                      }}
                       style={{
                         width: '100%',
                         height: 'auto',

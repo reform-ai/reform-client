@@ -12,18 +12,38 @@ export function getVideoDuration(file) {
 
     const video = document.createElement('video');
     video.preload = 'metadata';
+    let objectUrl = null;
 
-    video.onloadedmetadata = () => {
-      window.URL.revokeObjectURL(video.src);
-      resolve(video.duration);
+    const cleanup = () => {
+      if (objectUrl) {
+        try {
+          window.URL.revokeObjectURL(objectUrl);
+        } catch (e) {
+          console.warn('Error revoking object URL:', e);
+        }
+        objectUrl = null;
+      }
     };
 
-    video.onerror = () => {
-      window.URL.revokeObjectURL(video.src);
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      cleanup();
+      resolve(duration);
+    };
+
+    video.onerror = (e) => {
+      console.error('Video metadata load error:', e);
+      cleanup();
       reject(new Error('Failed to load video metadata'));
     };
 
-    video.src = URL.createObjectURL(file);
+    try {
+      objectUrl = URL.createObjectURL(file);
+      video.src = objectUrl;
+    } catch (e) {
+      console.error('Error creating object URL:', e);
+      reject(new Error('Failed to create object URL for video'));
+    }
   });
 }
 

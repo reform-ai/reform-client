@@ -54,7 +54,13 @@ export const API_ENDPOINTS = {
   ANALYSIS_PROGRESS: `${API_URL}/api/analyses/progress/metrics`,
   ANALYSIS_GENERATE_SHARE_IMAGE: (analysisId) => `${API_URL}/api/analyses/${analysisId}/generate-share-image`,
   // Contact endpoint
-  CONTACT_SUBMIT: `${API_URL}/api/contact/submit`
+  CONTACT_SUBMIT: `${API_URL}/api/contact/submit`,
+  // X (Twitter) integration endpoints
+  X_STATUS: `${API_URL}/api/x/status`,
+  X_LOGIN: `${API_URL}/api/auth/x/login`,
+  X_DISCONNECT: `${API_URL}/api/x/disconnect`,
+  X_POST: `${API_URL}/api/x/post`,
+  X_POST_WITH_MEDIA: `${API_URL}/api/x/post-with-media`
 };
 
 // Only log API URL in development mode for security

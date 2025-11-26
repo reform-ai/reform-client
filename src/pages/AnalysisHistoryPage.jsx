@@ -29,6 +29,8 @@ const AnalysisHistoryPage = () => {
   const [preloadedImageUrl, setPreloadedImageUrl] = useState(null);
   const [preloadedThumbnailUrl, setPreloadedThumbnailUrl] = useState(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [xStatus, setXStatus] = useState(null);
+  const [isPostingToX, setIsPostingToX] = useState(false);
   const [expandedStates, setExpandedStates] = useState({
     torso_angle: false,
     quad_angle: false,
@@ -67,6 +69,23 @@ const AnalysisHistoryPage = () => {
       fetchAnalysisDetails(selectedAnalysis.id);
     }
   }, [selectedAnalysis]);
+
+  useEffect(() => {
+    // Check X connection status
+    const fetchXStatus = async () => {
+      try {
+        const data = await authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate);
+        setXStatus(data);
+      } catch (err) {
+        // If not connected, that's okay - just means no connection
+        setXStatus({ connected: false, x_username: null });
+      }
+    };
+    
+    if (isUserLoggedIn()) {
+      fetchXStatus();
+    }
+  }, [navigate]);
 
   const fetchAnalyses = async () => {
     setLoading(true);
@@ -265,6 +284,138 @@ const AnalysisHistoryPage = () => {
     setPreloadedImageUrl(null);
     setPreloadedThumbnailUrl(null);
     navigate('/feed');
+  };
+
+  const handlePostToX = async () => {
+    if (!selectedAnalysisDetails) return;
+    
+    // Check if X is connected
+    if (!xStatus?.connected) {
+      const shouldConnect = window.confirm(
+        'You need to connect your X account to post. Would you like to connect now?'
+      );
+      if (shouldConnect) {
+        // Open X OAuth in a popup
+        try {
+          const response = await authenticatedFetchJson(
+            `${API_ENDPOINTS.X_LOGIN}?return_url=true`,
+            {},
+            navigate
+          );
+          
+          if (!response.oauth_url) {
+            alert('Failed to get OAuth URL. Please try again.');
+            return;
+          }
+          
+          // Open popup window for OAuth flow
+          const popupWidth = 600;
+          const popupHeight = 700;
+          const left = (window.screen.width - popupWidth) / 2;
+          const top = (window.screen.height - popupHeight) / 2;
+          
+          const popup = window.open(
+            response.oauth_url,
+            'X OAuth',
+            `width=${popupWidth},height=${popupHeight},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+          );
+          
+          if (!popup) {
+            alert('Please allow popups for this site to connect your X account.');
+            return;
+          }
+          
+          // Listen for OAuth completion message from popup
+          const handleMessage = (event) => {
+            // Verify origin for security
+            if (event.origin !== window.location.origin) {
+              return;
+            }
+            
+            if (event.data.type === 'X_OAUTH_SUCCESS') {
+              window.removeEventListener('message', handleMessage);
+              popup.close();
+              // Refresh X status
+              authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate)
+                .then(data => {
+                  setXStatus(data);
+                  // Retry posting after connection
+                  if (data.connected) {
+                    setTimeout(() => handlePostToX(), 500);
+                  }
+                })
+                .catch(() => setXStatus({ connected: false, x_username: null }));
+            } else if (event.data.type === 'X_OAUTH_ERROR') {
+              window.removeEventListener('message', handleMessage);
+              popup.close();
+              alert(event.data.message || 'Failed to connect X account. Please try again.');
+            }
+          };
+          
+          window.addEventListener('message', handleMessage);
+          
+          // Check if popup was closed manually
+          const checkClosed = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(checkClosed);
+              window.removeEventListener('message', handleMessage);
+            }
+          }, 1000);
+        } catch (err) {
+          alert(err.message || 'Failed to connect X account. Please try again.');
+        }
+      }
+      return;
+    }
+    
+    setIsPostingToX(true);
+    try {
+      // Generate share image
+      const imageResponse = await authenticatedFetchJson(
+        API_ENDPOINTS.ANALYSIS_GENERATE_SHARE_IMAGE(selectedAnalysisDetails.id),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        navigate
+      );
+      
+      if (!imageResponse || !imageResponse.image_url) {
+        throw new Error('Failed to generate share image');
+      }
+      
+      // Create tweet text
+      const tweetText = `Just completed ${selectedAnalysisDetails.exercise_name} analysis! Score: ${selectedAnalysisDetails.score}/100\n\n#ReformGym #FormAnalysis`;
+      
+      // Post to X with media
+      const postResponse = await authenticatedFetchJson(
+        API_ENDPOINTS.X_POST_WITH_MEDIA,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: tweetText,
+            media_urls: [imageResponse.image_url]
+          }),
+        },
+        navigate
+      );
+      
+      if (postResponse.success && postResponse.url) {
+        alert(`Successfully posted to X! View it here: ${postResponse.url}`);
+      } else {
+        throw new Error('Failed to post to X');
+      }
+    } catch (err) {
+      console.error('Error posting to X:', err);
+      alert(err.message || 'Failed to post to X. Please try again.');
+    } finally {
+      setIsPostingToX(false);
+    }
   };
 
   // Format date display: show time on second line if multiple analyses on same date
@@ -676,11 +827,11 @@ const AnalysisHistoryPage = () => {
                       </div>
                     </div>
                     
-                    {/* Share to Feed Button */}
-                    <div style={{ marginTop: '16px' }}>
+                    {/* Share to Feed and Post to X Buttons */}
+                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <button
                         onClick={handleShareToFeed}
-                        disabled={isGeneratingImage}
+                        disabled={isGeneratingImage || isPostingToX}
                         className="btn btn-primary"
                         style={{
                           width: '100%',
@@ -700,6 +851,35 @@ const AnalysisHistoryPage = () => {
                         ) : (
                           <>
                             📤 Share to Feed
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={handlePostToX}
+                        disabled={isGeneratingImage || isPostingToX}
+                        className="btn"
+                        style={{
+                          width: '100%',
+                          padding: '10px 20px',
+                          fontSize: '0.95rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          background: xStatus?.connected ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-primary)',
+                          opacity: (isGeneratingImage || isPostingToX) ? 0.6 : 1
+                        }}
+                      >
+                        {isPostingToX ? (
+                          <>
+                            <span className="btn-spinner"></span>
+                            Posting to X...
+                          </>
+                        ) : (
+                          <>
+                            {xStatus?.connected ? '🐦 Post to X' : '🔗 Connect X to Post'}
                           </>
                         )}
                       </button>

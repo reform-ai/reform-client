@@ -13,6 +13,7 @@ import ScoreBreakdown from '../shared/components/ScoreBreakdown';
 import AnglePlot from '../shared/components/charts/AnglePlot';
 import AnalysisFilterBar from '../shared/components/analysis/AnalysisFilterBar';
 import CreatePostModal from '../shared/components/modals/CreatePostModal';
+import CreateXPostModal from '../shared/components/modals/CreateXPostModal';
 import '../shared/styles/AnalysisSkeleton.css';
 import './AnalysisHistoryPage.css';
 
@@ -26,11 +27,11 @@ const AnalysisHistoryPage = () => {
   const [selectedAnalysisDetails, setSelectedAnalysisDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showCreateXPost, setShowCreateXPost] = useState(false);
   const [preloadedImageUrl, setPreloadedImageUrl] = useState(null);
   const [preloadedThumbnailUrl, setPreloadedThumbnailUrl] = useState(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [xStatus, setXStatus] = useState(null);
-  const [isPostingToX, setIsPostingToX] = useState(false);
   const [expandedStates, setExpandedStates] = useState({
     torso_angle: false,
     quad_angle: false,
@@ -339,7 +340,7 @@ const AnalysisHistoryPage = () => {
               authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate)
                 .then(data => {
                   setXStatus(data);
-                  // Retry posting after connection
+                  // Retry opening modal after connection
                   if (data.connected) {
                     setTimeout(() => handlePostToX(), 500);
                   }
@@ -368,10 +369,10 @@ const AnalysisHistoryPage = () => {
       return;
     }
     
-    setIsPostingToX(true);
+    // Generate share image and open modal
+    setIsGeneratingImage(true);
     try {
-      // Generate share image
-      const imageResponse = await authenticatedFetchJson(
+      const response = await authenticatedFetchJson(
         API_ENDPOINTS.ANALYSIS_GENERATE_SHARE_IMAGE(selectedAnalysisDetails.id),
         {
           method: 'POST',
@@ -382,39 +383,29 @@ const AnalysisHistoryPage = () => {
         navigate
       );
       
-      if (!imageResponse || !imageResponse.image_url) {
+      if (!response || !response.image_url) {
         throw new Error('Failed to generate share image');
       }
       
-      // Create tweet text
-      const tweetText = `Just completed ${selectedAnalysisDetails.exercise_name} analysis! Score: ${selectedAnalysisDetails.score}/100\n\n#ReformGym #FormAnalysis`;
-      
-      // Post to X with media
-      const postResponse = await authenticatedFetchJson(
-        API_ENDPOINTS.X_POST_WITH_MEDIA,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: tweetText,
-            media_urls: [imageResponse.image_url]
-          }),
-        },
-        navigate
-      );
-      
-      if (postResponse.success && postResponse.url) {
-        alert(`Successfully posted to X! View it here: ${postResponse.url}`);
-      } else {
-        throw new Error('Failed to post to X');
-      }
+      // Set pre-loaded image URL and open modal
+      setPreloadedImageUrl(response.image_url);
+      setIsGeneratingImage(false);
+      setTimeout(() => {
+        setShowCreateXPost(true);
+      }, 0);
     } catch (err) {
-      console.error('Error posting to X:', err);
-      alert(err.message || 'Failed to post to X. Please try again.');
-    } finally {
-      setIsPostingToX(false);
+      console.error('Error generating share image:', err);
+      alert('Failed to generate share image. Please try again.');
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const handleXPostCreated = (postResponse) => {
+    setShowCreateXPost(false);
+    setPreloadedImageUrl(null);
+    setIsGeneratingImage(false);
+    if (postResponse?.url) {
+      alert(`Successfully posted to X! View it here: ${postResponse.url}`);
     }
   };
 
@@ -856,7 +847,7 @@ const AnalysisHistoryPage = () => {
                       </button>
                       <button
                         onClick={handlePostToX}
-                        disabled={isGeneratingImage || isPostingToX}
+                        disabled={isGeneratingImage}
                         className="btn"
                         style={{
                           width: '100%',
@@ -869,13 +860,13 @@ const AnalysisHistoryPage = () => {
                           background: xStatus?.connected ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
                           border: '1px solid var(--border-color)',
                           color: 'var(--text-primary)',
-                          opacity: (isGeneratingImage || isPostingToX) ? 0.6 : 1
+                          opacity: isGeneratingImage ? 0.6 : 1
                         }}
                       >
-                        {isPostingToX ? (
+                        {isGeneratingImage ? (
                           <>
                             <span className="btn-spinner"></span>
-                            Posting to X...
+                            Generating...
                           </>
                         ) : (
                           <>
@@ -1012,6 +1003,21 @@ const AnalysisHistoryPage = () => {
           preloadedImageUrl={preloadedImageUrl}
           preloadedThumbnailUrl={preloadedThumbnailUrl}
           prefilledCaption={selectedAnalysisDetails ? `Just completed ${selectedAnalysisDetails.exercise_name} analysis! Score: ${selectedAnalysisDetails.score}/100` : ''}
+        />
+      )}
+
+      {showCreateXPost && (
+        <CreateXPostModal
+          isOpen={showCreateXPost}
+          onClose={() => {
+            setShowCreateXPost(false);
+            setPreloadedImageUrl(null);
+            setIsGeneratingImage(false);
+          }}
+          onPostCreated={handleXPostCreated}
+          preloadedImageUrl={preloadedImageUrl}
+          prefilledCaption={selectedAnalysisDetails ? `Just completed ${selectedAnalysisDetails.exercise_name} analysis! Score: ${selectedAnalysisDetails.score}/100\n\n#ReformGym #FormAnalysis` : ''}
+          xStatus={xStatus}
         />
       )}
     </PageContainer>

@@ -12,6 +12,7 @@ import PageHeader from '../shared/components/layout/PageHeader';
 import ScoreBreakdown from '../shared/components/ScoreBreakdown';
 import AnglePlot from '../shared/components/charts/AnglePlot';
 import CreatePostModal from '../shared/components/modals/CreatePostModal';
+import CreateXPostModal from '../shared/components/modals/CreateXPostModal';
 import '../shared/styles/AnalysisSkeleton.css';
 import './AnalysisDetailPage.css';
 
@@ -22,11 +23,11 @@ const AnalysisDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showCreateXPost, setShowCreateXPost] = useState(false);
   const [preloadedImageUrl, setPreloadedImageUrl] = useState(null);
   const [preloadedThumbnailUrl, setPreloadedThumbnailUrl] = useState(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [xStatus, setXStatus] = useState(null);
-  const [isPostingToX, setIsPostingToX] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isVideoExpanded, setIsVideoExpanded] = useState(false);
   const videoRef = useRef(null);
@@ -245,7 +246,7 @@ const AnalysisDetailPage = () => {
               authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate)
                 .then(data => {
                   setXStatus(data);
-                  // Retry posting after connection
+                  // Retry opening modal after connection
                   if (data.connected) {
                     setTimeout(() => handlePostToX(), 500);
                   }
@@ -274,10 +275,10 @@ const AnalysisDetailPage = () => {
       return;
     }
     
-    setIsPostingToX(true);
+    // Generate share image and open modal
+    setIsGeneratingImage(true);
     try {
-      // Generate share image
-      const imageResponse = await authenticatedFetchJson(
+      const response = await authenticatedFetchJson(
         API_ENDPOINTS.ANALYSIS_GENERATE_SHARE_IMAGE(analysis.id),
         {
           method: 'POST',
@@ -288,39 +289,29 @@ const AnalysisDetailPage = () => {
         navigate
       );
       
-      if (!imageResponse || !imageResponse.image_url) {
+      if (!response || !response.image_url) {
         throw new Error('Failed to generate share image');
       }
       
-      // Create tweet text
-      const tweetText = `Just completed ${analysis.exercise_name} analysis! Score: ${analysis.score}/100\n\n#ReformGym #FormAnalysis`;
-      
-      // Post to X with media
-      const postResponse = await authenticatedFetchJson(
-        API_ENDPOINTS.X_POST_WITH_MEDIA,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: tweetText,
-            media_urls: [imageResponse.image_url]
-          }),
-        },
-        navigate
-      );
-      
-      if (postResponse.success && postResponse.url) {
-        alert(`Successfully posted to X! View it here: ${postResponse.url}`);
-      } else {
-        throw new Error('Failed to post to X');
-      }
+      // Set pre-loaded image URL and open modal
+      setPreloadedImageUrl(response.image_url);
+      setIsGeneratingImage(false);
+      setTimeout(() => {
+        setShowCreateXPost(true);
+      }, 0);
     } catch (err) {
-      console.error('Error posting to X:', err);
-      alert(err.message || 'Failed to post to X. Please try again.');
-    } finally {
-      setIsPostingToX(false);
+      console.error('Error generating share image:', err);
+      alert('Failed to generate share image. Please try again.');
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const handleXPostCreated = (postResponse) => {
+    setShowCreateXPost(false);
+    setPreloadedImageUrl(null);
+    setIsGeneratingImage(false);
+    if (postResponse?.url) {
+      alert(`Successfully posted to X! View it here: ${postResponse.url}`);
     }
   };
 
@@ -425,7 +416,7 @@ const AnalysisDetailPage = () => {
             </button>
             <button
               onClick={handlePostToX}
-              disabled={isGeneratingImage || isPostingToX}
+              disabled={isGeneratingImage}
               className="btn"
               style={{
                 padding: '10px 20px',
@@ -436,13 +427,13 @@ const AnalysisDetailPage = () => {
                 background: xStatus?.connected ? 'var(--bg-secondary)' : 'var(--bg-tertiary)',
                 border: '1px solid var(--border-color)',
                 color: 'var(--text-primary)',
-                opacity: (isGeneratingImage || isPostingToX) ? 0.6 : 1
+                opacity: isGeneratingImage ? 0.6 : 1
               }}
             >
-              {isPostingToX ? (
+              {isGeneratingImage ? (
                 <>
                   <span className="btn-spinner"></span>
-                  Posting to X...
+                  Generating...
                 </>
               ) : (
                 <>
@@ -724,6 +715,21 @@ const AnalysisDetailPage = () => {
           preloadedImageUrl={preloadedImageUrl}
           preloadedThumbnailUrl={preloadedThumbnailUrl}
           prefilledCaption={`Just completed ${analysis.exercise_name} analysis! Score: ${analysis.score}/100`}
+        />
+      )}
+
+      {showCreateXPost && (
+        <CreateXPostModal
+          isOpen={showCreateXPost}
+          onClose={() => {
+            setShowCreateXPost(false);
+            setPreloadedImageUrl(null);
+            setIsGeneratingImage(false);
+          }}
+          onPostCreated={handleXPostCreated}
+          preloadedImageUrl={preloadedImageUrl}
+          prefilledCaption={`Just completed ${analysis.exercise_name} analysis! Score: ${analysis.score}/100\n\n#ReformGym #FormAnalysis`}
+          xStatus={xStatus}
         />
       )}
     </PageContainer>

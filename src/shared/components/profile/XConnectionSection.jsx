@@ -30,10 +30,73 @@ function XConnectionSection({ navigate, refreshTrigger }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger]);
 
-  const handleConnect = () => {
-    // Redirect to OAuth login endpoint
-    // The backend will handle the OAuth flow and redirect back
-    window.location.href = API_ENDPOINTS.X_LOGIN;
+  const handleConnect = async () => {
+    setError('');
+    
+    try {
+      // Get OAuth URL from backend (authenticated request)
+      const response = await authenticatedFetchJson(
+        `${API_ENDPOINTS.X_LOGIN}?return_url=true`,
+        {},
+        navigate
+      );
+      
+      const oauthUrl = response.oauth_url;
+      
+      if (!oauthUrl) {
+        setError('Failed to get OAuth URL. Please try again.');
+        return;
+      }
+      
+      // Open popup window for OAuth flow
+      const popupWidth = 600;
+      const popupHeight = 700;
+      const left = (window.screen.width - popupWidth) / 2;
+      const top = (window.screen.height - popupHeight) / 2;
+      
+      const popup = window.open(
+        oauthUrl,
+        'X OAuth',
+        `width=${popupWidth},height=${popupHeight},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+      );
+      
+      if (!popup) {
+        setError('Please allow popups for this site to connect your X account.');
+        return;
+      }
+      
+      // Listen for OAuth completion message from popup
+      const handleMessage = (event) => {
+        // Verify origin for security
+        if (event.origin !== window.location.origin) {
+          return;
+        }
+        
+        if (event.data.type === 'X_OAUTH_SUCCESS') {
+          window.removeEventListener('message', handleMessage);
+          popup.close();
+          // Refresh connection status
+          fetchXStatus();
+        } else if (event.data.type === 'X_OAUTH_ERROR') {
+          window.removeEventListener('message', handleMessage);
+          popup.close();
+          setError(event.data.message || 'Failed to connect X account. Please try again.');
+        }
+      };
+      
+      window.addEventListener('message', handleMessage);
+      
+      // Check if popup was closed manually
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkClosed);
+          window.removeEventListener('message', handleMessage);
+        }
+      }, 1000);
+      
+    } catch (err) {
+      setError(err.message || 'Failed to connect X account. Please try again.');
+    }
   };
 
   const handleDisconnect = async () => {

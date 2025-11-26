@@ -71,6 +71,22 @@ const AnalysisHistoryPage = () => {
     }
   }, [selectedAnalysis]);
 
+  // Check X connection status (separate useEffect, doesn't affect existing functionality)
+  useEffect(() => {
+    const fetchXStatus = async () => {
+      try {
+        const data = await authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate);
+        setXStatus(data);
+      } catch (err) {
+        setXStatus({ connected: false, x_username: null });
+      }
+    };
+    
+    if (isUserLoggedIn()) {
+      fetchXStatus();
+    }
+  }, [navigate]);
+
   useEffect(() => {
     // Check X connection status
     const fetchXStatus = async () => {
@@ -287,6 +303,121 @@ const AnalysisHistoryPage = () => {
     navigate('/feed');
   };
 
+  // New function for X posting - doesn't modify existing functionality
+  const handlePostToX = async () => {
+    if (!selectedAnalysisDetails) return;
+    
+    // Check if X is connected
+    if (!xStatus?.connected) {
+      const shouldConnect = window.confirm(
+        'You need to connect your X account to post. Would you like to connect now?'
+      );
+      if (shouldConnect) {
+        try {
+          const response = await authenticatedFetchJson(
+            `${API_ENDPOINTS.X_LOGIN}?return_url=true`,
+            {},
+            navigate
+          );
+          
+          if (!response.oauth_url) {
+            alert('Failed to get OAuth URL. Please try again.');
+            return;
+          }
+          
+          const popupWidth = 600;
+          const popupHeight = 700;
+          const left = (window.screen.width - popupWidth) / 2;
+          const top = (window.screen.height - popupHeight) / 2;
+          
+          const popup = window.open(
+            response.oauth_url,
+            'X OAuth',
+            `width=${popupWidth},height=${popupHeight},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+          );
+          
+          if (!popup) {
+            alert('Please allow popups for this site to connect your X account.');
+            return;
+          }
+          
+          const handleMessage = (event) => {
+            if (event.origin !== window.location.origin) {
+              return;
+            }
+            
+            if (event.data.type === 'X_OAUTH_SUCCESS') {
+              window.removeEventListener('message', handleMessage);
+              popup.close();
+              authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate)
+                .then(data => {
+                  setXStatus(data);
+                  if (data.connected) {
+                    setTimeout(() => handlePostToX(), 500);
+                  }
+                })
+                .catch(() => setXStatus({ connected: false, x_username: null }));
+            } else if (event.data.type === 'X_OAUTH_ERROR') {
+              window.removeEventListener('message', handleMessage);
+              popup.close();
+              alert(event.data.message || 'Failed to connect X account. Please try again.');
+            }
+          };
+          
+          window.addEventListener('message', handleMessage);
+          
+          const checkClosed = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(checkClosed);
+              window.removeEventListener('message', handleMessage);
+            }
+          }, 1000);
+        } catch (err) {
+          alert(err.message || 'Failed to connect X account. Please try again.');
+        }
+      }
+      return;
+    }
+    
+    // Generate share image and open modal
+    setIsGeneratingImage(true);
+    try {
+      const response = await authenticatedFetchJson(
+        API_ENDPOINTS.ANALYSIS_GENERATE_SHARE_IMAGE(selectedAnalysisDetails.id),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+        navigate
+      );
+      
+      if (!response || !response.image_url) {
+        throw new Error('Failed to generate share image');
+      }
+      
+      setPreloadedImageUrl(response.image_url);
+      setIsGeneratingImage(false);
+      setTimeout(() => {
+        setShowCreateXPost(true);
+      }, 0);
+    } catch (err) {
+      console.error('Error generating share image:', err);
+      alert('Failed to generate share image. Please try again.');
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const handleXPostCreated = (postResponse) => {
+    setShowCreateXPost(false);
+    setPreloadedImageUrl(null);
+    setIsGeneratingImage(false);
+    if (postResponse?.url) {
+      alert(`Successfully posted to X! View it here: ${postResponse.url}`);
+    }
+  };
+
   const handlePostToX = async () => {
     if (!selectedAnalysisDetails) return;
     
@@ -340,7 +471,7 @@ const AnalysisHistoryPage = () => {
               authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate)
                 .then(data => {
                   setXStatus(data);
-                  // Retry opening modal after connection
+                  // Retry posting after connection
                   if (data.connected) {
                     setTimeout(() => handlePostToX(), 500);
                   }
@@ -369,10 +500,10 @@ const AnalysisHistoryPage = () => {
       return;
     }
     
-    // Generate share image and open modal
-    setIsGeneratingImage(true);
+    setIsPostingToX(true);
     try {
-      const response = await authenticatedFetchJson(
+      // Generate share image
+      const imageResponse = await authenticatedFetchJson(
         API_ENDPOINTS.ANALYSIS_GENERATE_SHARE_IMAGE(selectedAnalysisDetails.id),
         {
           method: 'POST',
@@ -383,29 +514,39 @@ const AnalysisHistoryPage = () => {
         navigate
       );
       
-      if (!response || !response.image_url) {
+      if (!imageResponse || !imageResponse.image_url) {
         throw new Error('Failed to generate share image');
       }
       
-      // Set pre-loaded image URL and open modal
-      setPreloadedImageUrl(response.image_url);
-      setIsGeneratingImage(false);
-      setTimeout(() => {
-        setShowCreateXPost(true);
-      }, 0);
+      // Create tweet text
+      const tweetText = `Just completed ${selectedAnalysisDetails.exercise_name} analysis! Score: ${selectedAnalysisDetails.score}/100\n\n#ReformGym #FormAnalysis`;
+      
+      // Post to X with media
+      const postResponse = await authenticatedFetchJson(
+        API_ENDPOINTS.X_POST_WITH_MEDIA,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: tweetText,
+            media_urls: [imageResponse.image_url]
+          }),
+        },
+        navigate
+      );
+      
+      if (postResponse.success && postResponse.url) {
+        alert(`Successfully posted to X! View it here: ${postResponse.url}`);
+      } else {
+        throw new Error('Failed to post to X');
+      }
     } catch (err) {
-      console.error('Error generating share image:', err);
-      alert('Failed to generate share image. Please try again.');
-      setIsGeneratingImage(false);
-    }
-  };
-
-  const handleXPostCreated = (postResponse) => {
-    setShowCreateXPost(false);
-    setPreloadedImageUrl(null);
-    setIsGeneratingImage(false);
-    if (postResponse?.url) {
-      alert(`Successfully posted to X! View it here: ${postResponse.url}`);
+      console.error('Error posting to X:', err);
+      alert(err.message || 'Failed to post to X. Please try again.');
+    } finally {
+      setIsPostingToX(false);
     }
   };
 
@@ -822,7 +963,7 @@ const AnalysisHistoryPage = () => {
                     <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <button
                         onClick={handleShareToFeed}
-                        disabled={isGeneratingImage || isPostingToX}
+                        disabled={isGeneratingImage}
                         className="btn btn-primary"
                         style={{
                           width: '100%',

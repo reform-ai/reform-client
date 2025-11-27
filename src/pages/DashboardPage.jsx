@@ -5,6 +5,7 @@ import { useRequireAuth } from '../shared/utils/useRequireAuth';
 import { formatDateTime } from '../shared/utils/dateFormat';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
+import AnalysisModal from '../shared/components/modals/AnalysisModal';
 import '../shared/styles/AnalysisSkeleton.css';
 import './DashboardPage.css';
 
@@ -13,6 +14,8 @@ const DashboardPage = () => {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [selectedAnalysisId, setSelectedAnalysisId] = useState(null);
 
   const fetchMetrics = useCallback(async () => {
     setLoading(true);
@@ -93,14 +96,12 @@ const DashboardPage = () => {
               </div>
             ) : (
               <div>
-                <Link
-                  to={`/analyses/${mostRecentAnalysis.id}`}
-                  style={{
-                    textDecoration: 'none',
-                    color: 'inherit'
+                <div
+                  onClick={() => {
+                    setSelectedAnalysisId(mostRecentAnalysis.id);
+                    setShowAnalysisModal(true);
                   }}
-                >
-                  <div style={{
+                  style={{
                     padding: '16px',
                     background: 'var(--bg-tertiary)',
                     border: '1px solid var(--border-color)',
@@ -164,7 +165,7 @@ const DashboardPage = () => {
                       →
                     </div>
                   </div>
-                </Link>
+                </div>
 
                 {/* Quick Stats */}
                 {metrics && metrics.total_analyses > 0 && (
@@ -255,6 +256,17 @@ const DashboardPage = () => {
           </article>
         </div>
       </div>
+
+      {showAnalysisModal && (
+        <AnalysisModal
+          isOpen={showAnalysisModal}
+          onClose={() => {
+            setShowAnalysisModal(false);
+            setSelectedAnalysisId(null);
+          }}
+          analysisId={selectedAnalysisId}
+        />
+      )}
     </PageContainer>
   );
 };

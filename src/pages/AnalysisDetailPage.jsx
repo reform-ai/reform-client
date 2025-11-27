@@ -48,7 +48,7 @@ const AnalysisDetailPage = () => {
     setError(null);
 
     try {
-      const data = await getAnalysis(analysisId);
+      const data = await getAnalysis(analysisId, navigate);
       setAnalysis(data);
     } catch (err) {
       console.error('Error fetching analysis:', err);
@@ -56,7 +56,7 @@ const AnalysisDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [analysisId]);
+  }, [analysisId, navigate]);
 
   useRequireAuth(navigate, fetchAnalysis);
 

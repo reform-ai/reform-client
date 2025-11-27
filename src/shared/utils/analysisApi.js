@@ -51,14 +51,15 @@ export async function getAnalyses({
 /**
  * Get single analysis details by ID
  * @param {string} analysisId - Analysis ID
+ * @param {Function} navigate - Optional navigate function for redirects on auth failure
  * @returns {Promise<Object>} Full analysis details
  * @throws {Error} If request fails or analysis not found
  */
-export async function getAnalysis(analysisId) {
+export async function getAnalysis(analysisId, navigate = null) {
   // Use authenticatedFetch for proper token handling and refresh
   return await authenticatedFetchJson(API_ENDPOINTS.ANALYSIS(analysisId), {
     method: 'GET',
-  });
+  }, navigate);
 }
 
 /**

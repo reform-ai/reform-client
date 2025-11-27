@@ -95,7 +95,7 @@ const DashboardPage = () => {
                 </Link>
               </div>
             ) : (
-              <div>
+              <>
                 <div
                   onClick={() => {
                     setSelectedAnalysisId(mostRecentAnalysis.id);
@@ -122,7 +122,7 @@ const DashboardPage = () => {
                     e.currentTarget.style.background = 'var(--bg-tertiary)';
                     e.currentTarget.style.borderColor = 'var(--border-color)';
                   }}
-                  >
+                >
                     <div style={{ flex: 1 }}>
                       <div style={{
                         display: 'flex',
@@ -164,7 +164,6 @@ const DashboardPage = () => {
                     }}>
                       →
                     </div>
-                  </div>
                 </div>
 
                 {/* Quick Stats */}
@@ -237,7 +236,7 @@ const DashboardPage = () => {
                     View Progress
                   </Link>
                 </div>
-              </div>
+              </>
             )}
           </article>
 

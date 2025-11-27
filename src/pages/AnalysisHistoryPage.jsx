@@ -304,7 +304,7 @@ const AnalysisHistoryPage = () => {
       if (shouldConnect) {
         try {
           const response = await authenticatedFetchJson(
-            `${API_ENDPOINTS.X_LOGIN}?return_url=true`,
+            `${API_ENDPOINTS.X_CONNECT}?return_url=true`,
             {},
             navigate
           );

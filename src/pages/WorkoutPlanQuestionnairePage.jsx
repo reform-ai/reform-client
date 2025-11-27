@@ -218,16 +218,28 @@ const WorkoutPlanQuestionnairePage = () => {
       case 'select':
         return (
           <div className="select-options">
-            {question.options?.map(option => (
-              <button
-                key={option}
-                type="button"
-                className={`select-option ${value === option ? 'selected' : ''}`}
-                onClick={() => handleResponseChange(question.id, option)}
-              >
-                {option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ')}
-              </button>
-            ))}
+            {question.options?.map(option => {
+              // Format display text based on question type
+              let displayText = option;
+              if (question.id === 'weekly_frequency') {
+                displayText = `${option} ${option === '1' ? 'day' : 'days'} per week`;
+              } else if (question.id === 'plan_duration_weeks' || question.id === 'time_per_session') {
+                displayText = option; // Already formatted
+              } else {
+                displayText = option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ');
+              }
+              
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  className={`select-option ${value === option ? 'selected' : ''}`}
+                  onClick={() => handleResponseChange(question.id, option)}
+                >
+                  {displayText}
+                </button>
+              );
+            })}
           </div>
         );
 
@@ -309,10 +321,22 @@ const WorkoutPlanQuestionnairePage = () => {
             let displayValue = '';
             
             if (Array.isArray(answer)) {
-              displayValue = answer.map(v => v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ')).join(', ');
+              displayValue = answer.map(v => {
+                // Format body parts and other multi-word options
+                return v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ');
+              }).join(', ');
             } else if (answer !== undefined && answer !== null && answer !== '') {
               if (question.type === 'select') {
-                displayValue = answer.charAt(0).toUpperCase() + answer.slice(1).replace(/_/g, ' ');
+                // Format select options nicely
+                if (question.id === 'weekly_frequency') {
+                  displayValue = `${answer} ${answer === '1' ? 'day' : 'days'} per week`;
+                } else if (question.id === 'plan_duration_weeks') {
+                  displayValue = answer; // Already formatted as "2-4 weeks"
+                } else if (question.id === 'time_per_session') {
+                  displayValue = answer; // Already formatted as "10-15min"
+                } else {
+                  displayValue = answer.charAt(0).toUpperCase() + answer.slice(1).replace(/_/g, ' ');
+                }
               } else {
                 displayValue = String(answer);
               }

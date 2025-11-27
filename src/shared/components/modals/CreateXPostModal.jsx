@@ -59,6 +59,12 @@ const CreateXPostModal = ({
       return;
     }
 
+    // If posting with media, check for OAuth 1.0a connection (required for media uploads)
+    if (preloadedImageUrl && !xStatus?.oauth1_connected) {
+      setError('X account not connected for media upload. Please connect your X account for media posting first.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {

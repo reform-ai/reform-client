@@ -307,7 +307,7 @@ const AnalysisHistoryPage = () => {
   const handlePostToX = async () => {
     if (!selectedAnalysisDetails) return;
     
-    // Check if X is connected
+    // Check if X is connected (OAuth 2.0)
     if (!xStatus?.connected) {
       const shouldConnect = window.confirm(
         'You need to connect your X account to post. Would you like to connect now?'
@@ -374,6 +374,68 @@ const AnalysisHistoryPage = () => {
           }, 1000);
         } catch (err) {
           alert(err.message || 'Failed to connect X account. Please try again.');
+        }
+      }
+      return;
+    }
+    
+    // Check if OAuth 1.0a is connected (required for media uploads)
+    if (!xStatus?.oauth1_connected) {
+      const shouldConnect = window.confirm(
+        'You need to connect your X account for media posting to share images. Would you like to connect now?'
+      );
+      if (shouldConnect) {
+        try {
+          // Open OAuth 1.0a login in popup
+          const popupWidth = 600;
+          const popupHeight = 700;
+          const left = (window.screen.width - popupWidth) / 2;
+          const top = (window.screen.height - popupHeight) / 2;
+          
+          const popup = window.open(
+            API_ENDPOINTS.X_OAUTH1_LOGIN,
+            'X OAuth 1.0a',
+            `width=${popupWidth},height=${popupHeight},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
+          );
+          
+          if (!popup) {
+            alert('Please allow popups for this site to connect your X account.');
+            return;
+          }
+          
+          const handleMessage = (event) => {
+            if (event.origin !== window.location.origin) {
+              return;
+            }
+            
+            if (event.data.type === 'X_OAUTH1_SUCCESS') {
+              window.removeEventListener('message', handleMessage);
+              popup.close();
+              authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate)
+                .then(data => {
+                  setXStatus(data);
+                  if (data.oauth1_connected) {
+                    setTimeout(() => handlePostToX(), 500);
+                  }
+                })
+                .catch(() => setXStatus({ connected: false, oauth1_connected: false, x_username: null }));
+            } else if (event.data.type === 'X_OAUTH1_ERROR') {
+              window.removeEventListener('message', handleMessage);
+              popup.close();
+              alert(event.data.message || 'Failed to connect X account for media posting. Please try again.');
+            }
+          };
+          
+          window.addEventListener('message', handleMessage);
+          
+          const checkClosed = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(checkClosed);
+              window.removeEventListener('message', handleMessage);
+            }
+          }, 1000);
+        } catch (err) {
+          alert(err.message || 'Failed to connect X account for media posting. Please try again.');
         }
       }
       return;

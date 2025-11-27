@@ -15,13 +15,10 @@ function XConnectionSection({ navigate, refreshTrigger }) {
       const data = await authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate);
       setXStatus(data);
     } catch (err) {
-      // If authentication error, user might not be logged in - don't show error
       if (err.message && err.message.includes('Authentication required')) {
-        // User not authenticated with app - this is handled by app-level auth
         setXStatus({ connected: false, oauth1_connected: false, x_username: null });
         return;
       }
-      // If 404 or not connected, that's okay - just means no connection
       if (err.message && !err.message.includes('not found')) {
         setError(err.message || 'Failed to check X connection status');
       }
@@ -33,34 +30,29 @@ function XConnectionSection({ navigate, refreshTrigger }) {
 
   useEffect(() => {
     fetchXStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger]);
 
-  // Helper function to open OAuth popup
-  const openOAuthPopup = async (flowType = 'oauth2') => {
+  const openOAuthPopup = async () => {
     try {
-      // Use unified endpoint that checks status and returns appropriate OAuth URL
       const response = await authenticatedFetchJson(
         `${API_ENDPOINTS.X_CONNECT}?return_url=true`,
         {},
         navigate
       );
       
-      // If already fully connected, just refresh status
       if (response.connected) {
         await fetchXStatus();
         return null;
       }
       
       const oauthUrl = response.oauth_url;
-      const detectedFlowType = response.flow_type; // 'oauth2' or 'oauth1'
+      const detectedFlowType = response.flow_type;
       
       if (!oauthUrl) {
         setError('Failed to get OAuth URL. Please try again.');
         return null;
       }
       
-      // Open popup window for OAuth flow
       const popupWidth = 600;
       const popupHeight = 700;
       const left = (window.screen.width - popupWidth) / 2;
@@ -92,68 +84,45 @@ function XConnectionSection({ navigate, refreshTrigger }) {
       return;
     }
     
-    // Listen for OAuth completion message from popup
     const handleMessage = async (event) => {
-      // Verify origin for security
       if (event.origin !== window.location.origin) {
         return;
       }
       
-      // Handle OAuth 2.0 success - automatically continue to OAuth 1.0a if needed
       if (event.data.type === 'X_OAUTH_SUCCESS') {
-        window.removeEventListener('message', handleMessage);
-        popup.close();
-        
-        // Refresh connection status to check if OAuth 1.0a is still needed
         await fetchXStatus();
         
-        // Check if OAuth 1.0a is still needed
         const currentStatus = await authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate)
           .catch(() => ({ connected: true, oauth1_connected: false }));
         
         if (currentStatus.connected && !currentStatus.oauth1_connected) {
-          // Automatically open OAuth 1.0a popup
-          const oauth1Popup = await openOAuthPopup('oauth1');
-          if (oauth1Popup) {
-            // Set up message handler for OAuth 1.0a
-            const handleOAuth1Message = (event) => {
-              if (event.origin !== window.location.origin) {
-                return;
-              }
-              
-              if (event.data.type === 'X_OAUTH1_SUCCESS') {
-                window.removeEventListener('message', handleOAuth1Message);
-                oauth1Popup.close();
-                // Final status refresh
-                fetchXStatus();
-              } else if (event.data.type === 'X_OAUTH1_ERROR') {
-                window.removeEventListener('message', handleOAuth1Message);
-                oauth1Popup.close();
-                setError(event.data.message || 'Failed to complete X connection. Please try again.');
-              }
-            };
+          try {
+            const response = await authenticatedFetchJson(
+              `${API_ENDPOINTS.X_CONNECT}?return_url=true`,
+              {},
+              navigate
+            );
             
-            window.addEventListener('message', handleOAuth1Message);
-            
-            // Check if popup was closed manually
-            const checkClosed = setInterval(() => {
-              if (oauth1Popup.closed) {
-                clearInterval(checkClosed);
-                window.removeEventListener('message', handleOAuth1Message);
-              }
-            }, 1000);
+            if (response.oauth_url && response.flow_type === 'oauth1') {
+              popup.location.href = response.oauth_url;
+            } else {
+              window.removeEventListener('message', handleMessage);
+              popup.close();
+            }
+          } catch (err) {
+            window.removeEventListener('message', handleMessage);
+            popup.close();
+            setError('Failed to continue connection. Please try again.');
           }
+        } else {
+          window.removeEventListener('message', handleMessage);
+          popup.close();
         }
-      } 
-      // Handle OAuth 1.0a success (if opened directly)
-      else if (event.data.type === 'X_OAUTH1_SUCCESS') {
+      } else if (event.data.type === 'X_OAUTH1_SUCCESS') {
         window.removeEventListener('message', handleMessage);
         popup.close();
-        // Refresh connection status
         fetchXStatus();
-      } 
-      // Handle errors
-      else if (event.data.type === 'X_OAUTH_ERROR' || event.data.type === 'X_OAUTH1_ERROR') {
+      } else if (event.data.type === 'X_OAUTH_ERROR' || event.data.type === 'X_OAUTH1_ERROR') {
         window.removeEventListener('message', handleMessage);
         popup.close();
         setError(event.data.message || 'Failed to connect X account. Please try again.');
@@ -162,7 +131,6 @@ function XConnectionSection({ navigate, refreshTrigger }) {
     
     window.addEventListener('message', handleMessage);
     
-    // Check if popup was closed manually
     const checkClosed = setInterval(() => {
       if (popup.closed) {
         clearInterval(checkClosed);
@@ -184,7 +152,6 @@ function XConnectionSection({ navigate, refreshTrigger }) {
         method: 'POST'
       }, navigate);
       
-      // Refresh status after disconnect
       await fetchXStatus();
     } catch (err) {
       setError(err.message || 'Failed to disconnect X account');

@@ -421,8 +421,41 @@ const AnalysisDetailPage = () => {
     );
   }
 
+  // Get analysis results - ensure we have data before rendering
   const analysisResults = getAnalysisResults();
   const componentScores = getComponentScores();
+
+  // If we have analysis but normalization failed, show error
+  if (analysis && !analysisResults) {
+    return (
+      <PageContainer>
+        <PageHeader onLoginClick={() => navigate('/?login=1')} />
+        <div className="skeleton-shell">
+          <div className="skeleton-card" style={{ maxWidth: '500px', margin: '40px auto', textAlign: 'center' }}>
+            <p style={{ color: 'var(--accent-orange)', marginBottom: '16px' }}>
+              Failed to process analysis data. The analysis may be in an incompatible format.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button onClick={fetchAnalysis} className="btn btn-primary">
+                Retry
+              </button>
+              <Link to="/analyses" className="btn" style={{
+                padding: '8px 16px',
+                fontSize: '0.9rem',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
+                textDecoration: 'none',
+                display: 'inline-block'
+              }}>
+                Back to History
+              </Link>
+            </div>
+          </div>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>

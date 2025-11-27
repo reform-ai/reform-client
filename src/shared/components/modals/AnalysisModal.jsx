@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAnalysis } from '../../utils/analysisApi';
 import { normalizeAnalysisResults, getFpsFromAnalysis, getComponentScores as getComponentScoresFromNormalizer } from '../../utils/analysisDataNormalizer';
 import { formatDateTime } from '../../utils/dateFormat';
@@ -97,7 +97,7 @@ const AnalysisModal = ({ isOpen, onClose, analysisId }) => {
 
   const handleViewFullDetails = () => {
     onClose();
-    navigate(`/analyses/${analysisId}`);
+    navigate(`/analyses?selected=${analysisId}`);
   };
 
   const analysisResults = getAnalysisResults();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAnalyses, getAnalysis } from '../shared/utils/analysisApi';
 import { isUserLoggedIn } from '../shared/utils/authStorage';
 import { formatDateTime, formatDateOnly, formatTimeOnly, parseUTCDate } from '../shared/utils/dateFormat';
@@ -19,6 +19,7 @@ import './AnalysisHistoryPage.css';
 
 const AnalysisHistoryPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [analyses, setAnalyses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,6 +71,46 @@ const AnalysisHistoryPage = () => {
       fetchAnalysisDetails(selectedAnalysis.id);
     }
   }, [selectedAnalysis]);
+
+  // Auto-select analysis from URL query parameter (only once when analyses are loaded)
+  useEffect(() => {
+    const selectedId = searchParams.get('selected');
+    if (selectedId && analyses.length > 0 && !loading && !selectedAnalysis) {
+      // Find the analysis in the current list
+      const analysis = analyses.find(a => a.id === selectedId);
+      if (analysis) {
+        // Analysis found in list - select it (this will trigger fetchAnalysisDetails via the other useEffect)
+        setSelectedAnalysis(analysis);
+        // Remove the query parameter from URL to clean it up
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete('selected');
+        setSearchParams(newSearchParams, { replace: true });
+      } else {
+        // Analysis not in current page - fetch it directly and create a minimal object
+        const loadAnalysis = async () => {
+          try {
+            const data = await fetchAnalysisDetails(selectedId);
+            // Create analysis object from fetched data
+            setSelectedAnalysis({
+              id: data.id,
+              exercise_name: data.exercise_name,
+              score: data.score,
+              created_at: data.created_at
+            });
+          } catch (err) {
+            console.error('Failed to load analysis from URL parameter:', err);
+          } finally {
+            // Remove the query parameter from URL regardless of success/failure
+            const newSearchParams = new URLSearchParams(searchParams);
+            newSearchParams.delete('selected');
+            setSearchParams(newSearchParams, { replace: true });
+          }
+        };
+        loadAnalysis();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analyses, loading]);
 
   // Check X connection status (OAuth 2.0 and OAuth 1.0a)
   useEffect(() => {
@@ -128,11 +169,13 @@ const AnalysisHistoryPage = () => {
   const fetchAnalysisDetails = async (analysisId) => {
     setLoadingDetails(true);
     try {
-      const data = await getAnalysis(analysisId);
+      const data = await getAnalysis(analysisId, navigate);
       setSelectedAnalysisDetails(data);
+      return data;
     } catch (err) {
       console.error('Error fetching analysis details:', err);
       setSelectedAnalysisDetails(null);
+      throw err;
     } finally {
       setLoadingDetails(false);
     }

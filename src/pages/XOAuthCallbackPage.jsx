@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
@@ -12,6 +12,7 @@ import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
  */
 function XOAuthCallbackPage() {
   const [searchParams] = useSearchParams();
+  const [isRedirecting, setIsRedirecting] = useState(false);
   
   useEffect(() => {
     // Check if we're in a popup (opened by window.open)
@@ -41,6 +42,8 @@ function XOAuthCallbackPage() {
             );
             
             if (response.oauth_url && response.flow_type === 'oauth1') {
+              // Set redirecting state before redirecting
+              setIsRedirecting(true);
               // Redirect to OAuth 1.0a instead of closing
               window.location.href = response.oauth_url;
               return;
@@ -147,7 +150,9 @@ function XOAuthCallbackPage() {
         {(searchParams.get('x_oauth_success') === 'true' || searchParams.get('x_oauth1_success') === 'true') ? '✅' : '⏳'}
       </div>
       <p style={{ fontSize: '1rem', margin: 0 }}>
-        {(searchParams.get('x_oauth_success') === 'true' || searchParams.get('x_oauth1_success') === 'true')
+        {isRedirecting
+          ? 'X account connected successfully! Redirecting...'
+          : (searchParams.get('x_oauth_success') === 'true' || searchParams.get('x_oauth1_success') === 'true')
           ? 'X account connected successfully! Closing window...'
           : (searchParams.get('x_oauth_error') || searchParams.get('x_oauth1_error'))
           ? 'An error occurred. Closing window...'

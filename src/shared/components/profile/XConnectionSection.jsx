@@ -40,14 +40,21 @@ function XConnectionSection({ navigate, refreshTrigger }) {
     setError('');
     
     try {
-      // Get OAuth URL from backend (authenticated request)
+      // Use unified endpoint that checks status and returns appropriate OAuth URL
       const response = await authenticatedFetchJson(
-        `${API_ENDPOINTS.X_LOGIN}?return_url=true`,
+        `${API_ENDPOINTS.X_CONNECT}?return_url=true`,
         {},
         navigate
       );
       
+      // If already fully connected, just refresh status
+      if (response.connected) {
+        await fetchXStatus();
+        return;
+      }
+      
       const oauthUrl = response.oauth_url;
+      const flowType = response.flow_type; // 'oauth2' or 'oauth1'
       
       if (!oauthUrl) {
         setError('Failed to get OAuth URL. Please try again.');
@@ -62,7 +69,7 @@ function XConnectionSection({ navigate, refreshTrigger }) {
       
       const popup = window.open(
         oauthUrl,
-        'X OAuth',
+        flowType === 'oauth1' ? 'X OAuth 1.0a' : 'X OAuth',
         `width=${popupWidth},height=${popupHeight},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes`
       );
       
@@ -78,12 +85,13 @@ function XConnectionSection({ navigate, refreshTrigger }) {
           return;
         }
         
-        if (event.data.type === 'X_OAUTH_SUCCESS') {
+        // Handle both OAuth 2.0 and OAuth 1.0a success messages
+        if (event.data.type === 'X_OAUTH_SUCCESS' || event.data.type === 'X_OAUTH1_SUCCESS') {
           window.removeEventListener('message', handleMessage);
           popup.close();
           // Refresh connection status
           fetchXStatus();
-        } else if (event.data.type === 'X_OAUTH_ERROR') {
+        } else if (event.data.type === 'X_OAUTH_ERROR' || event.data.type === 'X_OAUTH1_ERROR') {
           window.removeEventListener('message', handleMessage);
           popup.close();
           setError(event.data.message || 'Failed to connect X account. Please try again.');
@@ -221,7 +229,7 @@ function XConnectionSection({ navigate, refreshTrigger }) {
         </label>
       </div>
       
-      {isConnected ? (
+      {isConnected && isOAuth1Connected ? (
         <div>
           <div style={{
             padding: '12px',
@@ -237,7 +245,7 @@ function XConnectionSection({ navigate, refreshTrigger }) {
               <span style={{ color: 'var(--accent-green)', fontSize: '1.2rem' }}>✓</span>
               <div>
                 <div style={{ color: 'var(--accent-green)', fontWeight: '600', fontSize: '0.9rem' }}>
-                  Connected (OAuth 2.0)
+                  Connected to X
                 </div>
                 {xUsername && (
                   <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '2px' }}>
@@ -263,79 +271,12 @@ function XConnectionSection({ navigate, refreshTrigger }) {
               {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
             </button>
           </div>
-          
-          {/* OAuth 1.0a connection status for media uploads */}
-          {isOAuth1Connected ? (
-            <div style={{
-              padding: '12px',
-              background: 'rgba(16, 185, 129, 0.1)',
-              border: '1px solid var(--accent-green)',
-              borderRadius: '8px',
-              marginBottom: '12px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: 'var(--accent-green)', fontSize: '1.2rem' }}>✓</span>
-                <div style={{ color: 'var(--accent-green)', fontWeight: '600', fontSize: '0.9rem' }}>
-                  Media Upload Enabled (OAuth 1.0a)
-                </div>
-              </div>
-              <p style={{ 
-                margin: '8px 0 0 0', 
-                fontSize: '0.85rem', 
-                color: 'var(--text-secondary)' 
-              }}>
-                You can share images and videos to X.
-              </p>
-            </div>
-          ) : (
-            <div style={{
-              padding: '12px',
-              background: 'rgba(255, 193, 7, 0.1)',
-              border: '1px solid var(--accent-orange)',
-              borderRadius: '8px',
-              marginBottom: '12px'
-            }}>
-              <p style={{ 
-                margin: '0 0 12px 0', 
-                fontSize: '0.85rem', 
-                color: 'var(--text-secondary)' 
-              }}>
-                Connect OAuth 1.0a to enable media uploads (images/videos) to X.
-              </p>
-              <button
-                onClick={handleConnectOAuth1}
-                style={{
-                  padding: '8px 16px',
-                  background: 'var(--accent-orange)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: '#fff',
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.opacity = '0.9';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.opacity = '1';
-                }}
-              >
-                <span>📸</span>
-                Connect for Media Upload
-              </button>
-            </div>
-          )}
-          
           <p style={{ 
             margin: '8px 0 0 0', 
             fontSize: '0.85rem', 
             color: 'var(--text-secondary)' 
           }}>
-            You can share your analysis results to X directly from the platform.
+            You can share your analysis results (including images and videos) to X directly from the platform.
           </p>
         </div>
       ) : (
@@ -352,7 +293,9 @@ function XConnectionSection({ navigate, refreshTrigger }) {
               fontSize: '0.85rem', 
               color: 'var(--text-secondary)' 
             }}>
-              Connect your X account to share your analysis results directly to X.
+              {isConnected 
+                ? 'Complete your X connection to enable media uploads (images/videos).'
+                : 'Connect your X account to share your analysis results directly to X.'}
             </p>
             <button
               onClick={handleConnect}
@@ -377,7 +320,7 @@ function XConnectionSection({ navigate, refreshTrigger }) {
               }}
             >
               <span>🐦</span>
-              Connect X Account
+              {isConnected ? 'Complete Connection' : 'Connect X Account'}
             </button>
           </div>
         </div>

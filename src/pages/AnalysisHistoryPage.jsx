@@ -71,31 +71,20 @@ const AnalysisHistoryPage = () => {
     }
   }, [selectedAnalysis]);
 
-  // Check X connection status (separate useEffect, doesn't affect existing functionality)
+  // Check X connection status (OAuth 2.0 and OAuth 1.0a)
   useEffect(() => {
     const fetchXStatus = async () => {
       try {
         const data = await authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate);
         setXStatus(data);
       } catch (err) {
-        setXStatus({ connected: false, x_username: null });
-      }
-    };
-    
-    if (isUserLoggedIn()) {
-      fetchXStatus();
-    }
-  }, [navigate]);
-
-  useEffect(() => {
-    // Check X connection status
-    const fetchXStatus = async () => {
-      try {
-        const data = await authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate);
-        setXStatus(data);
-      } catch (err) {
+        // If authentication error, user might not be logged in - don't set error state
         // If not connected, that's okay - just means no connection
-        setXStatus({ connected: false, x_username: null });
+        if (err.message && err.message.includes('Authentication required')) {
+          // User not authenticated with app - this will be handled by useRequireAuth
+          return;
+        }
+        setXStatus({ connected: false, oauth1_connected: false, x_username: null });
       }
     };
     

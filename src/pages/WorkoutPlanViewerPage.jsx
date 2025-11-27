@@ -90,6 +90,30 @@ const WorkoutPlanViewerPage = () => {
     }
   };
 
+  const handleStartOver = async () => {
+    if (!plan || !plan.id) return;
+
+    if (!window.confirm('Are you sure you want to start over? This will delete your current plan and you\'ll need to fill out the questionnaire again.')) {
+      return;
+    }
+
+    try {
+      await authenticatedFetchJson(
+        API_ENDPOINTS.WORKOUT_PLAN_DELETE(plan.id),
+        {
+          method: 'DELETE'
+        },
+        navigate
+      );
+
+      // Navigate to questionnaire to start over
+      navigate('/workout-plans/questionnaire');
+    } catch (err) {
+      console.error('Failed to delete plan:', err);
+      alert(err.message || 'Failed to delete plan');
+    }
+  };
+
   if (loading) {
     return (
       <PageContainer>
@@ -151,6 +175,12 @@ const WorkoutPlanViewerPage = () => {
               disabled={regenerating}
             >
               {regenerating ? 'Regenerating...' : 'Regenerate Plan'}
+            </button>
+            <button
+              onClick={handleStartOver}
+              className="start-over-button"
+            >
+              Start Over
             </button>
           </div>
         </div>

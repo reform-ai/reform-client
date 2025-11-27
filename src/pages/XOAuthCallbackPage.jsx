@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { API_ENDPOINTS } from '../config/api';
+import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 
 /**
  * X OAuth Callback Page
  * 
  * This page is opened in a popup window during the X OAuth flow.
  * It receives the OAuth callback from X, then communicates with the parent window
- * and closes itself.
+ * and either redirects to OAuth 1.0a (if needed) or closes itself.
  */
 function XOAuthCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -28,12 +30,43 @@ function XOAuthCallbackPage() {
           { type: 'X_OAUTH_SUCCESS' },
           window.location.origin
         );
+        
+        // Check if OAuth 1.0a is needed and redirect if so
+        const checkAndRedirect = async () => {
+          try {
+            const response = await authenticatedFetchJson(
+              `${API_ENDPOINTS.X_CONNECT}?return_url=true`,
+              {},
+              null // No navigate needed in popup
+            );
+            
+            if (response.oauth_url && response.flow_type === 'oauth1') {
+              // Redirect to OAuth 1.0a instead of closing
+              window.location.href = response.oauth_url;
+              return;
+            }
+          } catch (err) {
+            console.error('Failed to check OAuth 1.0a status:', err);
+          }
+          
+          // Close the popup if OAuth 1.0a is not needed or check failed
+          setTimeout(() => {
+            window.close();
+          }, 500);
+        };
+        
+        checkAndRedirect();
       } else if (oauth1Success) {
         // Send success message to parent window (OAuth 1.0a)
         window.opener.postMessage(
           { type: 'X_OAUTH1_SUCCESS' },
           window.location.origin
         );
+        
+        // Close the popup after a short delay
+        setTimeout(() => {
+          window.close();
+        }, 500);
       } else if (error) {
         // Send error message to parent window (OAuth 2.0)
         const errorMessages = {
@@ -53,6 +86,11 @@ function XOAuthCallbackPage() {
           },
           window.location.origin
         );
+        
+        // Close the popup after a short delay
+        setTimeout(() => {
+          window.close();
+        }, 500);
       } else if (oauth1Error) {
         // Send error message to parent window (OAuth 1.0a)
         const errorMessages = {
@@ -72,12 +110,12 @@ function XOAuthCallbackPage() {
           },
           window.location.origin
         );
+        
+        // Close the popup after a short delay
+        setTimeout(() => {
+          window.close();
+        }, 500);
       }
-      
-      // Close the popup after a short delay
-      setTimeout(() => {
-        window.close();
-      }, 500);
     } else {
       // Not in a popup - redirect to profile page
       const success = searchParams.get('x_oauth_success') === 'true' || searchParams.get('x_oauth1_success') === 'true';

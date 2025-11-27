@@ -79,8 +79,6 @@ function XConnectionSection({ navigate, refreshTrigger }) {
   const handleConnect = async () => {
     setError('');
     
-    const needsOAuth1 = !isOAuth1Connected;
-    
     const popup = await openOAuthPopup();
     if (!popup) {
       return;
@@ -92,35 +90,14 @@ function XConnectionSection({ navigate, refreshTrigger }) {
       }
       
       if (event.data.type === 'X_OAUTH_SUCCESS') {
+        // OAuth 2.0 succeeded - callback page will handle OAuth 1.0a redirect if needed
+        // Just refresh status and wait for OAuth 1.0a success or popup close
         await fetchXStatus();
-        
-        if (needsOAuth1) {
-          try {
-            const response = await authenticatedFetchJson(
-              `${API_ENDPOINTS.X_CONNECT}?return_url=true`,
-              {},
-              navigate
-            );
-            
-            if (response.oauth_url && response.flow_type === 'oauth1') {
-              popup.location.href = response.oauth_url;
-            } else {
-              window.removeEventListener('message', handleMessage);
-              popup.close();
-            }
-          } catch (err) {
-            window.removeEventListener('message', handleMessage);
-            popup.close();
-            setError('Failed to continue connection. Please try again.');
-          }
-        } else {
-          window.removeEventListener('message', handleMessage);
-          popup.close();
-        }
       } else if (event.data.type === 'X_OAUTH1_SUCCESS') {
+        // Both OAuth flows completed
         window.removeEventListener('message', handleMessage);
         popup.close();
-        fetchXStatus();
+        await fetchXStatus();
       } else if (event.data.type === 'X_OAUTH_ERROR' || event.data.type === 'X_OAUTH1_ERROR') {
         window.removeEventListener('message', handleMessage);
         popup.close();
@@ -134,6 +111,8 @@ function XConnectionSection({ navigate, refreshTrigger }) {
       if (popup.closed) {
         clearInterval(checkClosed);
         window.removeEventListener('message', handleMessage);
+        // Refresh status when popup closes in case connection completed
+        fetchXStatus();
       }
     }, 1000);
   };

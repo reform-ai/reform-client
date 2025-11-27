@@ -1,0 +1,262 @@
+.plan-viewer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+}
+
+.plan-title {
+  margin: 0 0 1rem 0;
+  font-size: 2rem;
+  color: #333;
+}
+
+.plan-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.meta-item {
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.meta-item strong {
+  color: #333;
+  margin-right: 0.5rem;
+}
+
+.plan-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.regenerate-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.regenerate-button:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.regenerate-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.week-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.week-button {
+  padding: 0.75rem 1.5rem;
+  background-color: white;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.week-button:hover {
+  border-color: #3498db;
+  color: #3498db;
+}
+
+.week-button.active {
+  background-color: #3498db;
+  border-color: #3498db;
+  color: white;
+}
+
+.week-content {
+  margin-bottom: 2rem;
+}
+
+.week-title {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.workouts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.workout-card {
+  background-color: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: box-shadow 0.2s;
+}
+
+.workout-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.workout-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.workout-day {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.workout-focus {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.workout-duration {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #999;
+}
+
+.exercises-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.exercise-item {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.exercise-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.exercise-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.exercise-sets-reps {
+  font-size: 0.95rem;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-left: 1rem;
+}
+
+.exercise-rest {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  color: #999;
+}
+
+.exercise-notes {
+  margin: 0.75rem 0 0 0;
+  font-size: 0.95rem;
+  color: #555;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.progression-section {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+}
+
+.section-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.progression-info {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: #666;
+}
+
+.progression-info strong {
+  color: #333;
+  margin-right: 0.5rem;
+}
+
+.loading-container,
+.error-container {
+  text-align: center;
+  padding: 3rem;
+}
+
+.create-button {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create-button:hover {
+  background-color: #2980b9;
+}
+
+@media (max-width: 768px) {
+  .plan-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .workouts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exercise-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .exercise-sets-reps {
+    margin-left: 0;
+  }
+}
+

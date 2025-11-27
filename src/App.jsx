@@ -18,6 +18,9 @@ import AnalysisHistoryPage from './pages/AnalysisHistoryPage';
 import AnalysisDetailPage from './pages/AnalysisDetailPage';
 import ProgressDashboardPage from './pages/ProgressDashboardPage';
 import XOAuthCallbackPage from './pages/XOAuthCallbackPage';
+import WorkoutPlanQuestionnairePage from './pages/WorkoutPlanQuestionnairePage';
+import WorkoutPlanGeneratePage from './pages/WorkoutPlanGeneratePage';
+import WorkoutPlanViewerPage from './pages/WorkoutPlanViewerPage';
 import Footer from './shared/components/layout/Footer';
 import './App.css';
 
@@ -43,6 +46,10 @@ function App() {
         <Route path="/analyses/:analysisId" element={<AnalysisDetailPage />} />
         <Route path="/progress" element={<ProgressDashboardPage />} />
         <Route path="/auth/x/callback" element={<XOAuthCallbackPage />} />
+        <Route path="/workout-plans/questionnaire" element={<WorkoutPlanQuestionnairePage />} />
+        <Route path="/workout-plans/generate" element={<WorkoutPlanGeneratePage />} />
+        <Route path="/workout-plans/:planId" element={<WorkoutPlanViewerPage />} />
+        <Route path="/workout-plans" element={<WorkoutPlanViewerPage />} />
         <Route path="*" element={<LandingPage />} />
       </Routes>
       <Footer />

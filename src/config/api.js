@@ -64,7 +64,14 @@ export const API_ENDPOINTS = {
   X_POST_WITH_MEDIA: `${API_URL}/api/x/post-with-media`, // Old endpoint (httpx-based, OAuth 2.0 only)
   X_TWEEPY_POST_WITH_MEDIA: `${API_URL}/api/x/tweepy/post-with-media`, // New endpoint (tweepy-based, OAuth 1.0a + OAuth 2.0)
   X_OAUTH1_LOGIN: `${API_URL}/api/auth/x/oauth1/login`, // OAuth 1.0a login for media upload
-  X_OAUTH1_STATUS: `${API_URL}/api/x/oauth1/status` // Check OAuth 1.0a connection status
+  X_OAUTH1_STATUS: `${API_URL}/api/x/oauth1/status`, // Check OAuth 1.0a connection status
+  // Workout plan endpoints
+  WORKOUT_PLANS_QUESTIONNAIRE: `${API_URL}/api/workout-plans/questionnaire`,
+  WORKOUT_PLANS_SUBMIT: `${API_URL}/api/workout-plans/questionnaire/submit`,
+  WORKOUT_PLANS_GENERATE: `${API_URL}/api/workout-plans/generate`,
+  WORKOUT_PLANS_ACTIVE: `${API_URL}/api/workout-plans/active`,
+  WORKOUT_PLAN: (planId) => `${API_URL}/api/workout-plans/${planId}`,
+  WORKOUT_PLAN_REGENERATE: (planId) => `${API_URL}/api/workout-plans/${planId}/regenerate`
 };
 
 // Only log API URL in development mode for security

@@ -27,31 +27,6 @@ const WorkoutPlanQuestionnairePage = () => {
     fetchQuestionnaire();
   }, [navigate]);
 
-  useEffect(() => {
-    // Auto-advance when question is answered
-    if (currentStep > 0 && currentStep <= questions.length) {
-      const questionIndex = currentStep - 1;
-      const question = questions[questionIndex];
-      const answer = responses[question?.id];
-      
-      if (question && answer !== undefined && answer !== '' && answer !== null) {
-        // Check if answer is valid
-        const isValid = validateAnswer(question, answer);
-        if (isValid) {
-          // Auto-advance after a short delay
-          const timer = setTimeout(() => {
-            if (currentStep < questions.length) {
-              handleNext();
-            } else {
-              setShowReview(true);
-            }
-          }, 500); // 500ms delay for smooth transition
-          
-          return () => clearTimeout(timer);
-        }
-      }
-    }
-  }, [responses, currentStep, questions.length]);
 
   const fetchQuestionnaire = async () => {
     try {

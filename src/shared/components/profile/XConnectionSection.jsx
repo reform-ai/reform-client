@@ -79,6 +79,8 @@ function XConnectionSection({ navigate, refreshTrigger }) {
   const handleConnect = async () => {
     setError('');
     
+    const needsOAuth1 = !isOAuth1Connected;
+    
     const popup = await openOAuthPopup();
     if (!popup) {
       return;
@@ -92,10 +94,7 @@ function XConnectionSection({ navigate, refreshTrigger }) {
       if (event.data.type === 'X_OAUTH_SUCCESS') {
         await fetchXStatus();
         
-        const currentStatus = await authenticatedFetchJson(API_ENDPOINTS.X_STATUS, {}, navigate)
-          .catch(() => ({ connected: true, oauth1_connected: false }));
-        
-        if (currentStatus.connected && !currentStatus.oauth1_connected) {
+        if (needsOAuth1) {
           try {
             const response = await authenticatedFetchJson(
               `${API_ENDPOINTS.X_CONNECT}?return_url=true`,

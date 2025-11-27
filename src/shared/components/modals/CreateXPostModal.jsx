@@ -63,10 +63,11 @@ const CreateXPostModal = ({
 
     try {
       // If there's an image, post with media, otherwise text-only
+      // Use new tweepy endpoint for media upload (supports OAuth 1.0a)
       let postResponse;
       if (preloadedImageUrl) {
         postResponse = await authenticatedFetchJson(
-          API_ENDPOINTS.X_POST_WITH_MEDIA,
+          API_ENDPOINTS.X_TWEEPY_POST_WITH_MEDIA,
           {
             method: 'POST',
             headers: {

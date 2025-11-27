@@ -60,7 +60,10 @@ export const API_ENDPOINTS = {
   X_LOGIN: `${API_URL}/api/auth/x/login`,
   X_DISCONNECT: `${API_URL}/api/x/disconnect`,
   X_POST: `${API_URL}/api/x/post`,
-  X_POST_WITH_MEDIA: `${API_URL}/api/x/post-with-media`
+  X_POST_WITH_MEDIA: `${API_URL}/api/x/post-with-media`, // Old endpoint (httpx-based, OAuth 2.0 only)
+  X_TWEEPY_POST_WITH_MEDIA: `${API_URL}/api/x/tweepy/post-with-media`, // New endpoint (tweepy-based, OAuth 1.0a + OAuth 2.0)
+  X_OAUTH1_LOGIN: `${API_URL}/api/auth/x/oauth1/login`, // OAuth 1.0a login for media upload
+  X_OAUTH1_STATUS: `${API_URL}/api/x/oauth1/status` // Check OAuth 1.0a connection status
 };
 
 // Only log API URL in development mode for security

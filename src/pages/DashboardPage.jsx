@@ -1,8 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getProgressMetrics } from '../shared/utils/analysisApi';
 import { useRequireAuth } from '../shared/utils/useRequireAuth';
 import { formatDateTime } from '../shared/utils/dateFormat';
+import { API_ENDPOINTS } from '../config/api';
+import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
 import AnalysisModal from '../shared/components/modals/AnalysisModal';
@@ -16,6 +18,9 @@ const DashboardPage = () => {
   const [error, setError] = useState(null);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [selectedAnalysisId, setSelectedAnalysisId] = useState(null);
+  const [workoutPlan, setWorkoutPlan] = useState(null);
+  const [workoutPlanLoading, setWorkoutPlanLoading] = useState(true);
+  const [todayWorkout, setTodayWorkout] = useState(null);
 
   const fetchMetrics = useCallback(async () => {
     setLoading(true);
@@ -33,6 +38,60 @@ const DashboardPage = () => {
   }, [navigate]);
 
   useRequireAuth(navigate, fetchMetrics);
+
+  // Fetch active workout plan
+  const fetchWorkoutPlan = useCallback(async () => {
+    setWorkoutPlanLoading(true);
+    try {
+      const data = await authenticatedFetchJson(
+        API_ENDPOINTS.WORKOUT_PLANS_ACTIVE,
+        { method: 'GET' },
+        null // Don't navigate on error, just silently fail
+      );
+      if (data && data.id) {
+        setWorkoutPlan(data);
+        // Find today's workout
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const todayName = dayNames[dayOfWeek];
+        
+        // Find current week (assuming plan started or we're in week 1)
+        const planData = data.plan_data;
+        const weeks = planData?.weeks || [];
+        
+        if (weeks.length > 0) {
+          // For now, show week 1's workout for today
+          // In a full implementation, you'd calculate which week based on plan start date
+          const currentWeek = weeks[0];
+          const workouts = currentWeek?.workouts || [];
+          
+          // Find workout for today
+          const workout = workouts.find(w => w.day_name === todayName);
+          if (workout) {
+            setTodayWorkout(workout);
+          } else {
+            setTodayWorkout(null);
+          }
+        } else {
+          setTodayWorkout(null);
+        }
+      } else {
+        setWorkoutPlan(null);
+        setTodayWorkout(null);
+      }
+    } catch (error) {
+      // Silently fail - user might not have a plan yet
+      setWorkoutPlan(null);
+      setTodayWorkout(null);
+    } finally {
+      setWorkoutPlanLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchWorkoutPlan();
+  }, [fetchWorkoutPlan]);
 
   const getScoreColor = (score) => {
     if (score >= 90) return 'var(--score-excellent)';
@@ -240,19 +299,133 @@ const DashboardPage = () => {
             )}
           </article>
 
-          {/* Community Feed */}
-          <article className="skeleton-card">
-            <h3>Community Feed</h3>
-            <p className="dashboard-feed-description">
-              Connect with the community and share your progress
-            </p>
-            <Link 
-              to="/feed" 
-              className="btn btn-view-feed"
-            >
-              View Feed →
-            </Link>
-          </article>
+          {/* Right Column - Workout Plan and Community Feed */}
+          <div className="dashboard-right-column">
+            {/* My Workout Plan */}
+            <article className="skeleton-card dashboard-workout-card">
+              <div className="dashboard-workout-header">
+                <h3>My Workout Plan</h3>
+                {workoutPlan && (
+                  <Link
+                    to={workoutPlan.id ? `/workout-plans/${workoutPlan.id}` : '/workout-plans'}
+                    className="dashboard-view-all-link"
+                  >
+                    My Plans →
+                  </Link>
+                )}
+              </div>
+
+              {workoutPlanLoading ? (
+                <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
+              ) : !workoutPlan ? (
+                <div>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                    No workout plan created yet.
+                  </p>
+                  <Link
+                    to="/workout-plans/questionnaire"
+                    className="btn btn-primary"
+                    style={{ fontSize: '0.9rem', width: '100%', textAlign: 'center', display: 'block' }}
+                  >
+                    Create Plan
+                  </Link>
+                </div>
+              ) : !todayWorkout ? (
+                <div>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                    No workout scheduled for today.
+                  </p>
+                  <Link
+                    to={workoutPlan.id ? `/workout-plans/${workoutPlan.id}` : '/workout-plans'}
+                    className="btn"
+                    style={{
+                      fontSize: '0.9rem',
+                      width: '100%',
+                      textAlign: 'center',
+                      display: 'block',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-primary)',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    View Plan
+                  </Link>
+                </div>
+              ) : (
+                <div>
+                  <div style={{
+                    padding: '12px',
+                    background: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '8px',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px'
+                    }}>
+                      <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                        {todayWorkout.day_name}
+                      </h4>
+                      <span style={{
+                        fontSize: '0.85rem',
+                        color: 'var(--text-secondary)'
+                      }}>
+                        ~{todayWorkout.estimated_duration_minutes} min
+                      </span>
+                    </div>
+                    <p style={{
+                      margin: '4px 0 8px 0',
+                      fontSize: '0.9rem',
+                      color: 'var(--accent-green)',
+                      fontWeight: 500
+                    }}>
+                      {todayWorkout.focus}
+                    </p>
+                    <div style={{
+                      fontSize: '0.85rem',
+                      color: 'var(--text-secondary)'
+                    }}>
+                      <strong>{todayWorkout.exercises?.length || 0}</strong> exercises
+                    </div>
+                  </div>
+                  <Link
+                    to={workoutPlan.id ? `/workout-plans/${workoutPlan.id}` : '/workout-plans'}
+                    className="btn"
+                    style={{
+                      fontSize: '0.9rem',
+                      width: '100%',
+                      textAlign: 'center',
+                      display: 'block',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-primary)',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    My Plans →
+                  </Link>
+                </div>
+              )}
+            </article>
+
+            {/* Community Feed - Half Height */}
+            <article className="skeleton-card dashboard-feed-card">
+              <h3>Community Feed</h3>
+              <p className="dashboard-feed-description">
+                Connect with the community and share your progress
+              </p>
+              <Link 
+                to="/feed" 
+                className="btn btn-view-feed"
+              >
+                View Feed →
+              </Link>
+            </article>
+          </div>
         </div>
       </div>
 

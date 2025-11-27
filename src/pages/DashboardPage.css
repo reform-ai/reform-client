@@ -152,3 +152,31 @@
   transform: translateY(0);
 }
 
+/* Dashboard Right Column - Workout Plan and Community Feed */
+.dashboard-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard-workout-card {
+  flex: 1;
+}
+
+.dashboard-feed-card {
+  flex: 1;
+  min-height: 0; /* Allow it to shrink */
+}
+
+.dashboard-workout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.dashboard-workout-header h3 {
+  margin: 0;
+}
+

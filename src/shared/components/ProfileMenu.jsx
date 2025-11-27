@@ -6,6 +6,7 @@ import { authenticatedFetchJson } from '../utils/authenticatedFetch';
 const ProfileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [tokensRemaining, setTokensRemaining] = useState(null);
+  const [activePlanId, setActivePlanId] = useState(null);
   const menuRef = useRef(null);
   const intervalRef = useRef(null);
 
@@ -71,10 +72,35 @@ const ProfileMenu = () => {
     }
   };
 
+  // Fetch active workout plan
+  const fetchActivePlan = async () => {
+    if (!isUserLoggedIn()) {
+      setActivePlanId(null);
+      return;
+    }
+
+    try {
+      const data = await authenticatedFetchJson(
+        API_ENDPOINTS.WORKOUT_PLANS_ACTIVE,
+        { method: 'GET' },
+        null // Don't navigate on error, just silently fail
+      );
+      if (data && data.id) {
+        setActivePlanId(data.id);
+      } else {
+        setActivePlanId(null);
+      }
+    } catch (error) {
+      // Silently fail - user might not have a plan yet
+      setActivePlanId(null);
+    }
+  };
+
   useEffect(() => {
     // Only set up token fetching if user is logged in
     if (isUserLoggedIn()) {
       fetchTokens();
+      fetchActivePlan();
       
       // Listen for token updates from analysis completion
       const handleTokensUpdated = (event) => {
@@ -140,6 +166,16 @@ const ProfileMenu = () => {
     setIsOpen(false);
     // Redirect to landing page
     window.location.href = '/';
+  };
+
+  const handleWorkoutPlansClick = (e) => {
+    e.preventDefault();
+    setIsOpen(false);
+    if (activePlanId) {
+      window.location.href = `/workout-plans/${activePlanId}`;
+    } else {
+      window.location.href = '/workout-plans';
+    }
   };
 
   return (
@@ -282,6 +318,27 @@ const ProfileMenu = () => {
             }}
           >
             History
+          </a>
+          <a
+            href="/workout-plans"
+            role="menuitem"
+            style={{
+              textDecoration: 'none',
+              color: 'var(--text-primary)',
+              padding: '10px 12px',
+              borderRadius: '10px',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              textAlign: 'left',
+              transition: 'background 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.05)'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
+            onClick={handleWorkoutPlansClick}
+          >
+            My Workout Plans
           </a>
           <a
             href="/followers"

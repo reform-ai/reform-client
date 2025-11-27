@@ -106,7 +106,15 @@ const CreateXPostModal = ({
       }
     } catch (err) {
       console.error('Error posting to X:', err);
-      setError(err.message || 'Failed to post to X. Please try again.');
+      
+      // Check if error is about OAuth 1.0a not being connected
+      const errorMessage = err.message || '';
+      if (errorMessage.includes('OAuth 1.0a') || errorMessage.includes('media upload')) {
+        setError('X account not connected for media upload. Please connect your X account for media posting first.');
+      } else {
+        setError(errorMessage || 'Failed to post to X. Please try again.');
+      }
+      
       setIsSubmitting(false);
     }
   };

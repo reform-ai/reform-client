@@ -60,17 +60,27 @@ const WorkoutPlanQuestionnairePage = () => {
       const injury = allQuestions.filter(q => q.id.startsWith('injury_'));
       
       // Conditional questions (exclude program_type, PAR-Q+, injury)
-      // These will be filtered based on program_type
+      // Deduplicate by question ID since common questions appear in multiple program types
       const conditional = allQuestions.filter(q => 
         q.id !== 'program_type' && 
         !q.id.startsWith('parq_') && 
         !q.id.startsWith('injury_')
       );
       
+      // Deduplicate conditional questions by ID (keep first occurrence)
+      const seenIds = new Set();
+      const deduplicatedConditional = conditional.filter(q => {
+        if (seenIds.has(q.id)) {
+          return false;
+        }
+        seenIds.add(q.id);
+        return true;
+      });
+      
       setProgramTypeQuestion(programType || null);
       setParqQuestions(parq);
       setInjuryQuestions(injury);
-      setConditionalQuestions(conditional);
+      setConditionalQuestions(deduplicatedConditional);
       
       setLoading(false);
     } catch (err) {

@@ -218,6 +218,15 @@ const WorkoutPlanQuestionnairePage = () => {
         );
 
       case 'select':
+        // Experience level tooltips
+        const experienceTooltips = {
+          'beginner': '~6 months of lifting experience',
+          'novice': '~2 years of lifting experience; progress without plateau',
+          'intermediate': '2+ years of lifting experience; hit first plateau',
+          'advanced': '5+ years of lifting experience; can adapt and get out of plateau',
+          'elite': '5-10+ years of lifting experience; competitive athlete'
+        };
+        
         return (
           <div className="select-options">
             {question.options?.map(option => {
@@ -229,15 +238,25 @@ const WorkoutPlanQuestionnairePage = () => {
                 displayText = option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ');
               }
               
+              const tooltip = question.id === 'experience_level' ? experienceTooltips[option] : null;
+              
               return (
-                <button
-                  key={option}
-                  type="button"
-                  className={`select-option ${value === option ? 'selected' : ''}`}
-                  onClick={() => handleResponseChange(question.id, option)}
-                >
-                  {displayText}
-                </button>
+                <div key={option} className="select-option-wrapper">
+                  <button
+                    type="button"
+                    className={`select-option ${value === option ? 'selected' : ''}`}
+                    onClick={() => handleResponseChange(question.id, option)}
+                    title={tooltip || undefined}
+                    data-tooltip={tooltip || undefined}
+                  >
+                    {displayText}
+                  </button>
+                  {tooltip && (
+                    <div className="select-tooltip">
+                      {tooltip}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

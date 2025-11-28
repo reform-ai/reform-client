@@ -148,6 +148,10 @@
   margin-top: 1rem;
 }
 
+.select-option-wrapper {
+  position: relative;
+}
+
 .select-option {
   padding: 1.25rem;
   border: 3px solid #ddd;
@@ -158,6 +162,8 @@
   cursor: pointer;
   transition: all 0.2s;
   color: #333;
+  width: 100%;
+  text-align: left;
 }
 
 .select-option:hover {
@@ -166,11 +172,49 @@
   box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
 }
 
+.select-option-wrapper:hover .select-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 .select-option.selected {
   border-color: #3498db;
   background-color: #3498db;
   color: white;
   box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.select-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-5px);
+  background-color: #333;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 300px;
+  white-space: normal;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.select-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #333;
 }
 
 /* Multiple Choice Cards */

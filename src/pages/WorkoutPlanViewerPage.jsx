@@ -195,6 +195,7 @@ const WorkoutPlanViewerPage = () => {
                 className={`week-button ${selectedWeek === index ? 'active' : ''}`}
               >
                 Week {week.week_number}
+                {week.date_range && `: ${week.date_range}`}
               </button>
             ))}
           </div>
@@ -203,7 +204,10 @@ const WorkoutPlanViewerPage = () => {
         {/* Week Content */}
         {weeks[selectedWeek] && (
           <div className="week-content">
-            <h3 className="week-title">Week {weeks[selectedWeek].week_number}</h3>
+            <h3 className="week-title">
+              Week {weeks[selectedWeek].week_number}
+              {weeks[selectedWeek].date_range && `: ${weeks[selectedWeek].date_range}`}
+            </h3>
             <div className="workouts-grid">
               {weeks[selectedWeek].workouts.map((workout, workoutIndex) => (
                 <div key={workoutIndex} className="workout-card">

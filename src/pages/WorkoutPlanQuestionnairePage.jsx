@@ -16,7 +16,7 @@ const WorkoutPlanQuestionnairePage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [warnings, setWarnings] = useState([]); // Store screening warnings
-  const [currentStep, setCurrentStep] = useState(0); // 0 = detail level, 1-N = questions, last = review
+  const [currentStep, setCurrentStep] = useState(0); // 0 = first question (PAR-Q), last = detail level, then review
   const [showReview, setShowReview] = useState(false);
   const [hasReachedReview, setHasReachedReview] = useState(false); // Track if user has seen review page
   
@@ -35,14 +35,11 @@ const WorkoutPlanQuestionnairePage = () => {
     fetchQuestionnaire();
   }, [navigate]);
   
-  // Handle program_type changes - reset step if needed to show conditional questions
+  // Handle program_type changes - when program_type is selected, ensure conditional questions update
   useEffect(() => {
-    // When program_type is selected, ensure we're showing the right questions
-    // The getOrderedQuestions function handles this dynamically
-    if (responses.program_type && currentStep > 0) {
-      // If we're past program_type selection, we might need to adjust
-      // But since questions are loaded, we can just continue
-    }
+    // When program_type changes, the getOrderedQuestions() will automatically filter correctly
+    // We don't need to reset the step, just let it continue naturally
+    // The conditional questions will be filtered based on the selected program_type
   }, [responses.program_type]);
 
 
@@ -63,6 +60,7 @@ const WorkoutPlanQuestionnairePage = () => {
       const injury = allQuestions.filter(q => q.id.startsWith('injury_'));
       
       // Conditional questions (exclude program_type, PAR-Q+, injury)
+      // These will be filtered based on program_type
       const conditional = allQuestions.filter(q => 
         q.id !== 'program_type' && 
         !q.id.startsWith('parq_') && 
@@ -91,24 +89,39 @@ const WorkoutPlanQuestionnairePage = () => {
       ordered.push(programTypeQuestion);
     }
     
-    // 2. PAR-Q+ questions (always shown)
+    // 2. PAR-Q+ questions (after program_type) - always shown
     ordered.push(...parqQuestions);
     
-    // 3. Injury questions (always shown)
+    // 3. Injury questions (after PAR-Q+) - always shown
     ordered.push(...injuryQuestions);
     
-    // 4. Conditional questions based on program_type
+    // 4. Conditional questions based on program_type - DIFFERENT SETS DEPENDING ON QUESTION 1
     const programType = responses.program_type;
     if (programType) {
       // Filter conditional questions based on program_type
-      // For now, show all conditional questions (backend handles filtering)
-      // In the future, we could filter client-side if needed
-      ordered.push(...conditionalQuestions);
-    } else {
-      // If no program_type selected yet, show all conditional questions
-      // (they'll be filtered once program_type is selected)
-      ordered.push(...conditionalQuestions);
+      // Each program type has completely different questions
+      const filteredConditional = conditionalQuestions.filter(q => {
+        // Strength training questions (8 questions)
+        if (programType === 'strength_training') {
+          return ['weekly_frequency', 'experience_level', 'equipment_available', 'goals', 
+                  'plan_duration_weeks', 'training_split_preference', 'previous_injuries', 
+                  'time_per_session'].includes(q.id);
+        }
+        // Mobility & stability questions (6 questions) - NO experience_level, NO goals
+        else if (programType === 'mobility_stability') {
+          return ['weekly_frequency', 'movement_confidence', 'stiffness_areas', 
+                  'balance_difficulty', 'plan_duration_weeks', 'time_per_session'].includes(q.id);
+        }
+        // Recovery focused questions (6 questions) - NO experience_level, NO goals
+        else if (programType === 'recovery_focused') {
+          return ['weekly_frequency', 'pain_location', 'movement_limitations', 
+                  'comfort_level', 'plan_duration_weeks', 'time_per_session'].includes(q.id);
+        }
+        return false;
+      });
+      ordered.push(...filteredConditional);
     }
+    // If no program_type selected yet, don't show conditional questions
     
     return ordered;
   };
@@ -135,12 +148,14 @@ const WorkoutPlanQuestionnairePage = () => {
   const handleNext = () => {
     const orderedQuestions = getOrderedQuestions();
     
-    if (currentStep === 0) {
-      // Moving from detail level to first question
-      setCurrentStep(1);
-    } else if (currentStep < orderedQuestions.length) {
+    if (currentStep < orderedQuestions.length) {
       // Moving to next question
       setCurrentStep(prev => prev + 1);
+    } else if (currentStep === orderedQuestions.length) {
+      // Moving to detail level (last step before review)
+      // Detail level is handled separately, so we skip to review
+      setShowReview(true);
+      setHasReachedReview(true);
     } else {
       // Moving to review
       setShowReview(true);
@@ -153,24 +168,25 @@ const WorkoutPlanQuestionnairePage = () => {
     
     if (showReview) {
       setShowReview(false);
-      setCurrentStep(orderedQuestions.length);
-    } else if (currentStep > 1) {
+      setCurrentStep(orderedQuestions.length); // Go back to detail level
+    } else if (currentStep === orderedQuestions.length) {
+      // From detail level, go back to last question
+      setCurrentStep(orderedQuestions.length - 1);
+    } else if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
-    } else if (currentStep === 1) {
-      setCurrentStep(0);
     }
   };
 
   const canGoNext = () => {
     const orderedQuestions = getOrderedQuestions();
     
-    if (currentStep === 0) {
+    // Detail level is at the end (after all questions)
+    if (currentStep === orderedQuestions.length) {
       return detailLevel !== '';
     }
     
-    if (currentStep > 0 && currentStep <= orderedQuestions.length) {
-      const questionIndex = currentStep - 1;
-      const question = orderedQuestions[questionIndex];
+    if (currentStep >= 0 && currentStep < orderedQuestions.length) {
+      const question = orderedQuestions[currentStep];
       const answer = responses[question?.id];
       return validateAnswer(question, answer);
     }
@@ -180,7 +196,8 @@ const WorkoutPlanQuestionnairePage = () => {
 
   const canGoPrevious = () => {
     if (showReview) return true;
-    return currentStep > 0;
+    const orderedQuestions = getOrderedQuestions();
+    return currentStep > 0 || currentStep === orderedQuestions.length; // Can go back from detail level
   };
 
   const handleEditQuestion = (questionIndex) => {
@@ -251,15 +268,18 @@ const WorkoutPlanQuestionnairePage = () => {
 
   const getCurrentQuestion = () => {
     const orderedQuestions = getOrderedQuestions();
-    if (currentStep === 0 || currentStep > orderedQuestions.length) return null;
-    return orderedQuestions[currentStep - 1];
+    if (currentStep < 0 || currentStep >= orderedQuestions.length) return null;
+    return orderedQuestions[currentStep];
   };
 
   const getProgress = () => {
     if (showReview) return 100;
     const orderedQuestions = getOrderedQuestions();
     const totalSteps = orderedQuestions.length + 1; // +1 for detail level
-    return ((currentStep + 1) / totalSteps) * 100;
+    const currentProgress = currentStep === orderedQuestions.length 
+      ? orderedQuestions.length + 1  // Detail level
+      : currentStep + 1;
+    return (currentProgress / totalSteps) * 100;
   };
 
   const renderDetailLevelSelection = () => {
@@ -688,8 +708,8 @@ const WorkoutPlanQuestionnairePage = () => {
           <div className="progress-text">
             {showReview 
               ? 'Review' 
-              : currentStep === 0 
-                ? 'Step 1 of ' + totalSteps 
+              : currentStep === orderedQuestions.length
+                ? `Step ${orderedQuestions.length + 1} of ${totalSteps} (Detail Level)`
                 : `Step ${currentStep + 1} of ${totalSteps}`
             }
           </div>
@@ -698,8 +718,8 @@ const WorkoutPlanQuestionnairePage = () => {
         {/* Question Steps */}
         {!showReview && (
           <div className="question-step-container">
-            {currentStep === 0 && renderDetailLevelSelection()}
-            {currentStep > 0 && currentQuestion && (
+            {currentStep === orderedQuestions.length && renderDetailLevelSelection()}
+            {currentStep < orderedQuestions.length && currentQuestion && (
               <div className="question-step">
                 <div className="question-content">
                   <h2 className="question-title">
@@ -736,7 +756,7 @@ const WorkoutPlanQuestionnairePage = () => {
                 className="nav-button next-button"
                 disabled={!canGoNext()}
               >
-                Next →
+                {currentStep === orderedQuestions.length ? 'Review →' : 'Next →'}
               </button>
             </div>
           </div>

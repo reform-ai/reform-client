@@ -235,6 +235,14 @@ const WorkoutPlanQuestionnairePage = () => {
           'bro_split': 'One muscle group per day'
         };
         
+        // Training split titles (properly formatted)
+        const trainingSplitTitles = {
+          'full_body': 'Full Body',
+          'upper_lower': 'Upper Lower',
+          'push_pull_legs': 'Push-Pull-Legs',
+          'bro_split': 'Bro Split'
+        };
+        
         // Check if this should use card style (like detail level)
         const useCardStyle = question.id === 'experience_level' || question.id === 'training_split_preference';
         
@@ -250,7 +258,7 @@ const WorkoutPlanQuestionnairePage = () => {
                   title = option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ');
                   description = experienceTooltips[option] || '';
                 } else if (question.id === 'training_split_preference') {
-                  title = option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  title = trainingSplitTitles[option] || option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ');
                   description = trainingSplitDescriptions[option] || '';
                 }
                 
@@ -439,6 +447,15 @@ const WorkoutPlanQuestionnairePage = () => {
                   displayValue = answer; // Already formatted as "2-4 weeks"
                 } else if (question.id === 'time_per_session') {
                   displayValue = answer; // Already formatted as "10-15min"
+                } else if (question.id === 'training_split_preference') {
+                  // Use proper formatting for training split
+                  const trainingSplitTitles = {
+                    'full_body': 'Full Body',
+                    'upper_lower': 'Upper Lower',
+                    'push_pull_legs': 'Push-Pull-Legs',
+                    'bro_split': 'Bro Split'
+                  };
+                  displayValue = trainingSplitTitles[answer] || answer.charAt(0).toUpperCase() + answer.slice(1).replace(/_/g, ' ');
                 } else {
                   displayValue = answer.charAt(0).toUpperCase() + answer.slice(1).replace(/_/g, ' ');
                 }

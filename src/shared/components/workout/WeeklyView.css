@@ -1,0 +1,297 @@
+.weekly-view {
+  background-color: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.weekly-view-empty {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+}
+
+.week-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.nav-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.nav-button:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.nav-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.current-week-info {
+  text-align: center;
+  flex: 1;
+  margin: 0 1rem;
+}
+
+.current-week-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.week-jump {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.week-jump label {
+  color: #666;
+  font-weight: 500;
+}
+
+.week-jump-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: white;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.week-jump-select:hover {
+  border-color: #3498db;
+}
+
+.week-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.day-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  background-color: white;
+  transition: all 0.2s;
+}
+
+.day-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.day-card.selected {
+  border-color: #3498db;
+  background-color: #f0f8ff;
+}
+
+.day-card.rest-day {
+  background-color: #f8f9fa;
+  border-color: #d0d0d0;
+  opacity: 0.9;
+}
+
+.day-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.day-info {
+  flex: 1;
+}
+
+.day-name {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.day-focus {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.day-focus.rest {
+  color: #999;
+  font-style: italic;
+}
+
+.day-duration {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #999;
+}
+
+.expand-button {
+  padding: 0.5rem 1rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expand-button:hover {
+  background-color: #2980b9;
+}
+
+.suggestions-button {
+  padding: 0.5rem 1rem;
+  background-color: #95a5a6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.suggestions-button:hover {
+  background-color: #7f8c8d;
+}
+
+.rest-suggestions {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.rest-suggestions ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #666;
+}
+
+.rest-suggestions li {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.day-details {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #f0f0f0;
+}
+
+.exercises-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.exercise-item {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.exercise-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.exercise-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.exercise-sets-reps {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-left: 1rem;
+}
+
+.exercise-rest {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.exercise-notes {
+  margin: 0.75rem 0 0 0;
+  font-size: 0.9rem;
+  color: #555;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .week-navigation {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .nav-button {
+    width: 100%;
+  }
+
+  .current-week-info {
+    margin: 0;
+  }
+
+  .week-jump {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .day-card-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .expand-button,
+  .suggestions-button {
+    width: 100%;
+  }
+
+  .exercise-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .exercise-sets-reps {
+    margin-left: 0;
+  }
+}
+

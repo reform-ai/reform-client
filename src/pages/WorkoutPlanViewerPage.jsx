@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import { isUserLoggedIn } from '../shared/utils/authStorage';
+import { parseUTCDate } from '../shared/utils/dateFormat';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
+import ViewModeSelector from '../shared/components/workout/ViewModeSelector';
+import WorkoutCalendar from '../shared/components/workout/WorkoutCalendar';
+import DailyView from '../shared/components/workout/DailyView';
+import WeeklyView from '../shared/components/workout/WeeklyView';
 import './WorkoutPlanViewerPage.css';
 
 const WorkoutPlanViewerPage = () => {
@@ -14,7 +19,12 @@ const WorkoutPlanViewerPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [regenerating, setRegenerating] = useState(false);
-  const [selectedWeek, setSelectedWeek] = useState(0);
+  
+  // New state for view management
+  const [viewMode, setViewMode] = useState('daily'); // 'daily' or 'weekly'
+  const [selectedDays, setSelectedDays] = useState(new Set());
+  const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
+  const [currentDay, setCurrentDay] = useState(null);
 
   useEffect(() => {
     if (!isUserLoggedIn()) {
@@ -143,6 +153,90 @@ const WorkoutPlanViewerPage = () => {
   const weeks = planData?.weeks || [];
   const metadata = planData?.metadata || {};
 
+  // Calculate workout date from week start_date and workout day (1-7, where 1=Monday)
+  const calculateWorkoutDate = (weekStartDate, day) => {
+    if (!weekStartDate || !day) return null;
+    const start = parseUTCDate(weekStartDate);
+    if (!start) return null;
+    
+    // day is 1-7 where 1=Monday, 2=Tuesday, etc.
+    // JavaScript Date.getDay() returns 0=Sunday, 1=Monday, etc.
+    const targetWeekday = day === 7 ? 0 : day; // Sunday is 0 in JS, 7 in our system
+    
+    const startWeekday = start.getDay();
+    const daysDiff = (targetWeekday - startWeekday + 7) % 7;
+    const workoutDate = new Date(start);
+    workoutDate.setDate(start.getDate() + daysDiff);
+    
+    return workoutDate;
+  };
+
+  // Initialize selected days with all workout days when plan loads
+  useEffect(() => {
+    if (planData && weeks.length > 0) {
+      const workoutDays = new Set();
+      weeks.forEach(week => {
+        if (week.start_date) {
+          week.workouts.forEach(workout => {
+            if (workout.day) {
+              const workoutDate = calculateWorkoutDate(week.start_date, workout.day);
+              if (workoutDate) {
+                const dateString = workoutDate.toISOString().split('T')[0];
+                workoutDays.add(dateString);
+              }
+            }
+          });
+        }
+      });
+      setSelectedDays(workoutDays);
+      
+      // Set initial week to first week
+      setCurrentWeekIndex(0);
+    }
+  }, [planData, weeks]);
+
+  // Handle day selection toggle
+  const handleDayToggle = (dateString) => {
+    setSelectedDays(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(dateString)) {
+        newSet.delete(dateString);
+      } else {
+        newSet.add(dateString);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle view mode change
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+  };
+
+  // Handle week change
+  const handleWeekChange = (weekIndex) => {
+    setCurrentWeekIndex(weekIndex);
+  };
+
+  // Handle day change (for Daily view)
+  const handleDayChange = (dateString) => {
+    setCurrentDay(dateString);
+  };
+
+  // Future placeholders for workout completion and day switching
+  // These will be implemented later
+  const workoutCompletionStatus = useMemo(() => {
+    // Placeholder: track which workouts are completed
+    // Format: { [dateString]: boolean }
+    return {};
+  }, []);
+
+  const workoutSwitchable = useMemo(() => {
+    // Placeholder: track which workouts can be switched
+    // Format: { [dateString]: boolean }
+    return {};
+  }, []);
+
   return (
     <PageContainer>
       <PageHeader title="Your Workout Plan" />
@@ -185,75 +279,39 @@ const WorkoutPlanViewerPage = () => {
           </div>
         </div>
 
-        {/* Week Selector */}
-        {weeks.length > 1 && (
-          <div className="week-selector">
-            {weeks.map((week, index) => (
-              <button
-                key={week.week_number}
-                onClick={() => setSelectedWeek(index)}
-                className={`week-button ${selectedWeek === index ? 'active' : ''}`}
-              >
-                Week {week.week_number}
-                {week.date_range && `: ${week.date_range}`}
-              </button>
-            ))}
+        {/* New 3-Card Layout */}
+        <div className="plan-view-controls">
+          {/* Top Row: View Mode Selector and Calendar */}
+          <div className="controls-top-row">
+            <ViewModeSelector
+              viewMode={viewMode}
+              onViewModeChange={handleViewModeChange}
+            />
+            <WorkoutCalendar
+              weeks={weeks}
+              selectedDays={selectedDays}
+              onDayToggle={handleDayToggle}
+            />
           </div>
-        )}
 
-        {/* Week Content */}
-        {weeks[selectedWeek] && (
-          <div className="week-content">
-            <h3 className="week-title">
-              Week {weeks[selectedWeek].week_number}
-              {weeks[selectedWeek].date_range && `: ${weeks[selectedWeek].date_range}`}
-            </h3>
-            <div className="workouts-grid">
-              {weeks[selectedWeek].workouts.map((workout, workoutIndex) => {
-                const isRestDay = workout.focus === "Rest Day" || workout.exercises.length === 0;
-                return (
-                  <div key={workoutIndex} className={`workout-card ${isRestDay ? 'rest-day' : ''}`}>
-                    <div className="workout-header">
-                      <h4 className="workout-day">{workout.day_name}</h4>
-                      <p className="workout-focus">{workout.focus}</p>
-                      {!isRestDay && (
-                        <p className="workout-duration">~{workout.estimated_duration_minutes} min</p>
-                      )}
-                    </div>
-                    {isRestDay ? (
-                      <div className="rest-day-message">
-                        <p>Rest and recovery day</p>
-                      </div>
-                    ) : (
-                      <div className="exercises-list">
-                        {workout.exercises.map((exercise, exerciseIndex) => (
-                          <div key={exerciseIndex} className="exercise-item">
-                            <div className="exercise-header">
-                              <h5 className="exercise-name">{exercise.name}</h5>
-                              <span className="exercise-sets-reps">
-                                {exercise.sets} sets × {exercise.reps}
-                                {exercise.rpe && ` @ RPE ${exercise.rpe}`}
-                              </span>
-                            </div>
-                            {exercise.rest_seconds && (
-                              <p className="exercise-rest">Rest: {exercise.rest_seconds}s</p>
-                            )}
-                            {exercise.ai_notes && (
-                              <p className="exercise-notes">{exercise.ai_notes}</p>
-                            )}
-                            {exercise.notes && (
-                              <p className="exercise-notes">{exercise.notes}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+          {/* Bottom Card: Plan Display */}
+          <div className="plan-display-card">
+            {viewMode === 'daily' ? (
+              <DailyView
+                selectedDays={Array.from(selectedDays)}
+                planData={planData}
+                onDayChange={handleDayChange}
+              />
+            ) : (
+              <WeeklyView
+                selectedDays={selectedDays}
+                planData={planData}
+                currentWeekIndex={currentWeekIndex}
+                onWeekChange={handleWeekChange}
+              />
+            )}
           </div>
-        )}
+        </div>
 
         {/* Progression Rules */}
         {planData.progression_rules && (

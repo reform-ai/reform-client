@@ -209,37 +209,48 @@ const WorkoutPlanViewerPage = () => {
               {weeks[selectedWeek].date_range && `: ${weeks[selectedWeek].date_range}`}
             </h3>
             <div className="workouts-grid">
-              {weeks[selectedWeek].workouts.map((workout, workoutIndex) => (
-                <div key={workoutIndex} className="workout-card">
-                  <div className="workout-header">
-                    <h4 className="workout-day">{workout.day_name}</h4>
-                    <p className="workout-focus">{workout.focus}</p>
-                    <p className="workout-duration">~{workout.estimated_duration_minutes} min</p>
-                  </div>
-                  <div className="exercises-list">
-                    {workout.exercises.map((exercise, exerciseIndex) => (
-                      <div key={exerciseIndex} className="exercise-item">
-                        <div className="exercise-header">
-                          <h5 className="exercise-name">{exercise.name}</h5>
-                          <span className="exercise-sets-reps">
-                            {exercise.sets} sets × {exercise.reps}
-                            {exercise.rpe && ` @ RPE ${exercise.rpe}`}
-                          </span>
-                        </div>
-                        {exercise.rest_seconds && (
-                          <p className="exercise-rest">Rest: {exercise.rest_seconds}s</p>
-                        )}
-                        {exercise.ai_notes && (
-                          <p className="exercise-notes">{exercise.ai_notes}</p>
-                        )}
-                        {exercise.notes && (
-                          <p className="exercise-notes">{exercise.notes}</p>
-                        )}
+              {weeks[selectedWeek].workouts.map((workout, workoutIndex) => {
+                const isRestDay = workout.focus === "Rest Day" || workout.exercises.length === 0;
+                return (
+                  <div key={workoutIndex} className={`workout-card ${isRestDay ? 'rest-day' : ''}`}>
+                    <div className="workout-header">
+                      <h4 className="workout-day">{workout.day_name}</h4>
+                      <p className="workout-focus">{workout.focus}</p>
+                      {!isRestDay && (
+                        <p className="workout-duration">~{workout.estimated_duration_minutes} min</p>
+                      )}
+                    </div>
+                    {isRestDay ? (
+                      <div className="rest-day-message">
+                        <p>Rest and recovery day</p>
                       </div>
-                    ))}
+                    ) : (
+                      <div className="exercises-list">
+                        {workout.exercises.map((exercise, exerciseIndex) => (
+                          <div key={exerciseIndex} className="exercise-item">
+                            <div className="exercise-header">
+                              <h5 className="exercise-name">{exercise.name}</h5>
+                              <span className="exercise-sets-reps">
+                                {exercise.sets} sets × {exercise.reps}
+                                {exercise.rpe && ` @ RPE ${exercise.rpe}`}
+                              </span>
+                            </div>
+                            {exercise.rest_seconds && (
+                              <p className="exercise-rest">Rest: {exercise.rest_seconds}s</p>
+                            )}
+                            {exercise.ai_notes && (
+                              <p className="exercise-notes">{exercise.ai_notes}</p>
+                            )}
+                            {exercise.notes && (
+                              <p className="exercise-notes">{exercise.notes}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

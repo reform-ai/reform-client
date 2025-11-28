@@ -136,6 +136,28 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.workout-card.rest-day {
+  background-color: #f8f9fa;
+  border-color: #d0d0d0;
+  opacity: 0.8;
+}
+
+.workout-card.rest-day:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.rest-day-message {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #999;
+  font-style: italic;
+}
+
+.rest-day-message p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
 .workout-header {
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;

@@ -26,6 +26,21 @@ const WorkoutPlanViewerPage = () => {
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [currentDay, setCurrentDay] = useState(null);
 
+  // Future placeholders for workout completion and day switching
+  // These will be implemented later
+  // MUST be before early returns to follow Rules of Hooks
+  const workoutCompletionStatus = useMemo(() => {
+    // Placeholder: track which workouts are completed
+    // Format: { [dateString]: boolean }
+    return {};
+  }, []);
+
+  const workoutSwitchable = useMemo(() => {
+    // Placeholder: track which workouts can be switched
+    // Format: { [dateString]: boolean }
+    return {};
+  }, []);
+
   useEffect(() => {
     if (!isUserLoggedIn()) {
       navigate('/?login=1');
@@ -222,20 +237,6 @@ const WorkoutPlanViewerPage = () => {
   const handleDayChange = (dateString) => {
     setCurrentDay(dateString);
   };
-
-  // Future placeholders for workout completion and day switching
-  // These will be implemented later
-  const workoutCompletionStatus = useMemo(() => {
-    // Placeholder: track which workouts are completed
-    // Format: { [dateString]: boolean }
-    return {};
-  }, []);
-
-  const workoutSwitchable = useMemo(() => {
-    // Placeholder: track which workouts can be switched
-    // Format: { [dateString]: boolean }
-    return {};
-  }, []);
 
   return (
     <PageContainer>

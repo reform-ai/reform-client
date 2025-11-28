@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config/api';
 import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
@@ -25,21 +25,6 @@ const WorkoutPlanViewerPage = () => {
   const [selectedDays, setSelectedDays] = useState(new Set());
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [currentDay, setCurrentDay] = useState(null);
-
-  // Future placeholders for workout completion and day switching
-  // These will be implemented later
-  // MUST be before early returns to follow Rules of Hooks
-  const workoutCompletionStatus = useMemo(() => {
-    // Placeholder: track which workouts are completed
-    // Format: { [dateString]: boolean }
-    return {};
-  }, []);
-
-  const workoutSwitchable = useMemo(() => {
-    // Placeholder: track which workouts can be switched
-    // Format: { [dateString]: boolean }
-    return {};
-  }, []);
 
   // Compute planData and weeks BEFORE early returns (using optional chaining)
   // This allows useEffect to always be called in same order
@@ -115,7 +100,6 @@ const WorkoutPlanViewerPage = () => {
       setPlan(data);
       setLoading(false);
     } catch (err) {
-      console.error('Failed to fetch plan:', err);
       setError(err.message || 'Failed to load workout plan');
       setLoading(false);
     }
@@ -132,7 +116,6 @@ const WorkoutPlanViewerPage = () => {
       setPlan(data);
       setLoading(false);
     } catch (err) {
-      console.error('Failed to fetch active plan:', err);
       setError(err.message || 'No active workout plan found');
       setLoading(false);
     }
@@ -159,7 +142,6 @@ const WorkoutPlanViewerPage = () => {
       // Navigate to new plan
       navigate(`/workout-plans/${result.new_plan_id}`);
     } catch (err) {
-      console.error('Failed to regenerate plan:', err);
       alert(err.message || 'Failed to regenerate plan');
       setRegenerating(false);
     }
@@ -184,7 +166,6 @@ const WorkoutPlanViewerPage = () => {
       // Navigate to questionnaire to start over
       navigate('/workout-plans/questionnaire');
     } catch (err) {
-      console.error('Failed to delete plan:', err);
       alert(err.message || 'Failed to delete plan');
     }
   };

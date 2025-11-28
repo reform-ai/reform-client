@@ -56,7 +56,7 @@ const WorkoutCalendar = ({ weeks, selectedDays, onDayToggle }) => {
         }
       });
     } catch (error) {
-      console.error('Error extracting workout days:', error);
+      // Silently fail - workout days will remain empty
     }
     setAllWorkoutDays(workoutDays);
   }, [weeks, calculateWorkoutDate]);

@@ -41,6 +41,31 @@ const WorkoutPlanViewerPage = () => {
     return {};
   }, []);
 
+  // Compute planData and weeks BEFORE early returns (using optional chaining)
+  // This allows useEffect to always be called in same order
+  const planData = plan?.plan_data;
+  const weeks = planData?.weeks || [];
+  const metadata = planData?.metadata || {};
+
+  // Calculate workout date from week start_date and workout day (1-7, where 1=Monday)
+  // Must be defined before useEffect that uses it
+  const calculateWorkoutDate = (weekStartDate, day) => {
+    if (!weekStartDate || !day) return null;
+    const start = parseUTCDate(weekStartDate);
+    if (!start) return null;
+    
+    // day is 1-7 where 1=Monday, 2=Tuesday, etc.
+    // JavaScript Date.getDay() returns 0=Sunday, 1=Monday, etc.
+    const targetWeekday = day === 7 ? 0 : day; // Sunday is 0 in JS, 7 in our system
+    
+    const startWeekday = start.getDay();
+    const daysDiff = (targetWeekday - startWeekday + 7) % 7;
+    const workoutDate = new Date(start);
+    workoutDate.setDate(start.getDate() + daysDiff);
+    
+    return workoutDate;
+  };
+
   useEffect(() => {
     if (!isUserLoggedIn()) {
       navigate('/?login=1');
@@ -53,6 +78,31 @@ const WorkoutPlanViewerPage = () => {
       fetchActivePlan();
     }
   }, [navigate, planId]);
+
+  // Initialize selected days with all workout days when plan loads
+  // MUST be before early returns to follow Rules of Hooks
+  useEffect(() => {
+    if (planData && weeks.length > 0) {
+      const workoutDays = new Set();
+      weeks.forEach(week => {
+        if (week.start_date) {
+          week.workouts.forEach(workout => {
+            if (workout.day) {
+              const workoutDate = calculateWorkoutDate(week.start_date, workout.day);
+              if (workoutDate) {
+                const dateString = workoutDate.toISOString().split('T')[0];
+                workoutDays.add(dateString);
+              }
+            }
+          });
+        }
+      });
+      setSelectedDays(workoutDays);
+      
+      // Set initial week to first week
+      setCurrentWeekIndex(0);
+    }
+  }, [planData, weeks]);
 
   const fetchPlan = async (id) => {
     try {
@@ -163,52 +213,6 @@ const WorkoutPlanViewerPage = () => {
       </PageContainer>
     );
   }
-
-  const planData = plan.plan_data;
-  const weeks = planData?.weeks || [];
-  const metadata = planData?.metadata || {};
-
-  // Calculate workout date from week start_date and workout day (1-7, where 1=Monday)
-  const calculateWorkoutDate = (weekStartDate, day) => {
-    if (!weekStartDate || !day) return null;
-    const start = parseUTCDate(weekStartDate);
-    if (!start) return null;
-    
-    // day is 1-7 where 1=Monday, 2=Tuesday, etc.
-    // JavaScript Date.getDay() returns 0=Sunday, 1=Monday, etc.
-    const targetWeekday = day === 7 ? 0 : day; // Sunday is 0 in JS, 7 in our system
-    
-    const startWeekday = start.getDay();
-    const daysDiff = (targetWeekday - startWeekday + 7) % 7;
-    const workoutDate = new Date(start);
-    workoutDate.setDate(start.getDate() + daysDiff);
-    
-    return workoutDate;
-  };
-
-  // Initialize selected days with all workout days when plan loads
-  useEffect(() => {
-    if (planData && weeks.length > 0) {
-      const workoutDays = new Set();
-      weeks.forEach(week => {
-        if (week.start_date) {
-          week.workouts.forEach(workout => {
-            if (workout.day) {
-              const workoutDate = calculateWorkoutDate(week.start_date, workout.day);
-              if (workoutDate) {
-                const dateString = workoutDate.toISOString().split('T')[0];
-                workoutDays.add(dateString);
-              }
-            }
-          });
-        }
-      });
-      setSelectedDays(workoutDays);
-      
-      // Set initial week to first week
-      setCurrentWeekIndex(0);
-    }
-  }, [planData, weeks]);
 
   // Handle day selection toggle
   const handleDayToggle = (dateString) => {

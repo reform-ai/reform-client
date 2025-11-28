@@ -221,9 +221,7 @@ const WorkoutPlanQuestionnairePage = () => {
             {question.options?.map(option => {
               // Format display text based on question type
               let displayText = option;
-              if (question.id === 'weekly_frequency') {
-                displayText = `${option} ${option === '1' ? 'day' : 'days'} per week`;
-              } else if (question.id === 'plan_duration_weeks' || question.id === 'time_per_session') {
+              if (question.id === 'plan_duration_weeks' || question.id === 'time_per_session') {
                 displayText = option; // Already formatted
               } else {
                 displayText = option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ');
@@ -322,15 +320,13 @@ const WorkoutPlanQuestionnairePage = () => {
             
             if (Array.isArray(answer)) {
               displayValue = answer.map(v => {
-                // Format body parts and other multi-word options
+                // Format days of week and other multi-word options
                 return v.charAt(0).toUpperCase() + v.slice(1).replace(/_/g, ' ');
               }).join(', ');
             } else if (answer !== undefined && answer !== null && answer !== '') {
               if (question.type === 'select') {
                 // Format select options nicely
-                if (question.id === 'weekly_frequency') {
-                  displayValue = `${answer} ${answer === '1' ? 'day' : 'days'} per week`;
-                } else if (question.id === 'plan_duration_weeks') {
+                if (question.id === 'plan_duration_weeks') {
                   displayValue = answer; // Already formatted as "2-4 weeks"
                 } else if (question.id === 'time_per_session') {
                   displayValue = answer; // Already formatted as "10-15min"

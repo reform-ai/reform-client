@@ -280,38 +280,46 @@ const WorkoutPlanViewerPage = () => {
         </div>
 
         {/* New 3-Card Layout */}
-        <div className="plan-view-controls">
-          {/* Top Row: View Mode Selector and Calendar */}
-          <div className="controls-top-row">
-            <ViewModeSelector
-              viewMode={viewMode}
-              onViewModeChange={handleViewModeChange}
-            />
-            <WorkoutCalendar
-              weeks={weeks}
-              selectedDays={selectedDays}
-              onDayToggle={handleDayToggle}
-            />
-          </div>
-
-          {/* Bottom Card: Plan Display */}
-          <div className="plan-display-card">
-            {viewMode === 'daily' ? (
-              <DailyView
-                selectedDays={Array.from(selectedDays)}
-                planData={planData}
-                onDayChange={handleDayChange}
+        {weeks && weeks.length > 0 ? (
+          <div className="plan-view-controls">
+            {/* Top Row: View Mode Selector and Calendar */}
+            <div className="controls-top-row">
+              <ViewModeSelector
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
               />
-            ) : (
-              <WeeklyView
+              <WorkoutCalendar
+                weeks={weeks}
                 selectedDays={selectedDays}
-                planData={planData}
-                currentWeekIndex={currentWeekIndex}
-                onWeekChange={handleWeekChange}
+                onDayToggle={handleDayToggle}
               />
-            )}
+            </div>
+
+            {/* Bottom Card: Plan Display */}
+            <div className="plan-display-card">
+              {viewMode === 'daily' ? (
+                <DailyView
+                  selectedDays={Array.from(selectedDays)}
+                  planData={planData}
+                  onDayChange={handleDayChange}
+                />
+              ) : (
+                <WeeklyView
+                  selectedDays={selectedDays}
+                  planData={planData}
+                  currentWeekIndex={currentWeekIndex}
+                  onWeekChange={handleWeekChange}
+                />
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="plan-view-controls">
+            <div className="error-container">
+              <p>No workout plan data available. Please regenerate your plan.</p>
+            </div>
+          </div>
+        )}
 
         {/* Progression Rules */}
         {planData.progression_rules && (

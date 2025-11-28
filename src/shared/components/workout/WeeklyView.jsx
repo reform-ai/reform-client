@@ -18,6 +18,25 @@ const WeeklyView = ({ selectedDays, planData, currentWeekIndex, onWeekChange }) 
   const weeks = planData?.weeks || [];
   const currentWeek = weeks[currentWeekIndex];
 
+  // Calculate workout date from week start_date and workout day (1-7, where 1=Monday)
+  // Must be defined before useEffect that uses it
+  const calculateWorkoutDate = React.useCallback((weekStartDate, day) => {
+    if (!weekStartDate || !day) return null;
+    const start = parseUTCDate(weekStartDate);
+    if (!start) return null;
+    
+    // day is 1-7 where 1=Monday, 2=Tuesday, etc.
+    // JavaScript Date.getDay() returns 0=Sunday, 1=Monday, etc.
+    const targetWeekday = day === 7 ? 0 : day; // Sunday is 0 in JS, 7 in our system
+    
+    const startWeekday = start.getDay();
+    const daysDiff = (targetWeekday - startWeekday + 7) % 7;
+    const workoutDate = new Date(start);
+    workoutDate.setDate(start.getDate() + daysDiff);
+    
+    return workoutDate;
+  }, []);
+
   // Auto-scroll to first selected day when week changes
   useEffect(() => {
     if (weekRef.current && currentWeek && currentWeek.start_date) {
@@ -43,7 +62,7 @@ const WeeklyView = ({ selectedDays, planData, currentWeekIndex, onWeekChange }) 
         }
       }
     }
-  }, [currentWeekIndex, currentWeek, selectedDays]);
+  }, [currentWeekIndex, currentWeek, selectedDays, calculateWorkoutDate]);
 
   const handlePreviousWeek = () => {
     if (currentWeekIndex > 0) {
@@ -82,24 +101,6 @@ const WeeklyView = ({ selectedDays, planData, currentWeekIndex, onWeekChange }) 
     }));
   };
 
-  // Calculate workout date from week start_date and workout day (1-7, where 1=Monday)
-  const calculateWorkoutDate = (weekStartDate, day) => {
-    if (!weekStartDate || !day) return null;
-    const start = parseUTCDate(weekStartDate);
-    if (!start) return null;
-    
-    // day is 1-7 where 1=Monday, 2=Tuesday, etc.
-    // JavaScript Date.getDay() returns 0=Sunday, 1=Monday, etc.
-    const targetWeekday = day === 7 ? 0 : day; // Sunday is 0 in JS, 7 in our system
-    
-    const startWeekday = start.getDay();
-    const daysDiff = (targetWeekday - startWeekday + 7) % 7;
-    const workoutDate = new Date(start);
-    workoutDate.setDate(start.getDate() + daysDiff);
-    
-    return workoutDate;
-  };
-
   const isDaySelected = (workout, weekStartDate) => {
     if (!workout.day || !weekStartDate) return false;
     const workoutDate = calculateWorkoutDate(weekStartDate, workout.day);
@@ -127,10 +128,18 @@ const WeeklyView = ({ selectedDays, planData, currentWeekIndex, onWeekChange }) 
     ];
   };
 
-  if (!currentWeek) {
+  if (!currentWeek || !weeks || weeks.length === 0) {
     return (
       <div className="weekly-view-empty">
         <p>No week data available.</p>
+      </div>
+    );
+  }
+
+  if (!currentWeek.start_date) {
+    return (
+      <div className="weekly-view-empty">
+        <p>Week data is missing start date.</p>
       </div>
     );
   }

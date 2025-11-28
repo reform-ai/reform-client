@@ -98,6 +98,14 @@ const DailyView = ({ selectedDays, planData, onDayChange }) => {
     return null;
   };
 
+  if (!planData || !planData.weeks || planData.weeks.length === 0) {
+    return (
+      <div className="daily-view-empty">
+        <p>No plan data available.</p>
+      </div>
+    );
+  }
+
   if (sortedDays.length === 0) {
     return (
       <div className="daily-view-empty">
@@ -107,6 +115,14 @@ const DailyView = ({ selectedDays, planData, onDayChange }) => {
   }
 
   const currentDateString = sortedDays[currentDayIndex];
+  if (!currentDateString) {
+    return (
+      <div className="daily-view-empty">
+        <p>Invalid day selection.</p>
+      </div>
+    );
+  }
+
   const workoutData = getWorkoutForDate(currentDateString);
   const currentDate = parseUTCDate(currentDateString);
 
@@ -120,7 +136,7 @@ const DailyView = ({ selectedDays, planData, onDayChange }) => {
     });
   };
 
-  const isRestDay = !workoutData || workoutData.workout.focus === 'Rest Day' || workoutData.workout.exercises.length === 0;
+  const isRestDay = !workoutData || !workoutData.workout || workoutData.workout.focus === 'Rest Day' || (workoutData.workout.exercises && workoutData.workout.exercises.length === 0);
 
   return (
     <div className="daily-view" ref={dayRef}>

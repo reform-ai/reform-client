@@ -14,7 +14,7 @@ const WorkoutCalendar = ({ weeks, selectedDays, onDayToggle }) => {
   const [allWorkoutDays, setAllWorkoutDays] = useState(new Set());
 
   // Calculate workout date from week start_date and workout day (1-7, where 1=Monday)
-  const calculateWorkoutDate = (weekStartDate, day) => {
+  const calculateWorkoutDate = React.useCallback((weekStartDate, day) => {
     if (!weekStartDate || !day) return null;
     const start = parseUTCDate(weekStartDate);
     if (!start) return null;
@@ -31,26 +31,35 @@ const WorkoutCalendar = ({ weeks, selectedDays, onDayToggle }) => {
     workoutDate.setDate(start.getDate() + daysDiff);
     
     return workoutDate;
-  };
+  }, []);
 
   // Extract all workout days from plan data
   useEffect(() => {
+    if (!weeks || weeks.length === 0) {
+      setAllWorkoutDays(new Set());
+      return;
+    }
+
     const workoutDays = new Set();
-    weeks.forEach(week => {
-      if (week.start_date) {
-        week.workouts.forEach(workout => {
-          if (workout.day) {
-            const workoutDate = calculateWorkoutDate(week.start_date, workout.day);
-            if (workoutDate) {
-              const dateString = workoutDate.toISOString().split('T')[0];
-              workoutDays.add(dateString);
+    try {
+      weeks.forEach(week => {
+        if (week && week.start_date && week.workouts) {
+          week.workouts.forEach(workout => {
+            if (workout && workout.day) {
+              const workoutDate = calculateWorkoutDate(week.start_date, workout.day);
+              if (workoutDate) {
+                const dateString = workoutDate.toISOString().split('T')[0];
+                workoutDays.add(dateString);
+              }
             }
-          }
-        });
-      }
-    });
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error extracting workout days:', error);
+    }
     setAllWorkoutDays(workoutDays);
-  }, [weeks]);
+  }, [weeks, calculateWorkoutDate]);
 
   // Get first and last dates from plan
   const getPlanDateRange = () => {
@@ -58,6 +67,8 @@ const WorkoutCalendar = ({ weeks, selectedDays, onDayToggle }) => {
     
     const firstWeek = weeks[0];
     const lastWeek = weeks[weeks.length - 1];
+    
+    if (!firstWeek || !lastWeek) return null;
     
     const startDate = firstWeek.start_date ? parseUTCDate(firstWeek.start_date) : null;
     const endDate = lastWeek.end_date ? parseUTCDate(lastWeek.end_date) : null;

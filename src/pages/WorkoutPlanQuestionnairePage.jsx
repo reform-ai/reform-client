@@ -15,9 +15,16 @@ const WorkoutPlanQuestionnairePage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [warnings, setWarnings] = useState([]); // Store screening warnings
   const [currentStep, setCurrentStep] = useState(0); // 0 = detail level, 1-N = questions, last = review
   const [showReview, setShowReview] = useState(false);
   const [hasReachedReview, setHasReachedReview] = useState(false); // Track if user has seen review page
+  
+  // Organize questions into sections
+  const [programTypeQuestion, setProgramTypeQuestion] = useState(null);
+  const [parqQuestions, setParqQuestions] = useState([]);
+  const [injuryQuestions, setInjuryQuestions] = useState([]);
+  const [conditionalQuestions, setConditionalQuestions] = useState([]);
 
   useEffect(() => {
     if (!isUserLoggedIn()) {
@@ -27,6 +34,16 @@ const WorkoutPlanQuestionnairePage = () => {
 
     fetchQuestionnaire();
   }, [navigate]);
+  
+  // Handle program_type changes - reset step if needed to show conditional questions
+  useEffect(() => {
+    // When program_type is selected, ensure we're showing the right questions
+    // The getOrderedQuestions function handles this dynamically
+    if (responses.program_type && currentStep > 0) {
+      // If we're past program_type selection, we might need to adjust
+      // But since questions are loaded, we can just continue
+    }
+  }, [responses.program_type]);
 
 
   const fetchQuestionnaire = async () => {
@@ -37,13 +54,63 @@ const WorkoutPlanQuestionnairePage = () => {
         { method: 'GET' },
         navigate
       );
-      setQuestions(data.questions || []);
+      const allQuestions = data.questions || [];
+      setQuestions(allQuestions);
+      
+      // Organize questions into sections
+      const programType = allQuestions.find(q => q.id === 'program_type');
+      const parq = allQuestions.filter(q => q.id.startsWith('parq_'));
+      const injury = allQuestions.filter(q => q.id.startsWith('injury_'));
+      
+      // Conditional questions (exclude program_type, PAR-Q+, injury)
+      const conditional = allQuestions.filter(q => 
+        q.id !== 'program_type' && 
+        !q.id.startsWith('parq_') && 
+        !q.id.startsWith('injury_')
+      );
+      
+      setProgramTypeQuestion(programType || null);
+      setParqQuestions(parq);
+      setInjuryQuestions(injury);
+      setConditionalQuestions(conditional);
+      
       setLoading(false);
     } catch (err) {
       console.error('Failed to fetch questionnaire:', err);
       setError(err.message || 'Failed to load questionnaire');
       setLoading(false);
     }
+  };
+  
+  // Get ordered questions based on current program_type
+  const getOrderedQuestions = () => {
+    const ordered = [];
+    
+    // 1. Program type (always first)
+    if (programTypeQuestion) {
+      ordered.push(programTypeQuestion);
+    }
+    
+    // 2. PAR-Q+ questions (always shown)
+    ordered.push(...parqQuestions);
+    
+    // 3. Injury questions (always shown)
+    ordered.push(...injuryQuestions);
+    
+    // 4. Conditional questions based on program_type
+    const programType = responses.program_type;
+    if (programType) {
+      // Filter conditional questions based on program_type
+      // For now, show all conditional questions (backend handles filtering)
+      // In the future, we could filter client-side if needed
+      ordered.push(...conditionalQuestions);
+    } else {
+      // If no program_type selected yet, show all conditional questions
+      // (they'll be filtered once program_type is selected)
+      ordered.push(...conditionalQuestions);
+    }
+    
+    return ordered;
   };
 
   const validateAnswer = (question, answer) => {
@@ -66,10 +133,12 @@ const WorkoutPlanQuestionnairePage = () => {
   };
 
   const handleNext = () => {
+    const orderedQuestions = getOrderedQuestions();
+    
     if (currentStep === 0) {
       // Moving from detail level to first question
       setCurrentStep(1);
-    } else if (currentStep < questions.length) {
+    } else if (currentStep < orderedQuestions.length) {
       // Moving to next question
       setCurrentStep(prev => prev + 1);
     } else {
@@ -80,9 +149,11 @@ const WorkoutPlanQuestionnairePage = () => {
   };
 
   const handlePrevious = () => {
+    const orderedQuestions = getOrderedQuestions();
+    
     if (showReview) {
       setShowReview(false);
-      setCurrentStep(questions.length);
+      setCurrentStep(orderedQuestions.length);
     } else if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     } else if (currentStep === 1) {
@@ -91,13 +162,15 @@ const WorkoutPlanQuestionnairePage = () => {
   };
 
   const canGoNext = () => {
+    const orderedQuestions = getOrderedQuestions();
+    
     if (currentStep === 0) {
       return detailLevel !== '';
     }
     
-    if (currentStep > 0 && currentStep <= questions.length) {
+    if (currentStep > 0 && currentStep <= orderedQuestions.length) {
       const questionIndex = currentStep - 1;
-      const question = questions[questionIndex];
+      const question = orderedQuestions[questionIndex];
       const answer = responses[question?.id];
       return validateAnswer(question, answer);
     }
@@ -119,7 +192,8 @@ const WorkoutPlanQuestionnairePage = () => {
     e?.preventDefault();
     
     // Validate all required questions
-    const requiredQuestions = questions.filter(q => q.required);
+    const orderedQuestions = getOrderedQuestions();
+    const requiredQuestions = orderedQuestions.filter(q => q.required);
     const missingRequired = requiredQuestions.filter(q => {
       const answer = responses[q.id];
       return !validateAnswer(q, answer);
@@ -129,7 +203,7 @@ const WorkoutPlanQuestionnairePage = () => {
       setError(`Please answer all required questions: ${missingRequired.map(q => q.question).join(', ')}`);
       setShowReview(false);
       // Go to first missing question
-      const firstMissing = questions.findIndex(q => missingRequired.includes(q));
+      const firstMissing = orderedQuestions.findIndex(q => missingRequired.includes(q));
       setCurrentStep(firstMissing + 1);
       return;
     }
@@ -137,6 +211,7 @@ const WorkoutPlanQuestionnairePage = () => {
     try {
       setSubmitting(true);
       setError(null);
+      setWarnings([]);
 
       const result = await authenticatedFetchJson(
         API_ENDPOINTS.WORKOUT_PLANS_SUBMIT,
@@ -150,6 +225,21 @@ const WorkoutPlanQuestionnairePage = () => {
         navigate
       );
 
+      // Extract warnings from response message if present
+      if (result.message && result.message.includes('Warnings:')) {
+        const warningsMatch = result.message.match(/Warnings: (.+)/);
+        if (warningsMatch) {
+          const warningsText = warningsMatch[1];
+          const warningsList = warningsText.split('; ').filter(w => w.trim());
+          setWarnings(warningsList);
+          
+          // Show warnings in an alert, then proceed
+          if (warningsList.length > 0) {
+            alert(`⚠️ Important Information:\n\n${warningsList.join('\n\n')}\n\nYou can still proceed with plan generation.`);
+          }
+        }
+      }
+
       // Navigate to plan generation page
       navigate(`/workout-plans/generate?questionnaire_id=${result.questionnaire_id}`);
     } catch (err) {
@@ -160,13 +250,15 @@ const WorkoutPlanQuestionnairePage = () => {
   };
 
   const getCurrentQuestion = () => {
-    if (currentStep === 0 || currentStep > questions.length) return null;
-    return questions[currentStep - 1];
+    const orderedQuestions = getOrderedQuestions();
+    if (currentStep === 0 || currentStep > orderedQuestions.length) return null;
+    return orderedQuestions[currentStep - 1];
   };
 
   const getProgress = () => {
     if (showReview) return 100;
-    const totalSteps = questions.length + 1; // +1 for detail level
+    const orderedQuestions = getOrderedQuestions();
+    const totalSteps = orderedQuestions.length + 1; // +1 for detail level
     return ((currentStep + 1) / totalSteps) * 100;
   };
 
@@ -243,8 +335,24 @@ const WorkoutPlanQuestionnairePage = () => {
           'bro_split': 'Bro Split'
         };
         
+        // Program type descriptions
+        const programTypeDescriptions = {
+          'strength_training': 'Build muscle and strength with progressive resistance training',
+          'mobility_stability': 'Improve flexibility, balance, and movement quality',
+          'recovery_focused': 'Gentle movement and recovery for pain management and rehabilitation'
+        };
+        
+        // Program type titles
+        const programTypeTitles = {
+          'strength_training': 'Strength Training',
+          'mobility_stability': 'Mobility & Stability',
+          'recovery_focused': 'Recovery Focused'
+        };
+        
         // Check if this should use card style (like detail level)
-        const useCardStyle = question.id === 'experience_level' || question.id === 'training_split_preference';
+        const useCardStyle = question.id === 'experience_level' || 
+                            question.id === 'training_split_preference' || 
+                            question.id === 'program_type';
         
         if (useCardStyle) {
           return (
@@ -260,6 +368,9 @@ const WorkoutPlanQuestionnairePage = () => {
                 } else if (question.id === 'training_split_preference') {
                   title = trainingSplitTitles[option] || option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ');
                   description = trainingSplitDescriptions[option] || '';
+                } else if (question.id === 'program_type') {
+                  title = programTypeTitles[option] || option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ');
+                  description = programTypeDescriptions[option] || '';
                 }
                 
                 return (
@@ -285,6 +396,14 @@ const WorkoutPlanQuestionnairePage = () => {
               let displayText = option;
               if (question.id === 'plan_duration_weeks' || question.id === 'time_per_session') {
                 displayText = option; // Already formatted
+              } else if (question.id === 'parq_heart_condition' || 
+                        question.id === 'parq_chest_pain' || 
+                        question.id === 'parq_dizziness' || 
+                        question.id === 'parq_medical_conditions' || 
+                        question.id === 'parq_doctor_restriction' ||
+                        question.id === 'injury_current_pain') {
+                // PAR-Q+ and injury questions use yes/no
+                displayText = option === 'yes' ? 'Yes' : 'No';
               } else {
                 displayText = option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ');
               }
@@ -414,10 +533,21 @@ const WorkoutPlanQuestionnairePage = () => {
   };
 
   const renderReview = () => {
+    const orderedQuestions = getOrderedQuestions();
+    
     return (
       <div className="review-step">
         <h2 className="review-title">Review Your Answers</h2>
         <p className="review-subtitle">Review your answers before submitting. Click any answer to edit.</p>
+        
+        {warnings.length > 0 && (
+          <div className="warning-container">
+            <h3 className="warning-title">⚠️ Important Information</h3>
+            {warnings.map((warning, idx) => (
+              <div key={idx} className="warning-message">{warning}</div>
+            ))}
+          </div>
+        )}
         
         <div className="review-section">
           <div className="review-item">
@@ -431,7 +561,7 @@ const WorkoutPlanQuestionnairePage = () => {
             </button>
           </div>
 
-          {questions.map((question, index) => {
+          {orderedQuestions.map((question, index) => {
             const answer = responses[question.id];
             let displayValue = '';
             
@@ -456,6 +586,16 @@ const WorkoutPlanQuestionnairePage = () => {
                     'bro_split': 'Bro Split'
                   };
                   displayValue = trainingSplitTitles[answer] || answer.charAt(0).toUpperCase() + answer.slice(1).replace(/_/g, ' ');
+                } else if (question.id === 'program_type') {
+                  const programTypeTitles = {
+                    'strength_training': 'Strength Training',
+                    'mobility_stability': 'Mobility & Stability',
+                    'recovery_focused': 'Recovery Focused'
+                  };
+                  displayValue = programTypeTitles[answer] || answer.charAt(0).toUpperCase() + answer.slice(1).replace(/_/g, ' ');
+                } else if (question.id.startsWith('parq_') || question.id === 'injury_current_pain') {
+                  // PAR-Q+ and injury yes/no questions
+                  displayValue = answer === 'yes' ? 'Yes' : 'No';
                 } else {
                   displayValue = answer.charAt(0).toUpperCase() + answer.slice(1).replace(/_/g, ' ');
                 }
@@ -529,7 +669,8 @@ const WorkoutPlanQuestionnairePage = () => {
     );
   }
 
-  const totalSteps = questions.length + 1; // +1 for detail level
+  const orderedQuestions = getOrderedQuestions();
+  const totalSteps = orderedQuestions.length + 1; // +1 for detail level
   const currentQuestion = getCurrentQuestion();
 
   return (

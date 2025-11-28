@@ -17,6 +17,7 @@ const WorkoutPlanQuestionnairePage = () => {
   const [error, setError] = useState(null);
   const [currentStep, setCurrentStep] = useState(0); // 0 = detail level, 1-N = questions, last = review
   const [showReview, setShowReview] = useState(false);
+  const [hasReachedReview, setHasReachedReview] = useState(false); // Track if user has seen review page
 
   useEffect(() => {
     if (!isUserLoggedIn()) {
@@ -74,6 +75,7 @@ const WorkoutPlanQuestionnairePage = () => {
     } else {
       // Moving to review
       setShowReview(true);
+      setHasReachedReview(true);
     }
   };
 
@@ -243,20 +245,60 @@ const WorkoutPlanQuestionnairePage = () => {
 
       case 'multiple_choice':
         const selectedValues = Array.isArray(value) ? value : (value ? [value] : []);
+        const allOptions = question.options || [];
+        const allSelected = allOptions.length > 0 && allOptions.every(opt => selectedValues.includes(opt));
+        const hasSelectAll = ['weekly_frequency', 'equipment_available', 'goals'].includes(question.id);
+        
         return (
           <div className="multiple-choice-options">
-            {question.options?.map(option => {
+            {hasSelectAll && (
+              <button
+                type="button"
+                className={`multiple-choice-card select-all-card ${allSelected ? 'selected' : ''}`}
+                onClick={() => {
+                  if (allSelected) {
+                    // Deselect all
+                    handleResponseChange(question.id, []);
+                  } else {
+                    // Select all
+                    handleResponseChange(question.id, [...allOptions]);
+                  }
+                }}
+              >
+                <div className="checkbox-indicator">
+                  {allSelected && <span className="checkmark">✓</span>}
+                </div>
+                <span>Select All</span>
+              </button>
+            )}
+            {allOptions.map(option => {
               const isSelected = selectedValues.includes(option);
+              // Handle "none" option - if selected, deselect all others
+              const isNone = option === 'none';
+              
               return (
                 <button
                   key={option}
                   type="button"
                   className={`multiple-choice-card ${isSelected ? 'selected' : ''}`}
                   onClick={() => {
-                    const newValues = isSelected
-                      ? selectedValues.filter(v => v !== option)
-                      : [...selectedValues, option];
-                    handleResponseChange(question.id, newValues);
+                    if (isNone) {
+                      // If "none" is clicked, toggle it and clear others
+                      if (isSelected) {
+                        handleResponseChange(question.id, []);
+                      } else {
+                        handleResponseChange(question.id, ['none']);
+                      }
+                    } else {
+                      // For other options, if "none" is selected, remove it first
+                      let newValues = selectedValues.filter(v => v !== 'none');
+                      if (isSelected) {
+                        newValues = newValues.filter(v => v !== option);
+                      } else {
+                        newValues = [...newValues, option];
+                      }
+                      handleResponseChange(question.id, newValues);
+                    }
                   }}
                 >
                   <div className="checkbox-indicator">
@@ -454,6 +496,15 @@ const WorkoutPlanQuestionnairePage = () => {
               >
                 ← Previous
               </button>
+              {showReview === false && currentStep > 0 && hasReachedReview && (
+                <button
+                  type="button"
+                  onClick={() => setShowReview(true)}
+                  className="nav-button finish-button"
+                >
+                  Finish
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleNext}

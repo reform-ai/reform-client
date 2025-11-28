@@ -209,6 +209,16 @@
   box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
 }
 
+.select-all-card {
+  border-color: #27ae60 !important;
+  font-weight: 600;
+}
+
+.select-all-card.selected {
+  background-color: #d5f4e6 !important;
+  border-color: #27ae60 !important;
+}
+
 .checkbox-indicator {
   width: 28px;
   height: 28px;
@@ -236,6 +246,8 @@
 .navigation-container {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
   margin-top: 2rem;
   padding-top: 2rem;
   border-top: 2px solid #f0f0f0;
@@ -267,6 +279,15 @@
 
 .next-button:hover:not(:disabled) {
   background-color: #2980b9;
+}
+
+.finish-button {
+  background-color: #27ae60;
+  color: white;
+}
+
+.finish-button:hover {
+  background-color: #229954;
 }
 
 .nav-button:disabled {

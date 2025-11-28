@@ -227,6 +227,49 @@ const WorkoutPlanQuestionnairePage = () => {
           'elite': '5-10+ years of lifting experience; competitive athlete'
         };
         
+        // Training split descriptions
+        const trainingSplitDescriptions = {
+          'full_body': 'Train all muscle groups in each session',
+          'upper_lower': 'Alternate between upper and lower body',
+          'push_pull_legs': 'Push movements, pull movements, and legs',
+          'bro_split': 'One muscle group per day'
+        };
+        
+        // Check if this should use card style (like detail level)
+        const useCardStyle = question.id === 'experience_level' || question.id === 'training_split_preference';
+        
+        if (useCardStyle) {
+          return (
+            <div className="select-options-card">
+              {question.options?.map(option => {
+                const isSelected = value === option;
+                let title = '';
+                let description = '';
+                
+                if (question.id === 'experience_level') {
+                  title = option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ');
+                  description = experienceTooltips[option] || '';
+                } else if (question.id === 'training_split_preference') {
+                  title = option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  description = trainingSplitDescriptions[option] || '';
+                }
+                
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`select-card ${isSelected ? 'selected' : ''}`}
+                    onClick={() => handleResponseChange(question.id, option)}
+                  >
+                    <h3>{title}</h3>
+                    {description && <p>{description}</p>}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        }
+        
         return (
           <div className="select-options">
             {question.options?.map(option => {
@@ -238,25 +281,15 @@ const WorkoutPlanQuestionnairePage = () => {
                 displayText = option.charAt(0).toUpperCase() + option.slice(1).replace(/_/g, ' ');
               }
               
-              const tooltip = question.id === 'experience_level' ? experienceTooltips[option] : null;
-              
               return (
-                <div key={option} className="select-option-wrapper">
-                  <button
-                    type="button"
-                    className={`select-option ${value === option ? 'selected' : ''}`}
-                    onClick={() => handleResponseChange(question.id, option)}
-                    title={tooltip || undefined}
-                    data-tooltip={tooltip || undefined}
-                  >
-                    {displayText}
-                  </button>
-                  {tooltip && (
-                    <div className="select-tooltip">
-                      {tooltip}
-                    </div>
-                  )}
-                </div>
+                <button
+                  key={option}
+                  type="button"
+                  className={`select-option ${value === option ? 'selected' : ''}`}
+                  onClick={() => handleResponseChange(question.id, option)}
+                >
+                  {displayText}
+                </button>
               );
             })}
           </div>

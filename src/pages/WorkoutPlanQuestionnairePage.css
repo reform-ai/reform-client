@@ -77,9 +77,10 @@
 /* Detail Level Selection */
 .detail-level-options {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
+  justify-items: center;
 }
 
 .detail-level-card {
@@ -90,6 +91,8 @@
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
+  width: 100%;
+  max-width: 400px;
 }
 
 .detail-level-card:hover {
@@ -107,6 +110,7 @@
 .detail-level-card h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1.5rem;
+  font-weight: 700;
   color: #333;
 }
 
@@ -114,6 +118,53 @@
   margin: 0;
   color: #666;
   font-size: 1rem;
+}
+
+/* Select Options Card Style (for experience level and training split) */
+.select-options-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+  justify-items: center;
+}
+
+.select-card {
+  padding: 1.5rem;
+  border: 3px solid #ddd;
+  border-radius: 12px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  width: 100%;
+  max-width: 300px;
+}
+
+.select-card:hover {
+  border-color: #3498db;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+}
+
+.select-card.selected {
+  border-color: #3498db;
+  background-color: #ebf5fb;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.select-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.select-card p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 /* Input Styles */
@@ -140,16 +191,13 @@
   min-height: 120px;
 }
 
-/* Select Options (as buttons) */
+/* Select Options (as buttons) - for regular select questions */
 .select-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
   margin-top: 1rem;
-}
-
-.select-option-wrapper {
-  position: relative;
+  justify-items: center;
 }
 
 .select-option {
@@ -163,7 +211,8 @@
   transition: all 0.2s;
   color: #333;
   width: 100%;
-  text-align: left;
+  max-width: 300px;
+  text-align: center;
 }
 
 .select-option:hover {
@@ -172,49 +221,11 @@
   box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
 }
 
-.select-option-wrapper:hover .select-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
 .select-option.selected {
   border-color: #3498db;
   background-color: #3498db;
   color: white;
   box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-}
-
-.select-tooltip {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(-5px);
-  background-color: #333;
-  color: white;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
-  pointer-events: none;
-  z-index: 1000;
-  max-width: 300px;
-  white-space: normal;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.select-tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: #333;
 }
 
 /* Multiple Choice Cards */

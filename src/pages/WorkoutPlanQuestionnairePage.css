@@ -211,12 +211,24 @@
 
 .select-all-card {
   border-color: #27ae60 !important;
-  font-weight: 600;
 }
 
 .select-all-card.selected {
   background-color: #d5f4e6 !important;
   border-color: #27ae60 !important;
+}
+
+.none-option {
+  border-color: #e74c3c !important;
+}
+
+.none-option.selected {
+  background-color: #fee !important;
+  border-color: #e74c3c !important;
+}
+
+.bold-text {
+  font-weight: 700;
 }
 
 .checkbox-indicator {

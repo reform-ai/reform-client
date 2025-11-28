@@ -246,35 +246,18 @@ const WorkoutPlanQuestionnairePage = () => {
       case 'multiple_choice':
         const selectedValues = Array.isArray(value) ? value : (value ? [value] : []);
         const allOptions = question.options || [];
-        const allSelected = allOptions.length > 0 && allOptions.every(opt => selectedValues.includes(opt));
         const hasSelectAll = ['weekly_frequency', 'equipment_available', 'goals'].includes(question.id);
+        
+        // Separate regular options from special options (none, select_all)
+        const regularOptions = allOptions.filter(opt => opt !== 'none');
+        const hasNone = allOptions.includes('none');
+        // Check if all regular options are selected (excluding "none")
+        const allSelected = regularOptions.length > 0 && regularOptions.every(opt => selectedValues.includes(opt));
         
         return (
           <div className="multiple-choice-options">
-            {hasSelectAll && (
-              <button
-                type="button"
-                className={`multiple-choice-card select-all-card ${allSelected ? 'selected' : ''}`}
-                onClick={() => {
-                  if (allSelected) {
-                    // Deselect all
-                    handleResponseChange(question.id, []);
-                  } else {
-                    // Select all
-                    handleResponseChange(question.id, [...allOptions]);
-                  }
-                }}
-              >
-                <div className="checkbox-indicator">
-                  {allSelected && <span className="checkmark">✓</span>}
-                </div>
-                <span>Select All</span>
-              </button>
-            )}
-            {allOptions.map(option => {
+            {regularOptions.map(option => {
               const isSelected = selectedValues.includes(option);
-              // Handle "none" option - if selected, deselect all others
-              const isNone = option === 'none';
               
               return (
                 <button
@@ -282,23 +265,14 @@ const WorkoutPlanQuestionnairePage = () => {
                   type="button"
                   className={`multiple-choice-card ${isSelected ? 'selected' : ''}`}
                   onClick={() => {
-                    if (isNone) {
-                      // If "none" is clicked, toggle it and clear others
-                      if (isSelected) {
-                        handleResponseChange(question.id, []);
-                      } else {
-                        handleResponseChange(question.id, ['none']);
-                      }
+                    // For regular options, if "none" is selected, remove it first
+                    let newValues = selectedValues.filter(v => v !== 'none');
+                    if (isSelected) {
+                      newValues = newValues.filter(v => v !== option);
                     } else {
-                      // For other options, if "none" is selected, remove it first
-                      let newValues = selectedValues.filter(v => v !== 'none');
-                      if (isSelected) {
-                        newValues = newValues.filter(v => v !== option);
-                      } else {
-                        newValues = [...newValues, option];
-                      }
-                      handleResponseChange(question.id, newValues);
+                      newValues = [...newValues, option];
                     }
+                    handleResponseChange(question.id, newValues);
                   }}
                 >
                   <div className="checkbox-indicator">
@@ -308,6 +282,47 @@ const WorkoutPlanQuestionnairePage = () => {
                 </button>
               );
             })}
+            {hasNone && (
+              <button
+                key="none"
+                type="button"
+                className={`multiple-choice-card none-option ${selectedValues.includes('none') ? 'selected' : ''}`}
+                onClick={() => {
+                  // If "none" is clicked, toggle it and clear others
+                  if (selectedValues.includes('none')) {
+                    handleResponseChange(question.id, []);
+                  } else {
+                    handleResponseChange(question.id, ['none']);
+                  }
+                }}
+              >
+                <div className="checkbox-indicator">
+                  {selectedValues.includes('none') && <span className="checkmark">✓</span>}
+                </div>
+                <span className="bold-text">None</span>
+              </button>
+            )}
+            {hasSelectAll && (
+              <button
+                type="button"
+                className={`multiple-choice-card select-all-card ${allSelected ? 'selected' : ''}`}
+                onClick={() => {
+                  if (allSelected) {
+                    // Deselect all
+                    handleResponseChange(question.id, []);
+                  } else {
+                    // Select all (excluding "none" if it exists)
+                    const optionsToSelect = hasNone ? regularOptions : allOptions;
+                    handleResponseChange(question.id, [...optionsToSelect]);
+                  }
+                }}
+              >
+                <div className="checkbox-indicator">
+                  {allSelected && <span className="checkmark">✓</span>}
+                </div>
+                <span className="bold-text">Select All</span>
+              </button>
+            )}
           </div>
         );
 

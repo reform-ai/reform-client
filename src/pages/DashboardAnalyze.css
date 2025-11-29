@@ -1,0 +1,276 @@
+.dashboard-analyze {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.dashboard-analyze .shell {
+  width: min(1200px, 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 32px;
+  background: rgba(5, 8, 18, 0.9);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.dashboard-analyze .header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboard-analyze .header-title {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-analyze .header-subtitle {
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+.dashboard-analyze .actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-analyze .btn {
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 12px 20px;
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, border 0.2s ease;
+}
+
+.dashboard-analyze .btn-primary {
+  background: var(--score-excellent);
+  border: none;
+  color: white;
+}
+
+.dashboard-analyze .btn-primary:disabled {
+  background: var(--bg-tertiary);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-analyze .btn-primary:not(:disabled):hover {
+  opacity: 0.9;
+}
+
+.dashboard-analyze .btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-color-hover);
+}
+
+.dashboard-analyze .analysis-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.dashboard-analyze .card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+.dashboard-analyze .card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.dashboard-analyze .upload-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-analyze .upload-area {
+  border: 2px dashed rgba(226, 232, 240, 0.2);
+  border-radius: 16px;
+  padding: 24px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  transition: border-color 0.2s ease, background 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  flex: 1;
+  min-height: 120px;
+}
+
+.dashboard-analyze .upload-area:hover {
+  border-color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.dashboard-analyze .upload-area input {
+  display: none;
+}
+
+.dashboard-analyze .upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.dashboard-analyze .upload-file-info {
+  min-height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-analyze .upload-file-info.has-file {
+  color: var(--text-primary);
+  border-color: var(--border-color-hover);
+}
+
+.dashboard-analyze .analysis-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-analyze .select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-analyze label {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.dashboard-analyze select,
+.dashboard-analyze textarea {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.dashboard-analyze select:focus,
+.dashboard-analyze textarea:focus {
+  border-color: var(--accent-blue);
+}
+
+.dashboard-analyze textarea {
+  resize: none;
+  min-height: 60px;
+}
+
+.dashboard-analyze .analysis-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-analyze .analysis-note {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.dashboard-analyze .analysis-upload-status {
+  margin-top: 16px;
+  min-height: 90px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dashboard-analyze .component-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.dashboard-analyze .component-row span:last-child {
+  font-weight: 600;
+}
+
+.dashboard-analyze .camera-warning {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+}
+
+.dashboard-analyze video {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 12px;
+  background: #000;
+}
+
+@media (max-width: 768px) {
+  .dashboard-analyze {
+    padding: 20px 12px;
+  }
+
+  .dashboard-analyze .shell {
+    border-radius: 20px;
+    padding: 28px;
+  }
+
+  .dashboard-analyze .header-title {
+    font-size: clamp(1.6rem, 6vw, 2.2rem);
+  }
+
+  .dashboard-analyze .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-analyze .analysis-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+

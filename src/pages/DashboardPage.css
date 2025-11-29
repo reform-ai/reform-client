@@ -1,0 +1,68 @@
+/* Dashboard page now uses skeleton classes for header */
+/* Shell, header, title, subtitle, grid, and card classes come from AnalysisSkeleton.css */
+
+.hero-actions {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.hero-actions button,
+.hero-actions a {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 14px 28px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, border 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: var(--accent-green);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.btn-primary:hover,
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-color-hover);
+}
+
+/* Grid and card classes come from AnalysisSkeleton.css */
+
+/* Dashboard-specific: Add actions to header */
+.skeleton-header .hero-actions {
+  margin-top: 0;
+  align-self: flex-end;
+}
+
+@media (max-width: 768px) {
+  /* Mobile styles for skeleton classes are in AnalysisSkeleton.css */
+  /* Additional dashboard-specific mobile styles */
+  .skeleton-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .skeleton-header .hero-actions {
+    width: 100%;
+    margin-top: 16px;
+    align-self: stretch;
+  }
+
+  .skeleton-header .hero-actions a {
+    width: 100%;
+    text-align: center;
+  }
+}
+

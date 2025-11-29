@@ -1,0 +1,21 @@
+.limit-message {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.signin-link {
+  background: none;
+  border: none;
+  color: var(--accent-green);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin-left: 4px;
+  font-family: inherit;
+  font-size: inherit;
+}
+

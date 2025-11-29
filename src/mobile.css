@@ -1,126 +1,319 @@
-/* Mobile-specific styles - All desktop styles remain in index.css */
+/* ------------------------------------------------------------------
+   Mobile design system
+   - Desktop rules live in index.css + component styles
+   - This file only applies progressive enhancements for mobile/tablet
+   - Organized by component/page for maintainability
+-------------------------------------------------------------------*/
 
-/* App Header - Mobile */
-@media (max-width: 480px) {
-  .app-header,
-  .video-upload-header,
-  .overall-score-header {
-    font-size: clamp(0.9rem, 6vw, 2.5rem);
+/* ================================================================
+   GLOBAL MOBILE ADJUSTMENTS
+   ================================================================ */
+@media (max-width: 768px) {
+  body {
+    font-size: 0.95rem;
   }
-}
 
-@media (max-width: 375px) {
+  /* PageContainer adjustments */
+  .app-container,
   .App {
-    padding: 15px;
-  }
-  .app-header,
-  .video-upload-header,
-  .overall-score-header {
-    font-size: clamp(0.9rem, 6.5vw, 2.5rem);
-  }
-}
-
-/* Make headers same size as app-header on all mobile sizes */
-@media (max-width: 768px) {
-  .video-upload-header,
-  .overall-score-header {
-    font-size: clamp(0.9rem, 5vw, 2.5rem) !important;
-  }
-}
-
-/* Analysis Results Layout - Mobile */
-@media (max-width: 768px) {
-  .analysis-layout {
-    flex-direction: column;
-  }
-}
-
-/* Results Controls - Mobile */
-@media (max-width: 768px) {
-  .results-controls-container,
-  .pre-analysis-controls-container {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 12px !important;
-  }
-  
-  .results-controls-container > label,
-  .pre-analysis-exercise-row > label {
+    padding: 12px;
+    min-height: 100vh;
     width: 100%;
+    margin: 0;
   }
-  
-  .results-controls-container > select,
-  .pre-analysis-exercise-row > select {
-    width: 100% !important;
-    maxWidth: 100% !important;
-    flexShrink: 1 !important;
-  }
-  
-  .pre-analysis-exercise-row {
-    margin-bottom: 12px !important;
-    flex-wrap: wrap !important;
-  }
-  
-  .results-buttons-container,
-  .pre-analysis-buttons-container {
-    margin-left: 0 !important;
+}
+
+/* ================================================================
+   PAGE HEADER (PageHeader component)
+   Applied to ALL pages for consistent title and icon positioning
+   ================================================================ */
+@media (max-width: 768px) {
+  /* Base header layout - applies to all pages */
+  .page-header {
     width: 100% !important;
     flex-direction: column !important;
-    align-items: stretch !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
   }
-  
-  .results-buttons-container button,
-  .pre-analysis-buttons-container button {
+
+  .app-header {
+    font-size: clamp(1rem, 5.5vw, 2rem) !important;
+    line-height: 1.3 !important;
     width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex-grow: 0 !important;
+    order: 2 !important;
   }
-  
-  .results-filename-desktop,
-  .pre-analysis-filename-desktop {
+
+  /* Anonymous header: Login button above title (correct position from landing page) */
+  .page-header--anonymous .header-actions {
+    order: -1 !important;
+    width: 100% !important;
+    justify-content: flex-end !important;
+    margin-left: 0 !important;
+  }
+
+  .page-header--anonymous .header-cta {
+    width: auto !important;
+    margin-left: 0 !important;
+  }
+
+  /* Authenticated header: ProfileMenu + Dashboard above title (same pattern as anonymous) */
+  .page-header--authenticated {
+    flex-direction: column !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .page-header--authenticated .header-actions {
+    order: -1 !important;
+    width: 100% !important;
+    justify-content: flex-end !important;
+    margin-left: 0 !important;
+  }
+
+  .page-header--authenticated .app-header {
+    width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex-grow: 0 !important;
+    order: 2 !important;
+  }
+
+  .page-header--authenticated .profile-menu,
+  .page-header--authenticated .header-cta {
+    width: auto !important;
+  }
+
+  /* Hide Dashboard text label on mobile, keep icon only */
+  .page-header--authenticated .header-cta__label {
     display: none !important;
   }
-  
-  .results-filename-mobile,
-  .pre-analysis-filename-mobile {
-    display: block !important;
-    margin-top: 8px !important;
-  }
 }
 
-/* Analysis Progress - Mobile */
+/* ================================================================
+   ANALYSIS SKELETON (AnalysisSkeleton component)
+   Used by LandingPage, DashboardAnalyze, DashboardPage, ProfilePage
+   Ensures consistent title positioning across all pages
+   ================================================================ */
 @media (max-width: 768px) {
-  .analysis-progress-container {
+  /* Main container - override default styles for mobile */
+  .skeleton-shell {
+    border-radius: 20px;
+    margin-top: 16px;
+  }
+
+  /* Header section - consistent across all pages */
+  .skeleton-header {
+    padding: 28px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .skeleton-title {
+    font-size: clamp(1.5rem, 6vw, 2rem) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    width: 100% !important;
+    margin: 0 0 16px 0 !important;
+  }
+
+  .skeleton-subtitle {
+    max-width: 100% !important;
+    font-size: 0.95rem !important;
+  }
+
+  /* Grid: stack cards vertically */
+  .skeleton-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 28px;
+  }
+
+  /* Cards */
+  .skeleton-card {
+    padding: 20px;
+    border-radius: 16px;
+    width: 100%;
+  }
+
+  /* Upload area - maintain consistent size */
+  .skeleton-upload-area {
+    min-height: 80px;
+    padding: 20px 12px;
+    width: 100%;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .skeleton-upload-content {
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+  }
+
+  /* Upload file info - prevent layout shift */
+  .skeleton-upload-file-info {
+    min-height: 32px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .skeleton-upload-label {
+    width: auto !important;
+    margin: 0 auto;
+    justify-content: center;
+  }
+
+  /* Upload text: show mobile version, hide desktop */
+  .skeleton-upload-text-desktop {
+    display: none !important;
+  }
+
+  .skeleton-upload-text-mobile {
+    display: inline !important;
+  }
+
+  .skeleton-upload-guidance {
+    display: none !important;
+  }
+
+  /* Analysis options */
+  .skeleton-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .skeleton-select-group {
+    width: 100%;
+  }
+
+  .skeleton-select-group select,
+  .skeleton-select-group textarea {
+    width: 100%;
+  }
+
+  /* Actions */
+  .skeleton-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .skeleton-btn {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  .skeleton-note {
+    text-align: center;
+    width: 100%;
+  }
+
+  /* Progress and error messages */
+  .skeleton-progress,
+  .skeleton-error,
+  .skeleton-limit-message {
     width: 100% !important;
   }
 }
 
-/* Form Score, Angle Plot, and Video - Mobile */
+/* ================================================================
+   PROFILE MENU (ProfileMenu component)
+   ================================================================ */
 @media (max-width: 768px) {
-  .form-score-container {
-    width: 100% !important;
-    max-width: 100% !important;
+  /* ProfileMenu inside PageHeader - handled by page-header--authenticated rules */
+  .page-header--authenticated .profile-menu {
+    margin-left: 0 !important;
   }
-  
-  .overall-score-display {
-    font-size: 25.2px !important; /* 70% of 36px */
+
+  /* Profile menu in header wrapper */
+  .app-header-wrapper .profile-menu {
+    margin-left: 0 !important;
   }
-  
-  .angle-analysis-plot-container {
-    width: 100% !important;
-    max-width: 100% !important;
+
+  .profile-menu .profile-trigger {
+    width: auto;
+    max-width: 100%;
   }
-  
-  .angle-analysis-plot-container > div {
-    width: 100% !important;
-  }
-  
-  .angle-analysis-plot-container canvas {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-  
-  .video-container {
-    width: 100% !important;
-    max-width: 100% !important;
+
+  .profile-menu .menu-list {
+    width: min(220px, 80vw);
   }
 }
 
+/* ================================================================
+   FORMS (SignupPage, ProfilePage, LoginModal)
+   ================================================================ */
+@media (max-width: 768px) {
+  form {
+    width: 100%;
+  }
+
+  form input,
+  form textarea,
+  form select {
+    width: 100%;
+    font-size: 1rem;
+  }
+}
+
+/* ================================================================
+   FOOTER (Footer component)
+   ================================================================ */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+/* ================================================================
+   COMPACT PHONES (≤480px)
+   ================================================================ */
+@media (max-width: 480px) {
+  .app-header,
+  .header-title {
+    font-size: clamp(0.95rem, 6vw, 1.85rem);
+  }
+
+  .App {
+    padding: 16px 12px;
+  }
+
+  .skeleton-shell {
+    margin-top: 12px;
+  }
+
+  .skeleton-header,
+  .skeleton-grid {
+    padding: 24px;
+  }
+}
+
+/* ================================================================
+   ULTRA-SMALL PHONES (≤360px)
+   ================================================================ */
+@media (max-width: 360px) {
+  .App {
+    padding: 12px;
+  }
+
+  .skeleton-header,
+  .skeleton-grid {
+    padding: 20px;
+  }
+
+  .app-header {
+    font-size: clamp(0.9rem, 7vw, 1.5rem);
+  }
+}

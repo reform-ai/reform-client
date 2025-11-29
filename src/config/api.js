@@ -14,7 +14,35 @@ export const API_URL = getApiUrl();
 export const API_ENDPOINTS = {
   UPLOAD_VIDEO: `${API_URL}/upload-video`,
   HEALTH: `${API_URL}/health`,
-  ROOT: `${API_URL}/`
+  ROOT: `${API_URL}/`,
+  CHECK_ANONYMOUS_LIMIT: `${API_URL}/api/check-anonymous-limit`,
+  SIGNUP: `${API_URL}/api/auth/signup`,
+  LOGIN: `${API_URL}/api/auth/login`,
+  ME: `${API_URL}/api/auth/me`,
+  CHANGE_PASSWORD: `${API_URL}/api/auth/change-password`,
+  UPDATE_USERNAME: `${API_URL}/api/auth/update-username`,
+  UPDATE_PROFILE: `${API_URL}/api/auth/update-profile`,
+  // Social feed endpoints
+  FEED: `${API_URL}/api/social/feed`,
+  POSTS: `${API_URL}/api/social/posts`,
+  POST: (postId) => `${API_URL}/api/social/posts/${postId}`,
+  DELETE_POST: (postId) => `${API_URL}/api/social/posts/${postId}`,
+  POST_LIKE: (postId) => `${API_URL}/api/social/posts/${postId}/like`,
+  POST_COMMENTS: (postId) => `${API_URL}/api/social/posts/${postId}/comments`,
+  COMMENT: (commentId) => `${API_URL}/api/social/comments/${commentId}`,
+  USER_FOLLOW: (username) => `${API_URL}/api/social/users/${username}/follow`,
+  USER_FOLLOW_STATUS: (username) => `${API_URL}/api/social/users/${username}/follow`,
+  USER_POSTS: (username) => `${API_URL}/api/social/users/${username}/posts`,
+  USER_PROFILE: (username) => `${API_URL}/api/social/users/${username}/profile`,
+  PRIVACY: `${API_URL}/api/social/users/me/privacy`,
+  MY_FOLLOWERS: `${API_URL}/api/social/users/me/followers`,
+  MY_FOLLOWING: `${API_URL}/api/social/users/me/following`,
+  // Token endpoints
+  TOKEN_BALANCE: `${API_URL}/api/tokens/balance`,
+  TOKEN_TRANSACTIONS: `${API_URL}/api/tokens/transactions`,
+  TOKEN_ACTIVATE: `${API_URL}/api/tokens/activate`,
+  // Contact endpoint
+  CONTACT_SUBMIT: `${API_URL}/api/contact/submit`
 };
 
 // Only log API URL in development mode for security

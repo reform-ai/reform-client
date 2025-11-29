@@ -53,6 +53,16 @@ export const API_ENDPOINTS = {
   ANALYSIS: (analysisId) => `${API_URL}/api/analyses/${analysisId}`,
   ANALYSIS_PROGRESS: `${API_URL}/api/analyses/progress/metrics`,
   ANALYSIS_GENERATE_SHARE_IMAGE: (analysisId) => `${API_URL}/api/analyses/${analysisId}/generate-share-image`,
+  // Pose service endpoints (for on-demand visualization)
+  POSE_SERVICE_URL: import.meta.env.VITE_POSE_SERVICE_URL || 'http://127.0.0.1:8001',
+  POSE_CREATE_VISUALIZATION: (sessionId) => {
+    const poseUrl = import.meta.env.VITE_POSE_SERVICE_URL || 'http://127.0.0.1:8001';
+    return `${poseUrl}/create-visualization/${sessionId}`;
+  },
+  POSE_CLEANUP_SESSION: (sessionId) => {
+    const poseUrl = import.meta.env.VITE_POSE_SERVICE_URL || 'http://127.0.0.1:8001';
+    return `${poseUrl}/session/${sessionId}`;
+  },
   // Contact endpoint
   CONTACT_SUBMIT: `${API_URL}/api/contact/submit`,
   // X (Twitter) integration endpoints

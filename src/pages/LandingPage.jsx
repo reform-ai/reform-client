@@ -8,6 +8,7 @@ import ScoreBreakdown from '../shared/components/ScoreBreakdown';
 import AnglePlot from '../shared/components/charts/AnglePlot';
 import { isUserLoggedIn } from '../shared/utils/authStorage';
 import { normalizeAnalysisResults, getFpsFromAnalysis, getComponentScores } from '../shared/utils/analysisDataNormalizer';
+import { API_ENDPOINTS } from '../config/api';
 
 function LandingPage() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ function LandingPage() {
   });
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isVideoExpanded, setIsVideoExpanded] = useState(false);
+  const [isCreatingVisualization, setIsCreatingVisualization] = useState(false);
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -90,6 +92,38 @@ function LandingPage() {
 
   const handleVideoPause = () => {
     setIsVideoPlaying(false);
+  };
+
+  const handleCreateVisualization = async () => {
+    if (!analysisResults?.session_id) return;
+    
+    setIsCreatingVisualization(true);
+    try {
+      const response = await fetch(API_ENDPOINTS.POSE_CREATE_VISUALIZATION(analysisResults.session_id), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create visualization');
+      }
+      
+      const data = await response.json();
+      if (data.visualization_url) {
+        // Update analysis results with visualization URL
+        setAnalysisResults(prev => ({
+          ...prev,
+          visualization_url: data.visualization_url
+        }));
+      }
+    } catch (error) {
+      console.error('Error creating visualization:', error);
+      alert('Failed to create visualization. Please try again.');
+    } finally {
+      setIsCreatingVisualization(false);
+    }
   };
 
   const handleExpandVideo = () => {
@@ -204,7 +238,7 @@ function LandingPage() {
               flex: '1',
               minWidth: 0
             }}>
-              {analysisResults.visualization_url && (
+              {analysisResults.visualization_url ? (
                 <div className="video-container" style={{ 
                   position: 'relative',
                   width: '100%'
@@ -264,7 +298,40 @@ function LandingPage() {
                     )}
                   </div>
                 </div>
-              )}
+              ) : analysisResults.session_id ? (
+                <div style={{
+                  padding: '40px',
+                  backgroundColor: 'var(--card-bg)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  textAlign: 'center'
+                }}>
+                  <p style={{
+                    marginBottom: '20px',
+                    color: 'var(--text-secondary)',
+                    fontSize: '14px'
+                  }}>
+                    Visualization video is available on-demand to reduce processing time.
+                  </p>
+                  <button
+                    onClick={handleCreateVisualization}
+                    disabled={isCreatingVisualization}
+                    style={{
+                      padding: '12px 24px',
+                      backgroundColor: isCreatingVisualization ? 'var(--bg-secondary)' : 'var(--primary-color)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: isCreatingVisualization ? 'not-allowed' : 'pointer',
+                      fontWeight: 500,
+                      fontSize: '14px',
+                      opacity: isCreatingVisualization ? 0.7 : 1
+                    }}
+                  >
+                    {isCreatingVisualization ? 'Creating Visualization...' : 'Show Visualization Video'}
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

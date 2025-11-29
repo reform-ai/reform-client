@@ -63,6 +63,7 @@ export const normalizeAnalysisResults = (analysisData) => {
     // Optional fields
     visualization_url: analysisData.visualization_url,
     visualization_filename: analysisData.visualization_filename,
+    session_id: analysisData.session_id,  // For on-demand visualization
     notes: analysisData.notes
   };
 };

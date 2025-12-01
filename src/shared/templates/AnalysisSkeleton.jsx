@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { API_ENDPOINTS, API_URL } from '../../config/api';
-import { isUserLoggedIn } from '../utils/authStorage';
-import { uploadVideo } from '../utils/uploadHandler';
+import { isUserLoggedIn, getUserToken } from '../utils/authStorage';
+import { uploadVideo, uploadVideoOnly } from '../utils/uploadHandler';
+import { createErrorWithData } from '../utils/apiErrorHandler';
 import { getVideoDuration, getVideoFPS } from '../utils/videoDuration';
 import FileUploader from '../components/upload/FileUploader';
 import ExerciseSelector from '../components/upload/ExerciseSelector';
@@ -49,6 +50,8 @@ const AnalysisSkeleton = ({
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState('');
+  const [uploadedSessionId, setUploadedSessionId] = useState(null);
+  const [uploadComplete, setUploadComplete] = useState(false);
   const [videoDuration, setVideoDuration] = useState(null); // Video duration in seconds
   const [videoFPS, setVideoFPS] = useState(null); // Video FPS (if available from metadata)
   const [videoFrameCount, setVideoFrameCount] = useState(null); // Video frame count (from response - source of truth)
@@ -192,16 +195,62 @@ const AnalysisSkeleton = ({
     }
   };
 
-  // Cleanup on unmount
+  // Cleanup on unmount - delete uploaded video if user navigates away
   useEffect(() => {
     return () => {
       stopAnalysisProgress();
+      // Clean up uploaded video if user navigates away
+      if (uploadedSessionId) {
+        // Call cleanup endpoint (non-blocking, don't wait for response)
+        fetch(API_ENDPOINTS.POSE_CLEANUP_SESSION(uploadedSessionId), {
+          method: 'DELETE',
+          credentials: 'include',
+        }).catch(err => {
+          console.warn('Failed to cleanup session on unmount:', err);
+        });
+      }
     };
-  }, []);
+  }, [uploadedSessionId]);
 
-  const handleStartAnalysis = async () => {
+  const handleUpload = async () => {
     if (!selectedFile) {
       alert('Please select a video file first');
+      return;
+    }
+
+    setErrorMessage('');
+    setUploading(true);
+    setUploadComplete(false);
+    setUploadedSessionId(null);
+    updateProgress(0, 'Preparing upload...');
+
+    try {
+      const data = await uploadVideoOnly({
+        file: selectedFile,
+        onProgress: (progress, text) => {
+          updateProgress(progress, text);
+        }
+      });
+
+      // Upload complete
+      setUploading(false);
+      setUploadComplete(true);
+      setUploadedSessionId(data.session_id);
+      setProgress(0);
+      setProgressText('');
+    } catch (error) {
+      setUploading(false);
+      setUploadComplete(false);
+      setProgress(0);
+      setProgressText('');
+      setErrorMessage(error.message || 'An error occurred during upload');
+      setErrorData(error.errorData || null);
+    }
+  };
+
+  const handleStartAnalysis = async () => {
+    if (!uploadComplete || !uploadedSessionId) {
+      alert('Please upload the video first');
       return;
     }
 
@@ -211,25 +260,35 @@ const AnalysisSkeleton = ({
     }
 
     setErrorMessage('');
-    setUploading(true);
-    setAnalyzing(false);
-    updateProgress(0, 'Preparing upload...');
+    setAnalyzing(true);
+    updateProgress(0, 'Starting analysis...');
+    startAnalysisProgress();
 
     try {
-      const data = await uploadVideo({
-        file: selectedFile,
-        exercise,
-        notes: showNotes ? notes : null,
-        onProgress: (progress, text) => {
-          updateProgress(progress, text);
-          if (progress >= 99.9) {
-            setUploading(false);
-            setAnalyzing(true);
-            // Start analysis progress tracking
-            startAnalysisProgress();
-          }
-        }
+      // Call analyze-video endpoint with session_id
+      const formData = new FormData();
+      formData.append('session_id', uploadedSessionId);
+      formData.append('exercise', exercise);
+      if (showNotes && notes && notes.trim()) {
+        formData.append('notes', notes.trim());
+      }
+
+      const response = await fetch(API_ENDPOINTS.ANALYZE_VIDEO, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${getUserToken()}`,
+        },
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData.detail?.message || errorData.message || 'Analysis failed';
+        throw createErrorWithData(errorMsg, errorData.detail || errorData);
+      }
+
+      const data = await response.json();
 
       setUploading(false);
       setAnalyzing(false);
@@ -300,6 +359,10 @@ const AnalysisSkeleton = ({
             selectedFile={selectedFile}
             onFileChange={async (file) => {
               setSelectedFile(file);
+              // Reset upload state when new file is selected
+              setUploadComplete(false);
+              setUploadedSessionId(null);
+              setUploading(false);
               // Clear any previous errors when user selects a new file
               setErrorMessage('');
               setErrorData(null);
@@ -327,6 +390,8 @@ const AnalysisSkeleton = ({
               }
             }}
             disabled={isDisabled}
+            uploading={uploading}
+            onUploadClick={handleUpload}
           />
         </article>
 
@@ -352,9 +417,9 @@ const AnalysisSkeleton = ({
                 className="skeleton-btn skeleton-btn-primary"
                 type="button"
                 onClick={handleStartAnalysis}
-                disabled={uploading || analyzing || isDisabled}
+                disabled={!uploadComplete || analyzing || isDisabled}
               >
-                {analyzing ? 'Analyzing...' : uploading ? 'Uploading...' : 'Start Analysis'}
+                {analyzing ? 'Analyzing...' : 'Start Analysis'}
               </button>
               <p className="skeleton-note">
                 Processing takes ~30s.

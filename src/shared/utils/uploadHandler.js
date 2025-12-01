@@ -107,3 +107,62 @@ export const uploadVideo = async ({ file, exercise, notes = null, onProgress }) 
   });
 };
 
+/**
+ * Handles video upload only (no analysis)
+ * @param {Object} params - Upload parameters
+ * @param {File} params.file - Video file to upload
+ * @param {Function} params.onProgress - Progress callback (progress, text)
+ * @returns {Promise<Object>} Upload result with session_id
+ */
+export const uploadVideoOnly = async ({ file, onProgress }) => {
+  const formData = new FormData();
+  formData.append('video', file);
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const percentComplete = (e.loaded / e.total) * 100;
+        onProgress?.(percentComplete, `Uploading... ${Math.round(percentComplete)}%`);
+        if (percentComplete >= 99.9) {
+          onProgress?.(100, 'Upload complete');
+        }
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          resolve(response);
+        } catch (e) {
+          reject(new Error('Invalid response from server'));
+        }
+      } else {
+        const { errorMsg, errorData } = parseUploadError(xhr);
+        const error = createErrorWithData(errorMsg, errorData);
+        reject(error);
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      reject(new Error('Network error during upload'));
+    });
+
+    xhr.addEventListener('abort', () => {
+      reject(new Error('Upload cancelled'));
+    });
+
+    xhr.open('POST', API_ENDPOINTS.UPLOAD_VIDEO_ONLY);
+    xhr.withCredentials = true;
+    
+    const token = getUserToken();
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    }
+    
+    xhr.send(formData);
+  });
+};
+

@@ -9,8 +9,10 @@ import '../../styles/upload/FileUploader.css';
  * - selectedFile: File | null - Currently selected file
  * - onFileChange: (file: File | null) => void - Callback when file changes
  * - disabled: boolean - Whether uploader is disabled
+ * - uploading: boolean - Whether upload is in progress
+ * - onUploadClick: () => void - Callback when upload button is clicked
  */
-const FileUploader = ({ selectedFile, onFileChange, disabled = false }) => {
+const FileUploader = ({ selectedFile, onFileChange, disabled = false, uploading = false, onUploadClick = null }) => {
   const fileInputRef = useRef(null);
 
   const handleFileChange = (event) => {
@@ -53,6 +55,20 @@ const FileUploader = ({ selectedFile, onFileChange, disabled = false }) => {
       <div className={`upload-file-info${selectedFile ? ' has-file' : ''}`}>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFileName}</span>
       </div>
+      {selectedFile && (
+        <div className="upload-button-container">
+          <button 
+            className="upload-button" 
+            disabled={disabled || uploading}
+            onClick={onUploadClick}
+          >
+            Upload
+          </button>
+          {uploading && (
+            <div className="upload-spinner"></div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

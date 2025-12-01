@@ -14,6 +14,8 @@ const getApiUrl = () => {
 export const API_URL = getApiUrl();
 export const API_ENDPOINTS = {
   UPLOAD_VIDEO: `${API_URL}/upload-video`,
+  UPLOAD_VIDEO_ONLY: `${API_URL}/upload-video-only`,
+  ANALYZE_VIDEO: `${API_URL}/analyze-video`,
   HEALTH: `${API_URL}/health`,
   ROOT: `${API_URL}/`,
   CHECK_ANONYMOUS_LIMIT: `${API_URL}/api/check-anonymous-limit`,
@@ -63,6 +65,7 @@ export const API_ENDPOINTS = {
     const poseUrl = import.meta.env.VITE_POSE_SERVICE_URL || 'http://127.0.0.1:8001';
     return `${poseUrl}/session/${sessionId}`;
   },
+  POSE_SERVICE_URL: import.meta.env.VITE_POSE_SERVICE_URL || 'http://127.0.0.1:8001',
   // Contact endpoint
   CONTACT_SUBMIT: `${API_URL}/api/contact/submit`,
   // X (Twitter) integration endpoints

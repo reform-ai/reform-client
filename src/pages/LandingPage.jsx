@@ -187,12 +187,9 @@ function LandingPage() {
             onSignInClick={() => setShowLoginModal(true)}
           />
         </div>
-      </section>
 
-      {/* Benefits Section */}
-      <BenefitsSection />
-
-      {analysisResults?.form_analysis?.final_score && (
+        {/* Analysis Results - shown directly under upload container */}
+        {analysisResults?.form_analysis?.final_score && (
         <div style={{ 
           marginTop: '15px', 
           padding: '10px', 
@@ -371,7 +368,11 @@ function LandingPage() {
             </div>
           </div>
         </div>
-      )}
+        )}
+      </section>
+
+      {/* Benefits Section */}
+      <BenefitsSection />
 
       <LoginModal
         isOpen={showLoginModal}

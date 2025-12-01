@@ -1,20 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AnalysisSkeleton from '../shared/templates/AnalysisSkeleton';
+import AnalysisUploader from '../shared/components/analysis/AnalysisUploader';
+import AnalysisSectionHeader from '../shared/components/analysis/AnalysisSectionHeader';
 import PageHeader from '../shared/components/layout/PageHeader';
 import PageContainer from '../shared/components/layout/PageContainer';
 import LoginModal from '../shared/components/modals/LoginModal';
 import ScoreBreakdown from '../shared/components/ScoreBreakdown';
 import AnglePlot from '../shared/components/charts/AnglePlot';
+import HeroSection from '../shared/components/landing/HeroSection';
+import FeaturesGrid from '../shared/components/landing/FeaturesGrid';
+import BenefitsSection from '../shared/components/landing/BenefitsSection';
 import { isUserLoggedIn } from '../shared/utils/authStorage';
 import { normalizeAnalysisResults, getFpsFromAnalysis, getComponentScores } from '../shared/utils/analysisDataNormalizer';
 import { API_ENDPOINTS } from '../config/api';
+import '../shared/styles/AnalysisSkeleton.css';
+import '../shared/styles/landing/LandingComponents.css';
 
 function LandingPage() {
   const navigate = useNavigate();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() => isUserLoggedIn());
   const [analysisResults, setAnalysisResults] = useState(null);
+  const analysisSectionRef = useRef(null);
   const [expandedStates, setExpandedStates] = useState({
     torso_angle: false,
     quad_angle: false,
@@ -143,18 +150,47 @@ function LandingPage() {
   // Use the normalizer's getComponentScores function for consistency
   const componentScores = getComponentScores(analysisResults?.form_analysis);
 
+  const scrollToAnalysis = () => {
+    if (analysisSectionRef.current) {
+      analysisSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <PageContainer className="App">
       <PageHeader onLoginClick={() => setShowLoginModal(true)} />
 
-      <AnalysisSkeleton
-        showNotes={false}
-        syncCardHeights={true}
-        headerTitle="Upload a Session"
-        headerSubtitle={null}
-        onSignInClick={() => setShowLoginModal(true)}
-        onAnalysisComplete={handleAnalysisComplete}
-      />
+      {/* Hero Section */}
+      <HeroSection onScrollToAnalysis={scrollToAnalysis} />
+
+      {/* Features Section */}
+      <FeaturesGrid onScrollToAnalysis={scrollToAnalysis} />
+
+      {/* Analysis Tool Section */}
+      <section className="analysis-tool-section" ref={analysisSectionRef}>
+        <div className="analysis-tool-container">
+          <h2 className="analysis-tool-title">Try It Now for Free!</h2>
+          <p className="analysis-tool-subtitle">
+            Upload your workout video and get instant AI-powered form analysis.
+          </p>
+        </div>
+        <div className="skeleton-shell">
+          <AnalysisSectionHeader
+            eyebrow="New Analysis"
+            title="Upload a Session"
+            subtitle={null}
+          />
+          <AnalysisUploader
+            showNotes={false}
+            syncCardHeights={true}
+            onAnalysisComplete={handleAnalysisComplete}
+            onSignInClick={() => setShowLoginModal(true)}
+          />
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <BenefitsSection />
 
       {analysisResults?.form_analysis?.final_score && (
         <div style={{ 

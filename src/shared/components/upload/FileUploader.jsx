@@ -10,9 +10,10 @@ import '../../styles/upload/FileUploader.css';
  * - onFileChange: (file: File | null) => void - Callback when file changes
  * - disabled: boolean - Whether uploader is disabled
  * - uploading: boolean - Whether upload is in progress
+ * - uploadComplete: boolean - Whether upload is complete
  * - onUploadClick: () => void - Callback when upload button is clicked
  */
-const FileUploader = ({ selectedFile, onFileChange, disabled = false, uploading = false, onUploadClick = null }) => {
+const FileUploader = ({ selectedFile, onFileChange, disabled = false, uploading = false, uploadComplete = false, onUploadClick = null }) => {
   const fileInputRef = useRef(null);
 
   const handleFileChange = (event) => {
@@ -33,7 +34,7 @@ const FileUploader = ({ selectedFile, onFileChange, disabled = false, uploading 
 
   return (
     <div className="upload-content">
-      <h3>Upload Your Video</h3>
+      <h3>{uploadComplete ? 'Change Video?' : 'Upload Your Video'}</h3>
       <div className="upload-area" style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : {}}>
         <label className="upload-label" style={{ justifyContent: 'center', alignSelf: 'center', width: 'auto' }}>
           <input

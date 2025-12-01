@@ -68,6 +68,19 @@
   flex-direction: column;
   gap: 14px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.3s ease;
+}
+
+.skeleton-card.upload-pending {
+  border-color: var(--accent-green);
+}
+
+.skeleton-card.upload-complete {
+  border-color: var(--border-color);
+}
+
+.skeleton-card.analysis-ready {
+  border-color: var(--accent-green);
 }
 
 .skeleton-card h3 {

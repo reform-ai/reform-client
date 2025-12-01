@@ -354,7 +354,7 @@ const AnalysisSkeleton = ({
       </header>
 
       <div className="skeleton-grid">
-        <article className="skeleton-card" ref={shouldSyncHeights ? leftCardRef : null}>
+        <article className={`skeleton-card ${uploadComplete ? 'upload-complete' : (selectedFile && !uploadComplete ? 'upload-pending' : '')}`} ref={shouldSyncHeights ? leftCardRef : null}>
           <FileUploader
             selectedFile={selectedFile}
             onFileChange={async (file) => {
@@ -391,11 +391,18 @@ const AnalysisSkeleton = ({
             }}
             disabled={isDisabled}
             uploading={uploading}
+            uploadComplete={uploadComplete}
             onUploadClick={handleUpload}
+          />
+          <UploadProgress
+            progress={progress}
+            progressText={progressText}
+            uploading={uploading}
+            analyzing={false}
           />
         </article>
 
-        <article className="skeleton-card" ref={shouldSyncHeights ? rightCardRef : null}>
+        <article className={`skeleton-card ${uploadComplete ? 'analysis-ready' : ''}`} ref={shouldSyncHeights ? rightCardRef : null}>
           <h3>Analysis Details</h3>
           <div className="skeleton-options">
             <ExerciseSelector
@@ -417,7 +424,7 @@ const AnalysisSkeleton = ({
                 className="skeleton-btn skeleton-btn-primary"
                 type="button"
                 onClick={handleStartAnalysis}
-                disabled={!uploadComplete || analyzing || isDisabled}
+                disabled={!uploadComplete || analyzing || uploading || isDisabled}
               >
                 {analyzing ? 'Analyzing...' : 'Start Analysis'}
               </button>
@@ -443,13 +450,6 @@ const AnalysisSkeleton = ({
                 
                 // User can now retry the upload
               }}
-            />
-
-            <UploadProgress
-              progress={progress}
-              progressText={progressText}
-              uploading={uploading}
-              analyzing={analyzing}
             />
           </div>
         </article>

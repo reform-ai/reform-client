@@ -63,8 +63,17 @@ const FileUploader = ({ selectedFile, onFileChange, disabled = false, uploading 
             disabled={disabled || uploading}
             onClick={onUploadClick}
           >
-            {uploadComplete ? 'Change Video' : 'Upload'}
+            Upload
           </button>
+          {uploadComplete && (
+            <button 
+              className="upload-button upload-button-change"
+              disabled={disabled}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Change video
+            </button>
+          )}
           {uploading && (
             <div className="upload-spinner"></div>
           )}

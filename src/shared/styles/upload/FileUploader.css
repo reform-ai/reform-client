@@ -93,6 +93,17 @@
   cursor: not-allowed;
 }
 
+.upload-button-change {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.upload-button-change:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color-hover);
+}
+
 .upload-spinner {
   width: 16px;
   height: 16px;

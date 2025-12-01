@@ -394,14 +394,6 @@ const AnalysisSkeleton = ({
             uploadComplete={uploadComplete}
             onUploadClick={handleUpload}
           />
-          {uploading && (
-            <UploadProgress
-              progress={progress}
-              progressText={progressText}
-              uploading={uploading}
-              analyzing={false}
-            />
-          )}
         </article>
 
         <article className={`skeleton-card ${uploadComplete ? 'analysis-ready' : ''}`} ref={shouldSyncHeights ? rightCardRef : null}>

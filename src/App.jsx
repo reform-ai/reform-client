@@ -21,6 +21,12 @@ import XOAuthCallbackPage from './pages/XOAuthCallbackPage';
 import WorkoutPlanQuestionnairePage from './pages/WorkoutPlanQuestionnairePage';
 import WorkoutPlanGeneratePage from './pages/WorkoutPlanGeneratePage';
 import WorkoutPlanViewerPage from './pages/WorkoutPlanViewerPage';
+import ExpertCoachingPage from './pages/ExpertCoachingPage';
+import ExpertCoachingRequestPage from './pages/ExpertCoachingRequestPage';
+import ExpertCoachingConsultationsPage from './pages/ExpertCoachingConsultationsPage';
+import ExpertCoachingDetailPage from './pages/ExpertCoachingDetailPage';
+import PTExpertCoachingConsultationsPage from './pages/PTExpertCoachingConsultationsPage';
+import PTExpertCoachingDetailPage from './pages/PTExpertCoachingDetailPage';
 import Footer from './shared/components/layout/Footer';
 import './App.css';
 
@@ -50,6 +56,12 @@ function App() {
         <Route path="/workout-plans/generate" element={<WorkoutPlanGeneratePage />} />
         <Route path="/workout-plans/:planId" element={<WorkoutPlanViewerPage />} />
         <Route path="/workout-plans" element={<WorkoutPlanViewerPage />} />
+        <Route path="/expert-coaching" element={<ExpertCoachingPage />} />
+        <Route path="/expert-coaching/request" element={<ExpertCoachingRequestPage />} />
+        <Route path="/expert-coaching/consultations" element={<ExpertCoachingConsultationsPage />} />
+        <Route path="/expert-coaching/consultations/:consultationId" element={<ExpertCoachingDetailPage />} />
+        <Route path="/pt/expert-coaching/consultations" element={<PTExpertCoachingConsultationsPage />} />
+        <Route path="/pt/expert-coaching/consultations/:consultationId" element={<PTExpertCoachingDetailPage />} />
         <Route path="*" element={<LandingPage />} />
       </Routes>
       <Footer />

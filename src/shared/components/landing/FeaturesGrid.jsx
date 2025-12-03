@@ -42,9 +42,8 @@ const FeaturesGrid = ({ onScrollToAnalysis }) => {
             icon="💬"
             title="Expert Coaching"
             description="Get personalized guidance and answers from AI personal trainers. Ask questions, get form tips, and receive expert advice."
-            ctaText="Learn More"
-            comingSoon={true}
-            disabled={true}
+            ctaText="Get Started"
+            ctaLink="/expert-coaching"
           />
         </div>
       </div>

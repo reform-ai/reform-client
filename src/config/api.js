@@ -85,7 +85,19 @@ export const API_ENDPOINTS = {
   WORKOUT_PLANS_ACTIVE: `${API_URL}/api/workout-plans/active`,
   WORKOUT_PLAN: (planId) => `${API_URL}/api/workout-plans/${planId}`,
   WORKOUT_PLAN_REGENERATE: (planId) => `${API_URL}/api/workout-plans/${planId}/regenerate`,
-  WORKOUT_PLAN_DELETE: (planId) => `${API_URL}/api/workout-plans/${planId}`
+  WORKOUT_PLAN_DELETE: (planId) => `${API_URL}/api/workout-plans/${planId}`,
+  // Expert Coaching endpoints
+  EXPERT_COACHING_REQUEST: `${API_URL}/api/expert-coaching/request`,
+  EXPERT_COACHING_CONSULTATIONS: `${API_URL}/api/expert-coaching/consultations`,
+  EXPERT_COACHING_CONSULTATION: (consultationId) => `${API_URL}/api/expert-coaching/consultations/${consultationId}`,
+  EXPERT_COACHING_UPDATE: (consultationId) => `${API_URL}/api/expert-coaching/consultations/${consultationId}`,
+  EXPERT_COACHING_ACKNOWLEDGE: (consultationId) => `${API_URL}/api/expert-coaching/consultations/${consultationId}/acknowledge`,
+  EXPERT_COACHING_PARQ_QUESTIONS: `${API_URL}/api/expert-coaching/parq-questions`,
+  EXPERT_COACHING_PARQ_SUBMIT: (consultationId) => `${API_URL}/api/expert-coaching/consultations/${consultationId}/parq`,
+  // PT (Personal Trainer) endpoints for managing consultations
+  PT_EXPERT_COACHING_CONSULTATIONS: `${API_URL}/api/admin/expert-coaching/consultations`,
+  PT_EXPERT_COACHING_CONSULTATION: (consultationId) => `${API_URL}/api/admin/expert-coaching/consultations/${consultationId}`,
+  PT_EXPERT_COACHING_UPDATE_STATUS: (consultationId) => `${API_URL}/api/admin/expert-coaching/consultations/${consultationId}/status`
 };
 
 // Only log API URL in development mode for security

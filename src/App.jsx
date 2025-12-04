@@ -14,21 +14,24 @@ import ContactPage from './pages/ContactPage';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
-import AnalysisHistoryPage from './pages/AnalysisHistoryPage';
-import AnalysisDetailPage from './pages/AnalysisDetailPage';
+// Analysis feature - using feature-based organization
+import AnalysisHistoryPage from './features/analysis/pages/AnalysisHistoryPage';
+import AnalysisDetailPage from './features/analysis/pages/AnalysisDetailPage';
 import ProgressDashboardPage from './pages/ProgressDashboardPage';
 import XOAuthCallbackPage from './pages/XOAuthCallbackPage';
-import WorkoutPlanQuestionnairePage from './pages/WorkoutPlanQuestionnairePage';
-import WorkoutPlanGeneratePage from './pages/WorkoutPlanGeneratePage';
-import WorkoutPlanViewerPage from './pages/WorkoutPlanViewerPage';
-import ExpertCoachingPage from './pages/ExpertCoachingPage';
-import ExpertCoachingVoucherPage from './pages/ExpertCoachingVoucherPage';
-import ExpertCoachingRequestPage from './pages/ExpertCoachingRequestPage';
-import ExpertCoachingConsultationsPage from './pages/ExpertCoachingConsultationsPage';
-import ExpertCoachingDetailPage from './pages/ExpertCoachingDetailPage';
-import ExpertCoachingBookingPage from './pages/ExpertCoachingBookingPage';
-import PTExpertCoachingConsultationsPage from './pages/PTExpertCoachingConsultationsPage';
-import PTExpertCoachingDetailPage from './pages/PTExpertCoachingDetailPage';
+// Workout Plans feature - using feature-based organization
+import WorkoutPlanQuestionnairePage from './features/workout-plans/pages/WorkoutPlanQuestionnairePage';
+import WorkoutPlanGeneratePage from './features/workout-plans/pages/WorkoutPlanGeneratePage';
+import WorkoutPlanViewerPage from './features/workout-plans/pages/WorkoutPlanViewerPage';
+// Expert Coaching feature - using feature-based organization
+import ExpertCoachingPage from './features/expert-coaching/pages/ExpertCoachingPage';
+import ExpertCoachingVoucherPage from './features/expert-coaching/pages/ExpertCoachingVoucherPage';
+import ExpertCoachingRequestPage from './features/expert-coaching/pages/ExpertCoachingRequestPage';
+import ExpertCoachingConsultationsPage from './features/expert-coaching/pages/ExpertCoachingConsultationsPage';
+import ExpertCoachingDetailPage from './features/expert-coaching/pages/ExpertCoachingDetailPage';
+import ExpertCoachingBookingPage from './features/expert-coaching/pages/ExpertCoachingBookingPage';
+import PTExpertCoachingConsultationsPage from './features/expert-coaching/pages/PTExpertCoachingConsultationsPage';
+import PTExpertCoachingDetailPage from './features/expert-coaching/pages/PTExpertCoachingDetailPage';
 import Footer from './shared/components/layout/Footer';
 import './App.css';
 

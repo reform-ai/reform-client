@@ -5,13 +5,39 @@ import { authenticatedFetchJson } from '../../utils/authenticatedFetch';
 import { isUserLoggedIn } from '../../utils/authStorage';
 
 /**
- * Follow button component
+ * FollowButton - Interactive follow/unfollow button for user profiles
+ * 
+ * Displays a follow button that toggles follow status for a user. Automatically
+ * fetches follow status if not provided, handles loading states, and hides itself
+ * when viewing own profile. Includes optimistic UI updates.
  * 
  * @param {Object} props
  * @param {string} props.username - Username of the user to follow/unfollow
- * @param {boolean} props.initialFollowing - Initial follow status (optional)
- * @param {Function} props.onUpdate - Callback when follow status changes (optional)
- * @param {boolean} props.isOwnProfile - Whether this is the current user's own profile (optional)
+ * @param {boolean} [props.initialFollowing=null] - Initial follow status. If null, fetches from API
+ * @param {Function} [props.onUpdate] - Optional callback invoked when follow status changes.
+ *   Receives the new following state as argument: (isFollowing: boolean) => void
+ * @param {boolean} [props.isOwnProfile=false] - Whether this is the current user's own profile.
+ *   If true, button is hidden
+ * 
+ * @returns {JSX.Element|null} Follow button or null if own profile
+ * 
+ * @example
+ * // With initial state
+ * <FollowButton 
+ *   username="john_doe"
+ *   initialFollowing={true}
+ *   onUpdate={(isFollowing) => console.log('Now following:', isFollowing)}
+ * />
+ * 
+ * @example
+ * // Auto-fetch follow status
+ * <FollowButton 
+ *   username="jane_smith"
+ *   isOwnProfile={false}
+ * />
+ * 
+ * @note Automatically hides when isOwnProfile is true
+ * @see {@link authenticatedFetchJson} for API call implementation
  */
 const FollowButton = ({ username, initialFollowing = null, onUpdate, isOwnProfile = false }) => {
   const navigate = useNavigate();

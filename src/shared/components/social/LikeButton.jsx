@@ -3,6 +3,30 @@ import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../../../config/api';
 import { authenticatedFetchJson } from '../../utils/authenticatedFetch';
 
+/**
+ * LikeButton - Interactive like button for social posts
+ * 
+ * Displays a like button with current like count. Toggles like status on click
+ * and updates the UI optimistically. Handles loading states and error handling.
+ * 
+ * @param {Object} props
+ * @param {string|number} props.postId - ID of the post to like/unlike
+ * @param {boolean} props.isLiked - Initial liked state
+ * @param {number} props.likeCount - Initial like count
+ * @param {Function} [props.onUpdate] - Optional callback invoked after like status changes
+ * 
+ * @returns {JSX.Element} Like button with count display
+ * 
+ * @example
+ * <LikeButton 
+ *   postId={post.id}
+ *   isLiked={post.is_liked}
+ *   likeCount={post.like_count}
+ *   onUpdate={() => refreshPost()}
+ * />
+ * 
+ * @see {@link authenticatedFetchJson} for API call implementation
+ */
 const LikeButton = ({ postId, isLiked: initialIsLiked, likeCount: initialLikeCount, onUpdate }) => {
   const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(initialIsLiked);

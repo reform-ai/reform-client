@@ -3,11 +3,22 @@ import ProfileMenu from '../ProfileMenu';
 import { isUserLoggedIn } from '../../utils/authStorage';
 
 /**
- * Common page header component used across multiple pages
- * Displays title, ProfileMenu (if logged in), and Dashboard/Login button
+ * PageHeader - Common page header component with authentication-aware UI
+ * 
+ * Displays the application header with title, profile menu (when logged in),
+ * and appropriate action buttons (Dashboard for logged-in users, Login for guests).
+ * Automatically adapts its appearance based on authentication status.
  * 
  * @param {Object} props
- * @param {Function} props.onLoginClick - Callback when Login button is clicked
+ * @param {Function} props.onLoginClick - Callback function invoked when Login button is clicked
+ * 
+ * @returns {JSX.Element} Header component with title and action buttons
+ * 
+ * @example
+ * <PageHeader onLoginClick={() => setShowLoginModal(true)} />
+ * 
+ * @see {@link ProfileMenu} for the profile menu component
+ * @see {@link authStorage.isUserLoggedIn} for authentication check
  */
 const PageHeader = ({ onLoginClick }) => {
   const isLoggedIn = isUserLoggedIn();

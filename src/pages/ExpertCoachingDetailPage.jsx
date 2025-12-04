@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useRequireAuth } from '../shared/utils/useRequireAuth';
 import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
 import { API_ENDPOINTS } from '../config/api';
-import { formatDateTime } from '../shared/utils/dateFormat';
+import { formatDateTime, formatTimeOnly } from '../shared/utils/dateFormat';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
 import AcknowledgmentComponent from '../shared/components/expert-coaching/AcknowledgmentComponent';
@@ -690,7 +690,7 @@ const ExpertCoachingDetailPage = () => {
                     color: '#6b7280',
                     marginTop: '4px'
                   }}>
-                    Until {new Date(consultation.scheduled_end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    Until {formatTimeOnly(consultation.scheduled_end_time)}
                   </div>
                 )}
               </div>

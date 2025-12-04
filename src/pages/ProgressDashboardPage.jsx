@@ -13,6 +13,7 @@ import {
 } from '../shared/utils/chartDataUtils';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
+import { SCORE_THRESHOLDS } from '../shared/constants/app';
 import '../shared/styles/AnalysisSkeleton.css';
 import './ProgressDashboardPage.css';
 
@@ -40,9 +41,9 @@ const ProgressDashboardPage = () => {
   useRequireAuth(navigate, fetchMetrics);
 
   const getScoreColor = (score) => {
-    if (score >= 90) return 'var(--score-excellent)';
-    if (score >= 75) return 'var(--score-good)';
-    if (score >= 60) return 'var(--score-warning)';
+    if (score >= SCORE_THRESHOLDS.EXCELLENT) return 'var(--score-excellent)';
+    if (score >= SCORE_THRESHOLDS.GOOD) return 'var(--score-good)';
+    if (score >= SCORE_THRESHOLDS.WARNING) return 'var(--score-warning)';
     return 'var(--score-poor)';
   };
 

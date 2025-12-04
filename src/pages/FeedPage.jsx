@@ -8,6 +8,7 @@ import VerificationBanner from '../shared/components/verification/VerificationBa
 import { API_ENDPOINTS } from '../config/api';
 import { useRequireAuth } from '../shared/utils/useRequireAuth';
 import { authenticatedFetchJson } from '../shared/utils/authenticatedFetch';
+import { PAGINATION } from '../shared/constants/app';
 import '../shared/styles/AnalysisSkeleton.css';
 import './FeedPage.css';
 
@@ -18,11 +19,11 @@ const FeedPage = () => {
   const [error, setError] = useState('');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [offset, setOffset] = useState(0);
+  const [offset, setOffset] = useState(PAGINATION.DEFAULT_OFFSET);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
   const [isVerified, setIsVerified] = useState(true);
-  const limit = 20;
+  const limit = PAGINATION.DEFAULT_LIMIT;
 
   const fetchCurrentUser = useCallback(async () => {
     try {

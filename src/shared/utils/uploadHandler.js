@@ -37,13 +37,41 @@ function parseUploadError(xhr) {
 }
 
 /**
- * Handles video upload and analysis
+ * Handles video upload and analysis.
+ * 
+ * Uploads a video file and triggers analysis. Uses XMLHttpRequest for upload
+ * progress tracking. Supports both httpOnly cookies and Authorization header
+ * for authentication.
+ * 
  * @param {Object} params - Upload parameters
  * @param {File} params.file - Video file to upload
- * @param {string} params.exercise - Exercise type ID
- * @param {string|null} params.notes - Optional notes
- * @param {Function} params.onProgress - Progress callback (progress, text)
- * @returns {Promise<Object>} Analysis result
+ * @param {string} params.exercise - Exercise type ID (e.g., '1' for Squat, '2' for Bench, '3' for Deadlift)
+ * @param {string|null} [params.notes] - Optional notes to attach to the analysis
+ * @param {Function} [params.onProgress] - Progress callback: `(progress: number, text: string) => void`
+ *   - progress: Upload progress percentage (0-100)
+ *   - text: Status text (e.g., "Uploading... 50%" or "Upload complete, analyzing...")
+ * 
+ * @returns {Promise<Object>} Analysis result object with analysis data
+ * 
+ * @throws {Error} If upload fails, file is invalid, or analysis fails
+ * 
+ * @example
+ * import { uploadVideo } from '../shared/utils/uploadHandler';
+ * 
+ * try {
+ *   const result = await uploadVideo({
+ *     file: videoFile,
+ *     exercise: '1',
+ *     notes: 'My workout notes',
+ *     onProgress: (progress, text) => {
+ *       setUploadProgress(progress);
+ *       setUploadStatus(text);
+ *     }
+ *   });
+ *   console.log('Analysis complete:', result);
+ * } catch (error) {
+ *   console.error('Upload failed:', error.message);
+ * }
  */
 export const uploadVideo = async ({ file, exercise, notes = null, onProgress }) => {
   const formData = new FormData();
@@ -108,11 +136,29 @@ export const uploadVideo = async ({ file, exercise, notes = null, onProgress }) 
 };
 
 /**
- * Handles video upload only (no analysis)
+ * Handles video upload only (no analysis).
+ * 
+ * Uploads a video file without triggering analysis. Returns a session_id
+ * that can be used for later processing. Useful for multi-step upload flows.
+ * 
  * @param {Object} params - Upload parameters
  * @param {File} params.file - Video file to upload
- * @param {Function} params.onProgress - Progress callback (progress, text)
- * @returns {Promise<Object>} Upload result with session_id
+ * @param {Function} [params.onProgress] - Progress callback: `(progress: number, text: string) => void`
+ *   - progress: Upload progress percentage (0-100)
+ *   - text: Status text (e.g., "Uploading... 50%" or "Upload complete")
+ * 
+ * @returns {Promise<Object>} Upload result object with session_id
+ * 
+ * @throws {Error} If upload fails or file is invalid
+ * 
+ * @example
+ * import { uploadVideoOnly } from '../shared/utils/uploadHandler';
+ * 
+ * const result = await uploadVideoOnly({
+ *   file: videoFile,
+ *   onProgress: (progress) => console.log(`Upload: ${progress}%`)
+ * });
+ * const sessionId = result.session_id;
  */
 export const uploadVideoOnly = async ({ file, onProgress }) => {
   const formData = new FormData();

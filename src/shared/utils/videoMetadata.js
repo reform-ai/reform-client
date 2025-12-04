@@ -1,5 +1,7 @@
 // Video metadata utility - single source of truth for fps, totalFrames, and duration
 
+import { VIDEO_DEFAULTS } from '../constants/app';
+
 export const getVideoMetadata = ({
   calculationResults = null,
   formAnalysis = null,
@@ -10,7 +12,7 @@ export const getVideoMetadata = ({
 } = {}) => {
   // FPS priority: fpsOverride > calculationResults > formAnalysis > squatPhases > default
   const derivedFps = calculationResults?.fps || formAnalysis?.fps || squatPhases?.fps;
-  const fps = (fpsOverride && fpsOverride > 0 ? fpsOverride : derivedFps) || 30;
+  const fps = (fpsOverride && fpsOverride > 0 ? fpsOverride : derivedFps) || VIDEO_DEFAULTS.DEFAULT_FPS;
 
   // Frame count priority: frameCount > calculationResults.frame_count > dataArray length
   let totalFrames = 0;

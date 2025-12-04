@@ -9,12 +9,13 @@
 
 import { API_ENDPOINTS } from '../../config/api';
 import { authenticatedFetchJson } from './authenticatedFetch';
+import { PAGINATION } from '../constants/app';
 
 /**
  * Get list of analyses with optional filters
  * @param {Object} params - Query parameters
- * @param {number} params.limit - Number of analyses to return (default: 20)
- * @param {number} params.offset - Number of analyses to skip (default: 0)
+ * @param {number} params.limit - Number of analyses to return (default: PAGINATION.DEFAULT_LIMIT)
+ * @param {number} params.offset - Number of analyses to skip (default: PAGINATION.DEFAULT_OFFSET)
  * @param {number} params.exercise - Filter by exercise type (1=Squat, 2=Bench, 3=Deadlift)
  * @param {number} params.minScore - Minimum score filter (0-100)
  * @param {number} params.maxScore - Maximum score filter (0-100)
@@ -24,8 +25,8 @@ import { authenticatedFetchJson } from './authenticatedFetch';
  * @throws {Error} If request fails
  */
 export async function getAnalyses({
-  limit = 20,
-  offset = 0,
+  limit = PAGINATION.DEFAULT_LIMIT,
+  offset = PAGINATION.DEFAULT_OFFSET,
   exercise = null,
   minScore = null,
   maxScore = null,

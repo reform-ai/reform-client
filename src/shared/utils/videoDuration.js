@@ -1,7 +1,29 @@
 /**
- * Utility to get video duration from a File object
- * @param {File} file - Video file
+ * Video Duration Utilities
+ * 
+ * Provides utilities for extracting metadata from video files,
+ * including duration and FPS information.
+ * 
+ * @module videoDuration
+ */
+
+/**
+ * Gets the duration of a video file in seconds.
+ * 
+ * Creates a temporary video element to load metadata and extract duration.
+ * Automatically cleans up resources after extraction.
+ * 
+ * @param {File} file - Video file object
  * @returns {Promise<number>} Duration in seconds
+ * @throws {Error} If file is not a video or metadata cannot be loaded
+ * 
+ * @example
+ * try {
+ *   const duration = await getVideoDuration(file);
+ *   console.log(`Video is ${duration} seconds long`);
+ * } catch (error) {
+ *   console.error('Failed to get duration:', error);
+ * }
  */
 export function getVideoDuration(file) {
   return new Promise((resolve, reject) => {
@@ -48,11 +70,16 @@ export function getVideoDuration(file) {
 }
 
 /**
- * Utility to get video FPS from a File object
- * Note: FPS is not reliably available from HTML5 video API
- * Returns null - actual FPS comes from server response (calculation_results.fps)
- * @param {File} file - Video file
- * @returns {Promise<number|null>} FPS or null if unavailable
+ * Gets the FPS (frames per second) of a video file.
+ * 
+ * Note: FPS is not reliably available from the HTML5 video API.
+ * This function always returns null. Actual FPS is determined by the server
+ * during analysis and is available in `calculation_results.fps`.
+ * 
+ * @param {File} file - Video file object
+ * @returns {Promise<null>} Always returns null (FPS not available client-side)
+ * 
+ * @see {@link analysisDataNormalizer.getFpsFromAnalysis} for getting FPS from analysis results
  */
 export function getVideoFPS(file) {
   return Promise.resolve(null);

@@ -1,14 +1,33 @@
 /**
- * Helper functions for managing authentication data in localStorage
+ * Authentication Storage Utilities
+ * 
+ * Manages user authentication data in localStorage. Supports both httpOnly cookies
+ * (preferred) and localStorage tokens (fallback for browsers that block third-party cookies).
+ * 
+ * @module authStorage
  */
 
 /**
- * Stores user authentication data in localStorage after login/signup
- * Note: Tokens are now stored in httpOnly cookies, not localStorage
+ * Stores user authentication data in localStorage after login/signup.
+ * 
+ * Note: Tokens are primarily stored in httpOnly cookies (preferred), but access_token
+ * is also stored in localStorage as a fallback for browsers that block third-party cookies.
+ * 
  * @param {Object} data - Response data from login/signup endpoint
  * @param {string} data.user_id - User ID
  * @param {string} data.email - User email
  * @param {string} data.full_name - User's full name
+ * @param {string} [data.access_token] - Access token (stored as fallback)
+ * @param {string} [data.first_name] - First name (if provided directly)
+ * @param {string} [data.last_name] - Last name (if provided directly)
+ * 
+ * @example
+ * storeUserData({
+ *   user_id: '123',
+ *   email: 'user@example.com',
+ *   full_name: 'John Doe',
+ *   access_token: 'token123'
+ * });
  */
 export const storeUserData = (data) => {
   // Store access token temporarily as fallback for browsers that block third-party cookies
@@ -48,8 +67,15 @@ export const storeUserData = (data) => {
 };
 
 /**
- * Clears all authentication data from localStorage
- * Also calls logout endpoint to clear httpOnly cookie
+ * Clears all authentication data from localStorage and httpOnly cookies.
+ * 
+ * Removes all stored user data and calls the logout endpoint to clear server-side
+ * httpOnly cookies. This should be called on logout or when authentication fails.
+ * 
+ * @returns {Promise<void>} Resolves when cleanup is complete
+ * 
+ * @example
+ * await clearUserData();
  */
 export const clearUserData = async () => {
   // Clear localStorage first
@@ -79,18 +105,36 @@ export const clearUserData = async () => {
 };
 
 /**
- * Checks if user is logged in
- * @returns {boolean}
+ * Checks if user is currently logged in.
+ * 
+ * Determines login status based on localStorage flag. Note that this doesn't
+ * verify token validity - use authenticated API calls to verify actual authentication.
+ * 
+ * @returns {boolean} True if user is marked as logged in, false otherwise
+ * 
+ * @example
+ * if (isUserLoggedIn()) {
+ *   // Show authenticated UI
+ * }
  */
 export const isUserLoggedIn = () => {
   return localStorage.getItem('isLoggedIn') === 'true';
 };
 
 /**
- * Gets the user's authentication token
- * Returns token from localStorage as fallback for browsers that block third-party cookies
- * Cookies are preferred, but this provides a fallback
+ * Gets the user's authentication token from localStorage.
+ * 
+ * Returns the access token stored in localStorage. This is used as a fallback
+ * for browsers that block third-party cookies. Cookies (httpOnly) are preferred,
+ * but this provides a fallback mechanism.
+ * 
  * @returns {string|null} Access token from localStorage, or null if not available
+ * 
+ * @example
+ * const token = getUserToken();
+ * if (token) {
+ *   headers['Authorization'] = `Bearer ${token}`;
+ * }
  */
 export const getUserToken = () => {
   // Return token from localStorage as fallback

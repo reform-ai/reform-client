@@ -7,6 +7,7 @@ import { normalizeAnalysisResults, getFpsFromAnalysis, getComponentScores as get
 import { getScoreColor } from '../../../shared/utils/scoreUtils';
 import { API_ENDPOINTS } from '../../../config/api';
 import { authenticatedFetchJson } from '../../../shared/utils/authenticatedFetch';
+import { PAGINATION } from '../../../shared/constants/app';
 import PageContainer from '../../../shared/components/layout/PageContainer';
 import PageHeader from '../../../shared/components/layout/PageHeader';
 import ScoreBreakdown from '../../../shared/components/ScoreBreakdown';
@@ -46,8 +47,8 @@ const AnalysisHistoryPage = () => {
   });
   
   // Pagination
-  const [limit] = useState(20);
-  const [offset, setOffset] = useState(0);
+  const [limit] = useState(PAGINATION.DEFAULT_LIMIT);
+  const [offset, setOffset] = useState(PAGINATION.DEFAULT_OFFSET);
   
   // Filters
   const [exerciseFilter, setExerciseFilter] = useState(null);

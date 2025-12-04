@@ -400,7 +400,8 @@ const PTExpertCoachingDetailPage = () => {
                       day: 'numeric',
                       hour: 'numeric',
                       minute: '2-digit',
-                      timeZoneName: 'short'
+                      timeZoneName: 'short',
+                      timeZone: 'America/New_York'
                     })}
                   </p>
                 </div>
@@ -418,7 +419,8 @@ const PTExpertCoachingDetailPage = () => {
                     {new Date(consultation.scheduled_end_time).toLocaleString('en-US', {
                       hour: 'numeric',
                       minute: '2-digit',
-                      timeZoneName: 'short'
+                      timeZoneName: 'short',
+                      timeZone: 'America/New_York'
                     })}
                   </p>
                 </div>

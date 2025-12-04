@@ -114,7 +114,7 @@ const PARQComponent = ({ consultationId, onComplete, navigate }) => {
       marginBottom: '24px'
     }}>
       <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: '600' }}>
-        PAR-Q+ Screening (Optional)
+        Health Screening
       </h3>
       <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
         Complete this optional health screening questionnaire to help us provide better guidance.
@@ -184,43 +184,22 @@ const PARQComponent = ({ consultationId, onComplete, navigate }) => {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{
-              padding: '10px 20px',
-              fontSize: '14px',
-              backgroundColor: submitting ? '#ccc' : 'var(--primary-color)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: submitting ? 'not-allowed' : 'pointer',
-              fontWeight: '600'
-            }}
-          >
-            {submitting ? 'Submitting...' : 'Submit PAR-Q'}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (onComplete) {
-                onComplete(null, []); // Skip PAR-Q
-              }
-            }}
-            style={{
-              padding: '10px 20px',
-              fontSize: '14px',
-              backgroundColor: 'transparent',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-          >
-            Skip (Optional)
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={submitting}
+          style={{
+            padding: '10px 20px',
+            fontSize: '14px',
+            backgroundColor: submitting ? '#ccc' : 'var(--primary-color)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: submitting ? 'not-allowed' : 'pointer',
+            fontWeight: '600'
+          }}
+        >
+          {submitting ? 'Submitting...' : 'Submit'}
+        </button>
       </form>
     </div>
   );

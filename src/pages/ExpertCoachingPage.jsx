@@ -11,7 +11,7 @@ const ExpertCoachingPage = () => {
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
-      navigate('/expert-coaching/request');
+      navigate('/expert-coaching/voucher');
     } else {
       navigate('/?login=1');
     }

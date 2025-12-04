@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useRequireAuth } from '../shared/utils/useRequireAuth';
 import { authenticatedFetch } from '../shared/utils/authenticatedFetch';
 import { API_ENDPOINTS } from '../config/api';
-import { formatDateTime } from '../shared/utils/dateFormat';
+import { formatDateTime, parseUTCDate } from '../shared/utils/dateFormat';
 import PageContainer from '../shared/components/layout/PageContainer';
 import PageHeader from '../shared/components/layout/PageHeader';
 
@@ -393,7 +393,7 @@ const PTExpertCoachingDetailPage = () => {
                     margin: '4px 0 0 0',
                     color: consultation.status === 'pending_booking' ? '#78350f' : '#047857'
                   }}>
-                    {new Date(consultation.scheduled_start_time).toLocaleString('en-US', {
+                    {parseUTCDate(consultation.scheduled_start_time)?.toLocaleString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
@@ -416,7 +416,7 @@ const PTExpertCoachingDetailPage = () => {
                     margin: '4px 0 0 0',
                     color: consultation.status === 'pending_booking' ? '#78350f' : '#047857'
                   }}>
-                    {new Date(consultation.scheduled_end_time).toLocaleString('en-US', {
+                    {parseUTCDate(consultation.scheduled_end_time)?.toLocaleString('en-US', {
                       hour: 'numeric',
                       minute: '2-digit',
                       timeZoneName: 'short',
